@@ -1,8 +1,7 @@
 import SwiftUI
 
-struct VPNBlockView: View {
-    let isVPN: Bool
-    let onRetry: () -> Void
+struct JailbreakBlockView: View {
+    let onRecheck: () -> Void
 
     var body: some View {
         ZStack {
@@ -14,13 +13,11 @@ struct VPNBlockView: View {
                 FaceIcon(size: 88, color: Color(red: 0.96, green: 0.26, blue: 0.26), isSad: true)
                     .shadow(color: Color(red: 0.96, green: 0.26, blue: 0.26).opacity(0.45), radius: 18, y: 6)
 
-                Text(isVPN ? "VPN đang bật" : "Proxy đang bật")
+                Text("Thiết bị đã Jailbreak")
                     .font(.title2.weight(.bold))
                     .multilineTextAlignment(.center)
 
-                Text(isVPN
-                     ? "Tắt VPN rồi mở lại app để tiếp tục sử dụng."
-                     : "Tắt proxy trong Cài đặt > Wi-Fi rồi mở lại app.")
+                Text("App không hỗ trợ thiết bị đã jailbreak.\nVui lòng gỡ jailbreak để tiếp tục sử dụng.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -28,8 +25,8 @@ struct VPNBlockView: View {
 
                 Spacer()
 
-                Button(action: onRetry) {
-                    Text("Thử lại")
+                Button(action: onRecheck) {
+                    Text("Kiểm tra lại")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)

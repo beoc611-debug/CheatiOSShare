@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var licenseGate: LicenseGateStore
     @State private var showSettings = false
 
     var body: some View {
@@ -10,6 +11,9 @@ struct HomeView: View {
                 TechBackground()
                 ScrollView {
                     VStack(spacing: 20) {
+                        LicenseStatusBar()
+                            .padding(.top, 8)
+
                         deviceCard
                         entryGrid
                         Spacer(minLength: 30)
@@ -30,7 +34,7 @@ struct HomeView: View {
                         showSettings = true
                     } label: {
                         Image(systemName: "gear")
-                            .foregroundStyle(AppTheme.accent)
+                            .foregroundStyle(AppTheme.techGlow)
                     }
                 }
             })
@@ -53,7 +57,7 @@ struct HomeView: View {
                         .foregroundStyle(AppTheme.accent)
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(deviceModel())
+                    Text(AppInfo.hardwareDisplayName)
                         .font(.headline.bold())
                         .foregroundStyle(AppTheme.textPrimary)
                     Text("iOS \(UIDevice.current.systemVersion)")
@@ -119,14 +123,5 @@ struct HomeView: View {
         default:
             return entry.path
         }
-    }
-
-    private func deviceModel() -> String {
-        var sysinfo = utsname()
-        uname(&sysinfo)
-        let machine = withUnsafeBytes(of: &sysinfo.machine) { ptr in
-            String(cString: ptr.baseAddress!.assumingMemoryBound(to: CChar.self))
-        }
-        return UIDevice.current.name + " (\(machine))"
     }
 }

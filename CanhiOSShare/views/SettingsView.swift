@@ -1,13 +1,68 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @EnvironmentObject private var licenseGate: LicenseGateStore
     @Environment(\.dismiss) private var dismiss
+    @State private var showLicenseInfo = false
 
     var body: some View {
         NavigationView {
             ZStack {
                 TechBackground()
                 List {
+                    // License key section
+                    Section {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                    .fill(AppTheme.neonPurple.opacity(0.15))
+                                    .frame(width: 32, height: 32)
+                                Image(systemName: "lock.shield.fill")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(AppTheme.neonPurple)
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Mã Key")
+                                    .font(.subheadline)
+                                    .foregroundStyle(AppTheme.textSecondary)
+                                Text(licenseGate.maskedKeyCode.isEmpty ? "Chưa kích hoạt" : licenseGate.maskedKeyCode)
+                                    .font(.system(.subheadline, design: .monospaced).weight(.medium))
+                                    .foregroundStyle(AppTheme.textPrimary)
+                            }
+                            Spacer()
+                            Button {
+                                showLicenseInfo = true
+                            } label: {
+                                Image(systemName: "info.circle")
+                                    .foregroundStyle(AppTheme.techGlow)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.vertical, 2)
+                        .listRowBackground(AppTheme.card)
+
+                        Button(role: .destructive) {
+                            licenseGate.changeKey()
+                        } label: {
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                        .fill(AppTheme.red.opacity(0.15))
+                                        .frame(width: 32, height: 32)
+                                    Image(systemName: "key.slash")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundStyle(AppTheme.red)
+                                }
+                                Text("Đổi Key")
+                                    .foregroundStyle(AppTheme.red)
+                            }
+                        }
+                        .padding(.vertical, 2)
+                        .listRowBackground(AppTheme.card)
+                    } header: {
+                        sectionHeader("Bản quyền")
+                    }
+
                     // About
                     Section {
                         infoRow(icon: "info.circle", iconColor: AppTheme.accent,
@@ -18,7 +73,7 @@ struct SettingsView: View {
                         sectionHeader("Thông tin")
                     }
 
-                    // Nguồn gốc
+                    // Credits
                     Section {
                         linkRow(icon: "person.fill", iconColor: AppTheme.purple,
                                 title: "Tác giả", value: "HỒ XUÂN CẢNH (Cảnh iOS Crack)")
@@ -53,6 +108,10 @@ struct SettingsView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .sheet(isPresented: $showLicenseInfo) {
+            LicenseInfoSheetView()
+                .environmentObject(licenseGate)
+        }
     }
 
     private func infoRow(icon: String, iconColor: Color, title: String, value: String) -> some View {
