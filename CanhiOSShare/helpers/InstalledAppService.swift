@@ -30,7 +30,7 @@ final class InstalledAppService: ObservableObject {
         apps = loaded.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
     }
 
-    private func buildAppList() -> [InstalledApp] {
+    nonisolated private func buildAppList() -> [InstalledApp] {
         var result: [InstalledApp] = []
         var seen = Set<String>()
 
@@ -74,7 +74,7 @@ final class InstalledAppService: ObservableObject {
         return result
     }
 
-    private func appInfo(for bundleID: String) -> (name: String, version: String, icon: UIImage?) {
+    nonisolated private func appInfo(for bundleID: String) -> (name: String, version: String, icon: UIImage?) {
         var name = ""
         var version = ""
         var icon: UIImage?

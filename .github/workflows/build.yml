@@ -13,6 +13,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Show available Xcode versions
+        run: ls /Applications/Xcode*.app | head -20
+
       - name: Select Xcode 16
         run: sudo xcode-select -switch /Applications/Xcode_16.2.app
 
@@ -22,6 +25,7 @@ jobs:
 
       - name: Build .app (ad-hoc signed)
         run: |
+          set -o pipefail
           xcodebuild build \
             -project CheatiOSShare.xcodeproj \
             -scheme CheatiOSShare \
@@ -31,7 +35,17 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="-" \
-            OTHER_CODE_SIGN_FLAGS="--deep"
+            OTHER_CODE_SIGN_FLAGS="--deep" \
+            2>&1 | tee build.log
+          grep -E "(error:|warning:|BUILD SUCCEEDED|BUILD FAILED)" build.log | tail -50
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ github.sha }}
+          path: build.log
+          retention-days: 7
 
       - name: Package IPA
         run: |
