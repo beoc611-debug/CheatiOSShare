@@ -4,7 +4,6 @@ import UIKit
 struct AppDataBrowserView: View {
     @Environment(\.appLanguage) private var language
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var apps: [InstalledApp] = []
     @State private var isLoading = false
     @State private var isResolving = false
@@ -16,30 +15,16 @@ struct AppDataBrowserView: View {
         guard !searchText.isEmpty else { return apps }
         let q = searchText.lowercased()
         return apps.filter {
-            $0.name.lowercased().contains(q) || $0.bundleID.lowercased().contains(q)
+            $0.displayName.lowercased().contains(q) || $0.bundleID.lowercased().contains(q)
         }
     }
 
-    private var overlayState: AppBrowserOverlayState {
-        if (isLoading || isResolving) && apps.isEmpty { return .loading }
-        if apps.isEmpty { return .empty }
-        if filteredApps.isEmpty { return .noResults }
-        return .none
-    }
-
-    private var interfaceAnimation: Animation? {
-        reduceMotion ? nil : .easeOut(duration: 0.20)
-    }
-
     var body: some View {
-        AnyNavigationStack {
-            appList
-            .navigationTitle(language.text("browser.title"))
-            .navigationBarTitleDisplayMode(.inline)
+        appList
             .searchable(
                 text: $searchText,
                 placement: .navigationBarDrawer(displayMode: .always),
-                prompt: language.text("browser.search")
+                prompt: language.text("applist.search_prompt")
             )
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -55,77 +40,105 @@ struct AppDataBrowserView: View {
                 }
             }
             .onAppear {
-                if !hasLoaded {
-                    hasLoaded = true
-                    reload()
-                }
+                if !hasLoaded { hasLoaded = true; reload() }
             }
-        }
     }
 
     private var appList: some View {
         List {
+            // Manage card
             Section {
-                ForEach(filteredApps) { app in
-                    if app.containerPath.isEmpty {
-                        appRow(app)
-                    } else {
+                manageCard
+            }
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+
+            // App rows
+            Section {
+                if (isLoading || isResolving) && apps.isEmpty {
+                    HStack {
+                        Spacer()
+                        ProgressView(language.text("browser.loading"))
+                            .padding()
+                        Spacer()
+                    }
+                    .listRowBackground(Color.clear)
+                } else if apps.isEmpty {
+                    emptyView
+                        .listRowBackground(Color.clear)
+                } else if filteredApps.isEmpty {
+                    searchEmptyView
+                        .listRowBackground(Color.clear)
+                } else {
+                    ForEach(filteredApps) { app in
                         NavigationLink {
-                            FileBrowserView(
-                                containerPath: app.containerPath,
-                                title: app.displayName,
-                                bundleID: app.bundleID
-                            )
+                            AppDetailView(app: app)
                         } label: {
                             appRow(app)
                         }
                     }
                 }
             } header: {
-                HStack(spacing: 8) {
-                    Text(language.text("browser.apps_count", Int64(filteredApps.count)))
+                HStack {
+                    Text(language.text("applist.apps_count", Int64(filteredApps.count)))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
                     Spacer()
                     if isResolving {
-                        ProgressView()
-                            .controlSize(.mini)
-                        Text(language.text("browser.mha_scanning"))
+                        HStack(spacing: 4) {
+                            ProgressView().controlSize(.mini)
+                            Text(language.text("applist.scanning"))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
                 .textCase(nil)
+                .padding(.horizontal, 4)
             }
         }
-        .listStyle(.plain)
-        .environment(\.defaultMinListRowHeight, 48)
+        .listStyle(.insetGrouped)
         .scrollDismissesKeyboard15()
-        .overlay {
-            Group {
-                switch overlayState {
-                case .loading:
-                    ProgressView(language.text("browser.loading"))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                case .empty:
-                    emptyView
-                case .noResults:
-                    searchEmptyView
-                case .none:
-                    EmptyView()
-                }
+    }
+
+    private var manageCard: some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(AppTheme.neonPurple.opacity(0.20))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "externaldrive.badge.icloud")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(AppTheme.neonPurple)
             }
-            .transition(.opacity)
-            .animation(interfaceAnimation, value: overlayState)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(language.text("applist.manage_header"))
+                    .font(.subheadline.weight(.semibold))
+                Text(language.text("applist.manage_subtitle"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+            Spacer()
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .padding(.horizontal, 16)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
     }
 
     private func appRow(_ app: InstalledApp) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             BrowserAppIcon(app: app)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(app.displayName)
                     .font(.subheadline.weight(.semibold))
-                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
+                    .lineLimit(1)
                 Text(app.bundleID)
                     .font(.caption2.monospaced())
                     .foregroundStyle(.secondary)
@@ -135,30 +148,46 @@ struct AppDataBrowserView: View {
 
             Spacer()
 
-            if !app.version.isEmpty {
-                Text(app.version)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+            VStack(alignment: .trailing, spacing: 4) {
+                if !app.version.isEmpty {
+                    Text("v\(app.version)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                HStack(spacing: 4) {
+                    if !app.containerPath.isEmpty {
+                        appBadge("DATA", color: AppTheme.techGlow)
+                    }
+                    appBadge("IPA", color: AppTheme.neonPurple)
+                }
             }
         }
-        .padding(.vertical, 2)
-        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 12))
+        .padding(.vertical, 4)
+    }
+
+    private func appBadge(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(.system(size: 9, weight: .bold))
+            .foregroundStyle(color)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(color.opacity(0.14), in: RoundedRectangle(cornerRadius: 4))
     }
 
     private var emptyView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             Image(systemName: "folder.badge.questionmark")
-                .font(.system(size: 48))
+                .font(.system(size: 40))
                 .foregroundStyle(.secondary)
             Text(errorMessage ?? language.text("browser.empty"))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-                .padding()
             Button(language.text("browser.retry")) { reload() }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.bordered)
         }
-        .padding()
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
     }
 
     private var searchEmptyView: some View {
@@ -173,8 +202,8 @@ struct AppDataBrowserView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
     }
 
     private func reload() {
@@ -289,20 +318,16 @@ struct AppDataBrowserView: View {
     }
 }
 
-private enum AppBrowserOverlayState: Equatable {
-    case loading
-    case empty
-    case noResults
-    case none
-}
 
 struct BrowserAppIcon: View {
     let app: InstalledApp
+    var size: CGFloat = 36
     @State private var resolvedIcon: UIImage?
     @State private var didRequestIcon = false
 
-    init(app: InstalledApp) {
+    init(app: InstalledApp, size: CGFloat = 36) {
         self.app = app
+        self.size = size
         _resolvedIcon = State(initialValue: app.icon)
     }
 
@@ -314,12 +339,14 @@ struct BrowserAppIcon: View {
                     .scaledToFill()
             } else {
                 Image(systemName: "app")
-                    .font(.title3)
+                    .font(.system(size: size * 0.45))
                     .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(uiColor: .tertiarySystemFill))
             }
         }
-        .frame(width: 36, height: 36)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
         .accessibilityHidden(true)
         .onAppear {
             guard resolvedIcon == nil, !didRequestIcon else { return }

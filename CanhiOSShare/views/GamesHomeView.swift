@@ -127,11 +127,12 @@ struct GamesHomeView: View {
                         }
                     }
                 } else {
-                    appsTabContent
+                    AppDataBrowserView()
                 }
             }
-            .navigationTitle("")
-            .navigationBarHidden(true)
+            .navigationTitle(selectedTab == 1 ? "Ứng dụng" : "")
+            .navigationBarTitleDisplayMode(selectedTab == 1 ? .large : .inline)
+            .navigationBarHidden(selectedTab != 1)
             .refreshable {
                 await loadGames()
                 await checkAnnouncement()
@@ -448,77 +449,6 @@ struct GamesHomeView: View {
             .padding(.vertical, 9)
         }
         .buttonStyle(.plain)
-    }
-
-    // MARK: - Apps tab placeholder
-
-    private var appsTabContent: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                cyberHeader
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
-                    .padding(.bottom, 24)
-
-                VStack(spacing: 20) {
-                    ZStack {
-                        // Outer glow
-                        RoundedRectangle(cornerRadius: 32, style: .continuous)
-                            .fill(AppTheme.neonPurple.opacity(0.08))
-                            .frame(width: 110, height: 110)
-                            .blur(radius: 20)
-
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .fill(Color(red: 0.030, green: 0.050, blue: 0.115).opacity(0.82))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                    .strokeBorder(
-                                        LinearGradient(
-                                            colors: [AppTheme.neonPurple.opacity(0.55), AppTheme.techGlow.opacity(0.35)],
-                                            startPoint: .topLeading, endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
-                            )
-                            .frame(width: 90, height: 90)
-
-                        Image(systemName: "square.grid.2x2.fill")
-                            .font(.system(size: 36, weight: .bold))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [AppTheme.neonPurple, AppTheme.techGlow],
-                                    startPoint: .topLeading, endPoint: .bottomTrailing
-                                )
-                            )
-                            .shadow(color: AppTheme.neonPurple.opacity(0.60), radius: 12)
-                    }
-
-                    VStack(spacing: 8) {
-                        Text("Ứng dụng")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(.white)
-
-                        HStack(spacing: 8) {
-                            // Animated dots
-                            ForEach(0..<3) { i in
-                                Circle()
-                                    .fill(AppTheme.neonPurple.opacity(0.60))
-                                    .frame(width: 6, height: 6)
-                            }
-                        }
-
-                        Text("Đang phát triển")
-                            .font(.system(size: 15))
-                            .foregroundStyle(Color(red: 0.46, green: 0.56, blue: 0.76))
-                            .padding(.top, 2)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 60)
-
-                Spacer(minLength: 32)
-            }
-        }
     }
 
     private var emptyGamesView: some View {

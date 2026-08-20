@@ -651,6 +651,40 @@ enum ContainerStore {
         return result
     }
 
+    // MARK: Bundle path lookup
+
+    static func bundlePathForBundleID(_ bundleID: String) -> String? {
+        let fm = FileManager.default
+        for root in applicationBundleRoots {
+            let handle = grantContainerAccess(root.path)
+            if handle >= 0 { defer { bad_query_release(handle) } }
+            guard let entries = try? fm.contentsOfDirectory(atPath: root.path) else { continue }
+            if root.nested {
+                for entry in entries.prefix(2_048) {
+                    guard UUID(uuidString: entry) != nil else { continue }
+                    let containerPath = (root.path as NSString).appendingPathComponent(entry)
+                    let children = (try? fm.contentsOfDirectory(atPath: containerPath)) ?? []
+                    for child in children where child.hasSuffix(".app") {
+                        let appPath = (containerPath as NSString).appendingPathComponent(child)
+                        guard let data = try? Data(contentsOf: URL(fileURLWithPath: (appPath as NSString).appendingPathComponent("Info.plist"))),
+                              let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+                              plist["CFBundleIdentifier"] as? String == bundleID else { continue }
+                        return appPath
+                    }
+                }
+            } else {
+                for entry in entries.prefix(2_048) where entry.hasSuffix(".app") {
+                    let appPath = (root.path as NSString).appendingPathComponent(entry)
+                    guard let data = try? Data(contentsOf: URL(fileURLWithPath: (appPath as NSString).appendingPathComponent("Info.plist"))),
+                          let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+                          plist["CFBundleIdentifier"] as? String == bundleID else { continue }
+                    return appPath
+                }
+            }
+        }
+        return nil
+    }
+
     // MARK: File browsing
 
     static func listFiles(at path: String) -> [FileEntry] {

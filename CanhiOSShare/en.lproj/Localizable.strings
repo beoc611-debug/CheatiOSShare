@@ -559,3 +559,23 @@
 "smart_mode.pick_game" = "Open this game";
 
 "tab.settings" = "Settings";
+
+"applist.search_prompt" = "Search by name or bundle ID";
+"applist.manage_header" = "Manage Data & IPA";
+"applist.manage_subtitle" = "Browse Data Containers, App Bundles, and export IPA files.";
+"applist.apps_count" = "%lld APPS";
+"applist.scanning" = "Scanning…";
+
+"appdetail.quick" = "QUICK ACTIONS";
+"appdetail.open" = "Open App";
+"appdetail.files" = "FILE MANAGEMENT";
+"appdetail.browse_data" = "Browse Data Container";
+"appdetail.browse_bundle" = "Browse App Bundle";
+"appdetail.export_zip" = "Export Data as ZIP";
+"appdetail.export_ipa" = "Decrypt & Export IPA";
+"appdetail.info" = "INFO";
+"appdetail.version" = "Version";
+"appdetail.bundle_loading" = "Locating bundle…";
+"appdetail.bundle_missing" = "Bundle not found";
+"appdetail.exporting" = "Exporting…";
+"appdetail.open_fail" = "Cannot open this app";

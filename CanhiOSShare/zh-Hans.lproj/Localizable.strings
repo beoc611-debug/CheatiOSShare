@@ -559,3 +559,23 @@
 "smart_mode.pick_game" = "打开此游戏";
 
 "tab.settings" = "设置";
+
+"applist.search_prompt" = "按名称或 Bundle ID 搜索";
+"applist.manage_header" = "管理数据与 IPA";
+"applist.manage_subtitle" = "浏览 Data Container、App Bundle，并导出 IPA 文件。";
+"applist.apps_count" = "%lld 个应用";
+"applist.scanning" = "扫描中…";
+
+"appdetail.quick" = "快速操作";
+"appdetail.open" = "打开应用";
+"appdetail.files" = "文件管理";
+"appdetail.browse_data" = "浏览 Data Container";
+"appdetail.browse_bundle" = "浏览 App Bundle";
+"appdetail.export_zip" = "导出 Data 为 ZIP";
+"appdetail.export_ipa" = "解密并导出 IPA";
+"appdetail.info" = "信息";
+"appdetail.version" = "版本";
+"appdetail.bundle_loading" = "正在查找 Bundle…";
+"appdetail.bundle_missing" = "未找到 Bundle";
+"appdetail.exporting" = "导出中…";
+"appdetail.open_fail" = "无法打开此应用";

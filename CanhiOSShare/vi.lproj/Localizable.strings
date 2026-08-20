@@ -559,3 +559,23 @@
 "smart_mode.pick_game" = "Mở game này";
 
 "tab.settings" = "Cài đặt";
+
+"applist.search_prompt" = "Tìm theo tên hoặc bundle ID";
+"applist.manage_header" = "Quản lý Data & IPA";
+"applist.manage_subtitle" = "Duyệt Data Container, App Bundle và xuất file IPA.";
+"applist.apps_count" = "%lld ỨNG DỤNG";
+"applist.scanning" = "Đang quét…";
+
+"appdetail.quick" = "THAO TÁC NHANH";
+"appdetail.open" = "Mở ứng dụng";
+"appdetail.files" = "QUẢN LÝ FILE";
+"appdetail.browse_data" = "Duyệt Data Container";
+"appdetail.browse_bundle" = "Duyệt App Bundle";
+"appdetail.export_zip" = "Xuất Data thành ZIP";
+"appdetail.export_ipa" = "Giải mã và xuất IPA";
+"appdetail.info" = "THÔNG TIN";
+"appdetail.version" = "Phiên bản";
+"appdetail.bundle_loading" = "Đang tìm bundle…";
+"appdetail.bundle_missing" = "Không tìm thấy bundle";
+"appdetail.exporting" = "Đang xuất…";
+"appdetail.open_fail" = "Không thể mở ứng dụng này";
