@@ -1,4 +1,4 @@
-# Cảnh iOS Share
+# CheatiOSVip DSW
 
 > **Trình quản lý file cho iPhone/iPad — không cần jailbreak**  
 > Hỗ trợ iOS 17 · 18 · 26 | Cài qua AltStore / Sideloadly / TrollStore
@@ -11,7 +11,7 @@
 |---|---|
 | **Người mod & phát triển bản này** | **HỒ XUÂN CẢNH** (Cảnh iOS Crack) |
 | **Liên hệ** | hoxuancanh888@gmail.com |
-| **Thương hiệu bản mod** | Cảnh iOS Share |
+| **Thương hiệu bản mod** | CheatiOSVip DSW |
 
 Toàn bộ giao diện SwiftUI, thiết kế UX/UI dark-tech, các tính năng mở rộng và bản build phân phối trong project này được **tạo ra và sở hữu bởi HỒ XUÂN CẢNH**.
 
@@ -41,7 +41,7 @@ Bản mod này được xây dựng **dựa hoàn toàn** trên hai mã nguồn 
 | **Chủ sở hữu gốc** | **opa334** |
 | **Chức năng cung cấp** | Kernel exploit chain cho iOS 17–26 (kexploit, sandbox_escape, bad_query, krw) |
 
-> **Tóm tắt:** Cảnh iOS Share = Giao diện & UX bởi Cảnh iOS Crack + Lõi kỹ thuật bởi 0xjohnnydev + opa334.  
+> **Tóm tắt:** CheatiOSVip DSW = Giao diện & UX bởi Cảnh iOS Crack + Lõi kỹ thuật bởi 0xjohnnydev + opa334.  
 > Bản này **không** thay thế hay cạnh tranh với các dự án gốc.
 
 ---
