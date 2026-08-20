@@ -5,7 +5,7 @@ struct HomeView: View {
     @State private var showSettings = false
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ZStack {
                 TechBackground()
                 ScrollView {
