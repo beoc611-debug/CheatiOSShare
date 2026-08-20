@@ -166,14 +166,12 @@ struct AppDetailView: View {
     }
 
     private func openApp() {
-        guard let clazz = NSClassFromString("LSApplicationWorkspace"),
-              let ws = clazz.perform(Selector(("defaultWorkspace")))?.takeUnretainedValue() else {
+        guard let clazz = NSClassFromString("LSApplicationWorkspace") as? NSObject.Type,
+              let ws = clazz.perform(Selector(("defaultWorkspace")))?.takeUnretainedValue() as? NSObject else {
             toast = ToastMessage(text: language.text("appdetail.open_fail"))
             return
         }
-        if ws.perform(Selector(("openApplicationWithBundleID:")), with: app.bundleID) == nil {
-            toast = ToastMessage(text: language.text("appdetail.open_fail"))
-        }
+        ws.perform(Selector(("openApplicationWithBundleID:")), with: app.bundleID)
     }
 
     private func exportZip() {
