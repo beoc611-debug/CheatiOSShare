@@ -94,6 +94,7 @@
 		D0400A /* AppLauncher.m in Sources */ = {isa = PBXBuildFile; fileRef = C04004 /* AppLauncher.m */; };
 		D0400B /* DisplayIdentity.m in Sources */ = {isa = PBXBuildFile; fileRef = C04006 /* DisplayIdentity.m */; };
 		D0400C /* wallpaper_zip.c in Sources */ = {isa = PBXBuildFile; fileRef = C04008 /* wallpaper_zip.c */; };
+		E05001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = E05002 /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -204,6 +205,9 @@
 		C04006 /* DisplayIdentity.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DisplayIdentity.m; sourceTree = "<group>"; };
 		C04007 /* wallpaper_zip.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = wallpaper_zip.h; sourceTree = "<group>"; };
 		C04008 /* wallpaper_zip.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = wallpaper_zip.c; sourceTree = "<group>"; };
+		E05003 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		E05004 /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		E05005 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -243,6 +247,7 @@
 				CA10CAFEDEADBEEF0000F028 /* CanhiOSShare-Bridging-Header.h */,
 				CA10CAFEDEADBEEF0000F026 /* Info.plist */,
 				CA10CAFEDEADBEEF0000F027 /* Assets.xcassets */,
+				E05002 /* Localizable.strings */,
 				CA10CAFEDEADBEEF0000000E /* views */,
 				CA10CAFEDEADBEEF0000000F /* helpers */,
 				CA10CAFEDEADBEEF0000000G /* exploit */,
@@ -389,6 +394,19 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXVariantGroup section */
+		E05002 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				E05003 /* en */,
+				E05004 /* vi */,
+				E05005 /* zh-Hans */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
 /* Begin PBXNativeTarget section */
 		CA10CAFEDEADBEEF00000002 /* CheatiOSShare */ = {
 			isa = PBXNativeTarget;
@@ -428,6 +446,8 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				vi,
+				"zh-Hans",
 				Base,
 			);
 			mainGroup = CA10CAFEDEADBEEF0000000C;
@@ -446,6 +466,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CA10CAFEDEADBEEF0000B018 /* Assets.xcassets in Resources */,
+				E05001 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
