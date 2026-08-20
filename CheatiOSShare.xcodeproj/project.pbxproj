@@ -1,4 +1,4 @@
-// !$*UTF8*$!
+﻿// !$*UTF8*$!
 {
 	archiveVersion = 1;
 	classes = {
@@ -10,22 +10,17 @@
 		CA10CAFEDEADBEEF0000B001 /* CanhiOSShareApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F001 /* CanhiOSShareApp.swift */; };
 		CA10CAFEDEADBEEF0000B002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F002 /* ContentView.swift */; };
 		CA10CAFEDEADBEEF0000B003 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F003 /* DesignSystem.swift */; };
-		CA10CAFEDEADBEEF0000B004 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F004 /* HomeView.swift */; };
 		CA10CAFEDEADBEEF0000B005 /* FileBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F005 /* FileBrowserView.swift */; };
-		CA10CAFEDEADBEEF0000B006 /* AppListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F006 /* AppListView.swift */; };
 		CA10CAFEDEADBEEF0000B007 /* VPNBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F007 /* VPNBlockView.swift */; };
-		CA10CAFEDEADBEEF0000B008 /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F008 /* LoadingView.swift */; };
 		CA10CAFEDEADBEEF0000B009 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F009 /* SettingsView.swift */; };
 		CA10CAFEDEADBEEF0000B00A /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F00A /* AppState.swift */; };
 		CA10CAFEDEADBEEF0000B00B /* ContainerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F00B /* ContainerStore.swift */; };
-		CA10CAFEDEADBEEF0000B00C /* InstalledAppService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F00C /* InstalledAppService.swift */; };
 		CA10CAFEDEADBEEF0000B00D /* NetworkSecurityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F00D /* NetworkSecurityMonitor.swift */; };
 		CA10CAFEDEADBEEF0000B00E /* bad_query.c in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F00E /* bad_query.c */; };
 		CA10CAFEDEADBEEF0000B00F /* MCMBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F011 /* MCMBridge.m */; };
 		CA10CAFEDEADBEEF0000B010 /* MCMFilzaIntegration.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F013 /* MCMFilzaIntegration.m */; };
 		CA10CAFEDEADBEEF0000B018 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F027 /* Assets.xcassets */; };
 		CA10CAFEDEADBEEF0000B019 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F029 /* Security.framework */; };
-		CA10CAFEDEADBEEF0000B020 /* AppInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F030 /* AppInfo.swift */; };
 		CA10CAFEDEADBEEF0000B021 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F031 /* AppLanguage.swift */; };
 		CA10CAFEDEADBEEF0000B022 /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F032 /* DeviceIdentity.swift */; };
 		CA10CAFEDEADBEEF0000B023 /* PatchHubService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F033 /* PatchHubService.swift */; };
@@ -93,15 +88,11 @@
 		CA10CAFEDEADBEEF0000F001 /* CanhiOSShareApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanhiOSShareApp.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F003 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
-		CA10CAFEDEADBEEF0000F004 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F005 /* FileBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileBrowserView.swift; sourceTree = "<group>"; };
-		CA10CAFEDEADBEEF0000F006 /* AppListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppListView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F007 /* VPNBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPNBlockView.swift; sourceTree = "<group>"; };
-		CA10CAFEDEADBEEF0000F008 /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F009 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00B /* ContainerStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerStore.swift; sourceTree = "<group>"; };
-		CA10CAFEDEADBEEF0000F00C /* InstalledAppService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledAppService.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00D /* NetworkSecurityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkSecurityMonitor.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00E /* bad_query.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = bad_query.c; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00F /* bad_query.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bad_query.h; sourceTree = "<group>"; };
@@ -132,7 +123,6 @@
 		CA10CAFEDEADBEEF0000F028 /* CanhiOSShare-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CanhiOSShare-Bridging-Header.h"; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F029 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		CA10CAFEDEADBEEF0000000J /* CheatiOSShare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CheatiOSShare.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		CA10CAFEDEADBEEF0000F030 /* AppInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInfo.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F031 /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F032 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F033 /* PatchHubService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchHubService.swift; sourceTree = "<group>"; };
@@ -245,12 +235,9 @@
 			isa = PBXGroup;
 			children = (
 				CA10CAFEDEADBEEF0000F003 /* DesignSystem.swift */,
-				CA10CAFEDEADBEEF0000F004 /* HomeView.swift */,
-				CA10CAFEDEADBEEF0000F005 /* FileBrowserView.swift */,
-				CA10CAFEDEADBEEF0000F006 /* AppListView.swift */,
-				CA10CAFEDEADBEEF0000F007 /* VPNBlockView.swift */,
-				CA10CAFEDEADBEEF0000F008 /* LoadingView.swift */,
-				CA10CAFEDEADBEEF0000F009 /* SettingsView.swift */,
+					CA10CAFEDEADBEEF0000F005 /* FileBrowserView.swift */,
+					CA10CAFEDEADBEEF0000F007 /* VPNBlockView.swift */,
+					CA10CAFEDEADBEEF0000F009 /* SettingsView.swift */,
 				CA10CAFEDEADBEEF0000F038 /* WelcomeFaceIcon.swift */,
 				CA10CAFEDEADBEEF0000F039 /* JailbreakBlockView.swift */,
 				CA10CAFEDEADBEEF0000F03A /* MaintenanceView.swift */,
@@ -281,10 +268,8 @@
 			children = (
 				CA10CAFEDEADBEEF0000F00A /* AppState.swift */,
 				CA10CAFEDEADBEEF0000F00B /* ContainerStore.swift */,
-				CA10CAFEDEADBEEF0000F00C /* InstalledAppService.swift */,
-				CA10CAFEDEADBEEF0000F00D /* NetworkSecurityMonitor.swift */,
-				CA10CAFEDEADBEEF0000F030 /* AppInfo.swift */,
-				CA10CAFEDEADBEEF0000F031 /* AppLanguage.swift */,
+					CA10CAFEDEADBEEF0000F00D /* NetworkSecurityMonitor.swift */,
+					CA10CAFEDEADBEEF0000F031 /* AppLanguage.swift */,
 				CA10CAFEDEADBEEF0000F032 /* DeviceIdentity.swift */,
 				CA10CAFEDEADBEEF0000F033 /* PatchHubService.swift */,
 				CA10CAFEDEADBEEF0000F034 /* LicenseKeyService.swift */,
@@ -446,18 +431,13 @@
 				CA10CAFEDEADBEEF0000B001 /* CanhiOSShareApp.swift in Sources */,
 				CA10CAFEDEADBEEF0000B002 /* ContentView.swift in Sources */,
 				CA10CAFEDEADBEEF0000B003 /* DesignSystem.swift in Sources */,
-				CA10CAFEDEADBEEF0000B004 /* HomeView.swift in Sources */,
-				CA10CAFEDEADBEEF0000B005 /* FileBrowserView.swift in Sources */,
-				CA10CAFEDEADBEEF0000B006 /* AppListView.swift in Sources */,
-				CA10CAFEDEADBEEF0000B007 /* VPNBlockView.swift in Sources */,
-				CA10CAFEDEADBEEF0000B008 /* LoadingView.swift in Sources */,
-				CA10CAFEDEADBEEF0000B009 /* SettingsView.swift in Sources */,
+					CA10CAFEDEADBEEF0000B005 /* FileBrowserView.swift in Sources */,
+					CA10CAFEDEADBEEF0000B007 /* VPNBlockView.swift in Sources */,
+					CA10CAFEDEADBEEF0000B009 /* SettingsView.swift in Sources */,
 				CA10CAFEDEADBEEF0000B00A /* AppState.swift in Sources */,
 				CA10CAFEDEADBEEF0000B00B /* ContainerStore.swift in Sources */,
-				CA10CAFEDEADBEEF0000B00C /* InstalledAppService.swift in Sources */,
-				CA10CAFEDEADBEEF0000B00D /* NetworkSecurityMonitor.swift in Sources */,
-				CA10CAFEDEADBEEF0000B020 /* AppInfo.swift in Sources */,
-				CA10CAFEDEADBEEF0000B021 /* AppLanguage.swift in Sources */,
+					CA10CAFEDEADBEEF0000B00D /* NetworkSecurityMonitor.swift in Sources */,
+					CA10CAFEDEADBEEF0000B021 /* AppLanguage.swift in Sources */,
 				CA10CAFEDEADBEEF0000B022 /* DeviceIdentity.swift in Sources */,
 				CA10CAFEDEADBEEF0000B023 /* PatchHubService.swift in Sources */,
 				CA10CAFEDEADBEEF0000B024 /* LicenseKeyService.swift in Sources */,
