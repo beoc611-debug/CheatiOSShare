@@ -535,3 +535,27 @@
 "license.error.device_mismatch" = "Key này đã được dùng trên thiết bị khác.";
 "license.error.device_limit_reached" = "Key này đã đạt giới hạn số thiết bị cho phép.";
 "license.error.network" = "Không thể kết nối máy chủ.";
+
+"common.build" = "Build %@";
+
+"maintenance.default_title" = "Bảo trì";
+"maintenance.default_message" = "CheatiOSVip DSW tạm thời không khả dụng. Vui lòng thử lại sau.";
+
+"patch.importing_original" = "Đang nhập file gốc…";
+"patch.no_games_yet" = "Chưa có game nào được hỗ trợ.";
+"patch.original_file" = "File gốc";
+"patch.original_file_chosen" = "Đã chọn file gốc";
+"patch.original_file_none" = "Không bắt buộc — cho phép bật/tắt";
+"patch.original_file_footer" = "Lưu file gốc giúp bật/tắt patch mà không cần khôi phục toàn bộ.";
+"patch.change_original" = "Chạm để chọn file khác";
+"patch.remove_original_file" = "Xóa file gốc";
+"patch.toggle_footer" = "Chạm vào công tắc để áp dụng hoặc khôi phục từng quy tắc riêng lẻ.";
+"patch.toggle_unavailable" = "Chưa lưu file gốc — không thể bật/tắt";
+
+"smart_mode.title" = "Chế độ thông minh";
+"smart_mode.subtitle" = "Nút truy cập nhanh nổi";
+"smart_mode.toggle_title" = "Bật chế độ thông minh";
+"smart_mode.toggle_subtitle" = "Thêm nút nổi để mở game đang hoạt động ngay lập tức.";
+"smart_mode.pick_game" = "Mở game này";
+
+"tab.settings" = "Cài đặt";

@@ -535,3 +535,27 @@
 "license.error.device_mismatch" = "该密钥已在其他设备上使用。";
 "license.error.device_limit_reached" = "该密钥已达到设备数量上限。";
 "license.error.network" = "无法连接服务器。";
+
+"common.build" = "Build %@";
+
+"maintenance.default_title" = "维护中";
+"maintenance.default_message" = "CheatiOSVip DSW 暂时不可用，请稍后再试。";
+
+"patch.importing_original" = "正在导入原始文件…";
+"patch.no_games_yet" = "暂无支持的游戏。";
+"patch.original_file" = "原始文件";
+"patch.original_file_chosen" = "已选择原始文件";
+"patch.original_file_none" = "可选 — 启用开关功能";
+"patch.original_file_footer" = "存储原始文件后可单独开关补丁，无需完整恢复。";
+"patch.change_original" = "轻触以选择其他文件";
+"patch.remove_original_file" = "删除原始文件";
+"patch.toggle_footer" = "轻触开关以逐条应用或恢复规则。";
+"patch.toggle_unavailable" = "未存储原始文件 — 无法切换";
+
+"smart_mode.title" = "智能模式";
+"smart_mode.subtitle" = "悬浮快捷按钮";
+"smart_mode.toggle_title" = "启用智能模式";
+"smart_mode.toggle_subtitle" = "添加悬浮按钮，立即打开当前活跃游戏。";
+"smart_mode.pick_game" = "打开此游戏";
+
+"tab.settings" = "设置";

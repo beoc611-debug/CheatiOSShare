@@ -535,3 +535,27 @@
 "license.error.device_mismatch" = "This key is already in use on another device.";
 "license.error.device_limit_reached" = "This key has reached its device limit.";
 "license.error.network" = "Couldn't reach the server.";
+
+"common.build" = "Build %@";
+
+"maintenance.default_title" = "Maintenance";
+"maintenance.default_message" = "CheatiOSVip DSW is temporarily unavailable. Check back soon.";
+
+"patch.importing_original" = "Importing original…";
+"patch.no_games_yet" = "No supported games available.";
+"patch.original_file" = "Original File";
+"patch.original_file_chosen" = "Original file selected";
+"patch.original_file_none" = "Optional — enables toggle";
+"patch.original_file_footer" = "Storing the original enables toggling the patch on and off without a full restore.";
+"patch.change_original" = "Tap to choose another file";
+"patch.remove_original_file" = "Remove Original File";
+"patch.toggle_footer" = "Tap the switch to apply or restore each rule individually.";
+"patch.toggle_unavailable" = "No original stored — cannot toggle";
+
+"smart_mode.title" = "Smart Mode";
+"smart_mode.subtitle" = "Floating quick-access button";
+"smart_mode.toggle_title" = "Enable Smart Mode";
+"smart_mode.toggle_subtitle" = "Adds a floating button to open the active game instantly.";
+"smart_mode.pick_game" = "Open this game";
+
+"tab.settings" = "Settings";
