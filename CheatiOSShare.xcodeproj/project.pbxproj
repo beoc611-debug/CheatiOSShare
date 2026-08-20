@@ -67,7 +67,7 @@
 		CA10CAFEDEADBEEF0000F026 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F027 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F028 /* CanhiOSShare-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CanhiOSShare-Bridging-Header.h"; sourceTree = "<group>"; };
-		CA10CAFEDEADBEEF0000000J /* CanhiOSShare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CanhiOSShare.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CA10CAFEDEADBEEF0000000J /* CheatiOSShare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CheatiOSShare.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -171,7 +171,7 @@
 		CA10CAFEDEADBEEF0000000I /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CA10CAFEDEADBEEF0000000J /* CanhiOSShare.app */,
+				CA10CAFEDEADBEEF0000000J /* CheatiOSShare.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -179,9 +179,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		CA10CAFEDEADBEEF00000002 /* CanhiOSShare */ = {
+		CA10CAFEDEADBEEF00000002 /* CheatiOSShare */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CA10CAFEDEADBEEF00000008 /* Build configuration list for PBXNativeTarget "CanhiOSShare" */;
+			buildConfigurationList = CA10CAFEDEADBEEF00000008 /* Build configuration list for PBXNativeTarget "CheatiOSShare" */;
 			buildPhases = (
 				CA10CAFEDEADBEEF00000009 /* Sources */,
 				CA10CAFEDEADBEEF0000000B /* Frameworks */,
@@ -191,9 +191,9 @@
 			);
 			dependencies = (
 			);
-			name = CanhiOSShare;
-			productName = CanhiOSShare;
-			productReference = CA10CAFEDEADBEEF0000000J /* CanhiOSShare.app */;
+			name = CheatiOSShare;
+			productName = CheatiOSShare;
+			productReference = CA10CAFEDEADBEEF0000000J /* CheatiOSShare.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -224,7 +224,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				CA10CAFEDEADBEEF00000002 /* CanhiOSShare */,
+				CA10CAFEDEADBEEF00000002 /* CheatiOSShare */,
 			);
 		};
 /* End PBXProject section */
@@ -454,7 +454,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CA10CAFEDEADBEEF00000008 /* Build configuration list for PBXNativeTarget "CanhiOSShare" */ = {
+		CA10CAFEDEADBEEF00000008 /* Build configuration list for PBXNativeTarget "CheatiOSShare" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CA10CAFEDEADBEEF00000005 /* Debug */,
