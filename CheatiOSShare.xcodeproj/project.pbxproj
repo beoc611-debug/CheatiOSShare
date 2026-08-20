@@ -82,6 +82,7 @@
 		B0302E /* FilesTabControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402E /* FilesTabControls.swift */; };
 		B0302F /* FilesTabSwitcherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402F /* FilesTabSwitcherView.swift */; };
 		B03030 /* AppDataBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04030 /* AppDataBrowserView.swift */; };
+		B03031 /* AppDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04031 /* AppDetailView.swift */; };
 		D04001 /* mcm_bridge.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F015 /* mcm_bridge.m */; };
 		D04002 /* kexploit_opa334.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F017 /* kexploit_opa334.m */; };
 		D04003 /* krw.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F019 /* krw.m */; };
@@ -197,6 +198,7 @@
 		F0402E /* FilesTabControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesTabControls.swift; sourceTree = "<group>"; };
 		F0402F /* FilesTabSwitcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesTabSwitcherView.swift; sourceTree = "<group>"; };
 		F04030 /* AppDataBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDataBrowserView.swift; sourceTree = "<group>"; };
+		F04031 /* AppDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDetailView.swift; sourceTree = "<group>"; };
 		C04001 /* AppIconHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppIconHelper.h; sourceTree = "<group>"; };
 		C04002 /* AppIconHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppIconHelper.m; sourceTree = "<group>"; };
 		C04003 /* AppLauncher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppLauncher.h; sourceTree = "<group>"; };
@@ -284,6 +286,7 @@
 				F0402E /* FilesTabControls.swift */,
 				F0402F /* FilesTabSwitcherView.swift */,
 				F04030 /* AppDataBrowserView.swift */,
+				F04031 /* AppDetailView.swift */,
 			);
 			path = views;
 			sourceTree = "<group>";
@@ -550,6 +553,7 @@
 				B0302E /* FilesTabControls.swift in Sources */,
 				B0302F /* FilesTabSwitcherView.swift in Sources */,
 				B03030 /* AppDataBrowserView.swift in Sources */,
+				B03031 /* AppDetailView.swift in Sources */,
 				D04001 /* mcm_bridge.m in Sources */,
 				D04002 /* kexploit_opa334.m in Sources */,
 				D04003 /* krw.m in Sources */,
