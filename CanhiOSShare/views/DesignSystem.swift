@@ -1,5 +1,25 @@
 import SwiftUI
 
+extension View {
+    @ViewBuilder
+    func hideScrollBackground() -> some View {
+        if #available(iOS 16, *) {
+            self.scrollContentBackground(.hidden)
+        } else {
+            self
+        }
+    }
+
+    @ViewBuilder
+    func hideToolbarBackground() -> some View {
+        if #available(iOS 16, *) {
+            self.toolbarBackground(.hidden, for: .navigationBar)
+        } else {
+            self
+        }
+    }
+}
+
 // MARK: - Colors & Theme
 
 enum AppTheme {

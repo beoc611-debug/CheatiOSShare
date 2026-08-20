@@ -44,7 +44,7 @@ struct AppListView: View {
                 .listRowSeparatorTint(AppTheme.cardStroke)
             }
             .listStyle(.plain)
-            .scrollContentBackground(.hidden)
+            .hideScrollBackground()
         }
     }
 

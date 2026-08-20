@@ -19,7 +19,7 @@ struct HomeView: View {
                 }
             }
             .navigationTitle("")
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Text("Cảnh iOS Share")
                         .font(.title3.bold())
@@ -33,8 +33,8 @@ struct HomeView: View {
                             .foregroundStyle(AppTheme.accent)
                     }
                 }
-            }
-            .toolbarBackground(.hidden, for: .navigationBar)
+            })
+            .hideToolbarBackground()
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
