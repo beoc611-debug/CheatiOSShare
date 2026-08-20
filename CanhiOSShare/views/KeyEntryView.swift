@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// The very first thing the app shows: nothing else is reachable until a valid key is redeemed.
 struct KeyEntryView: View {
     @EnvironmentObject private var licenseGate: LicenseGateStore
     @Environment(\.appLanguage) private var language

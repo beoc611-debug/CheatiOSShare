@@ -29,6 +29,7 @@ struct LicenseInfoSheetView: View {
 
             ScrollView {
                 VStack(spacing: 20) {
+                    // Header
                     VStack(spacing: 8) {
                         ZStack {
                             Circle()
@@ -61,6 +62,7 @@ struct LicenseInfoSheetView: View {
                     }
                     .padding(.top, 28)
 
+                    // Key code card
                     infoCard {
                         VStack(alignment: .leading, spacing: 12) {
                             label("Mã Key")
@@ -75,6 +77,7 @@ struct LicenseInfoSheetView: View {
                         }
                     }
 
+                    // Time info card
                     infoCard {
                         VStack(alignment: .leading, spacing: 14) {
                             label("Thời hạn")
@@ -98,6 +101,7 @@ struct LicenseInfoSheetView: View {
                         }
                     }
 
+                    // Devices card
                     infoCard {
                         VStack(alignment: .leading, spacing: 14) {
                             label("Thiết bị đã kích hoạt")
@@ -148,6 +152,8 @@ struct LicenseInfoSheetView: View {
             }
         }
     }
+
+    // MARK: - Sub-views
 
     @ViewBuilder
     private func infoCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {

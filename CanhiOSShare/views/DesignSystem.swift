@@ -3,11 +3,31 @@ import SwiftUI
 // MARK: - App Theme
 
 enum AppTheme {
+    // Original accent — kept for compatibility with non-cyber views
+    static let accent = Color(
+        uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(red: 1.00, green: 0.64, blue: 0.42, alpha: 1.00)
+                : UIColor(red: 0.85, green: 0.42, blue: 0.20, alpha: 1.00)
+        }
+    )
+    static let pageBackground = Color(uiColor: .systemBackground)
+    static let consoleBackground = Color(uiColor: .secondarySystemBackground)
+    static let pageInset: CGFloat = 16
+    static let rowIconSize: CGFloat = 17
+    static let rowIconFrame: CGFloat = 28
+    static let fileRowIconSize: CGFloat = 17
+    static let fileRowIconFrame: CGFloat = 30
+    static let fileRowHeight: CGFloat = 60
+    static let appIconSize: CGFloat = 32
+    static let emptyIconSize: CGFloat = 30
+    static let selectionIconSize: CGFloat = 18
+
     // MARK: Cyberpunk palette
     static let cyberBase      = Color(red: 0.012, green: 0.031, blue: 0.090)
-    static let techGlow       = Color(red: 0.180, green: 0.522, blue: 1.000)
-    static let neonPurple     = Color(red: 0.580, green: 0.227, blue: 0.949)
-    static let neonCyan       = Color(red: 0.102, green: 0.851, blue: 1.000)
+    static let techGlow       = Color(red: 0.180, green: 0.522, blue: 1.000)   // electric blue
+    static let neonPurple     = Color(red: 0.580, green: 0.227, blue: 0.949)   // neon purple
+    static let neonCyan       = Color(red: 0.102, green: 0.851, blue: 1.000)   // cyan
     static let techCardFill   = Color(red: 0.068, green: 0.098, blue: 0.180)
 
     static var techCardStroke: LinearGradient {
@@ -36,30 +56,6 @@ enum AppTheme {
         }
         return color
     }
-
-    // MARK: Backwards-compat aliases for existing views
-    static let accent         = techGlow
-    static let background     = cyberBase
-    static let card           = techCardFill
-    static let cardStroke     = Color.white.opacity(0.07)
-    static let purple         = neonPurple
-    static let green          = Color(red: 0.20, green: 0.85, blue: 0.45)
-    static let red            = Color(red: 0.96, green: 0.26, blue: 0.26)
-    static let textPrimary    = Color.white
-    static let textSecondary  = Color(white: 0.55)
-
-    // MARK: Size constants
-    static let pageBackground = Color(uiColor: .systemBackground)
-    static let consoleBackground = Color(uiColor: .secondarySystemBackground)
-    static let pageInset: CGFloat = 16
-    static let rowIconSize: CGFloat = 17
-    static let rowIconFrame: CGFloat = 28
-    static let fileRowIconSize: CGFloat = 17
-    static let fileRowIconFrame: CGFloat = 30
-    static let fileRowHeight: CGFloat = 60
-    static let appIconSize: CGFloat = 32
-    static let emptyIconSize: CGFloat = 30
-    static let selectionIconSize: CGFloat = 18
 }
 
 // MARK: - Color hex initializer
@@ -113,25 +109,6 @@ struct TechCardModifier: ViewModifier {
 extension View {
     func techCard(_ cornerRadius: CGFloat = 20) -> some View {
         modifier(TechCardModifier(cornerRadius: cornerRadius))
-    }
-}
-
-// MARK: - TechCard view (backwards compat)
-
-struct TechCard<Content: View>: View {
-    @ViewBuilder let content: () -> Content
-
-    var body: some View {
-        content()
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AppTheme.techCardFill)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(AppTheme.techCardStroke, lineWidth: 1)
-            )
     }
 }
 
@@ -200,29 +177,7 @@ extension View {
     }
 }
 
-// MARK: - iOS 15 compatibility
-
-extension View {
-    @ViewBuilder
-    func hideScrollBackground() -> some View {
-        if #available(iOS 16, *) {
-            self.scrollContentBackground(.hidden)
-        } else {
-            self
-        }
-    }
-
-    @ViewBuilder
-    func hideToolbarBackground() -> some View {
-        if #available(iOS 16, *) {
-            self.toolbarBackground(.hidden, for: .navigationBar)
-        } else {
-            self
-        }
-    }
-}
-
-// MARK: - Reusable components
+// MARK: - Reusable components (original)
 
 struct AppRowIcon: View {
     let systemName: String
@@ -308,62 +263,5 @@ struct AppLogo: View {
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
         .accessibilityHidden(true)
-    }
-}
-
-// MARK: - Location Entry (grid tiles on HomeView)
-
-struct LocationEntry: Identifiable {
-    let id = UUID()
-    let icon: String
-    let iconColor: Color
-    let title: String
-    let subtitle: String
-    let path: String
-}
-
-extension LocationEntry {
-    static let all: [LocationEntry] = [
-        LocationEntry(icon: "tray.full.fill",    iconColor: AppTheme.accent,  title: "App Data",    subtitle: "Containers/Data",   path: "/private/var/mobile/Containers/Data/Application"),
-        LocationEntry(icon: "person.2.fill",      iconColor: AppTheme.purple,  title: "App Groups",  subtitle: "Shared/AppGroup",   path: "/private/var/mobile/Containers/Shared/AppGroup"),
-        LocationEntry(icon: "server.rack",         iconColor: Color(red:0.2,green:0.7,blue:0.4), title: "System Data", subtitle: "Containers/System", path: "/private/var/mobile/Containers/Data/System"),
-        LocationEntry(icon: "internaldrive.fill",  iconColor: Color(red:1.0,green:0.6,blue:0.1), title: "User Data",   subtitle: "/var/mobile",       path: "/private/var/mobile"),
-        LocationEntry(icon: "apps.iphone",         iconColor: Color(red:0.9,green:0.3,blue:0.6), title: "App List",    subtitle: "Ứng dụng đã cài",  path: "__applist__"),
-        LocationEntry(icon: "photo.fill",          iconColor: Color(red:0.4,green:0.7,blue:1.0), title: "Wallpapers",  subtitle: "Cryptex/Wallpapers",path: "/private/var/mobile/Library/SpringBoard"),
-    ]
-}
-
-struct EntryCard: View {
-    let entry: LocationEntry
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(entry.iconColor.opacity(0.15))
-                    .frame(width: 44, height: 44)
-                Image(systemName: entry.icon)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(entry.iconColor)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(entry.title)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(AppTheme.textPrimary)
-                Text(entry.subtitle)
-                    .font(.caption2)
-                    .foregroundStyle(AppTheme.textSecondary)
-                    .lineLimit(1)
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppTheme.techCardFill)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(AppTheme.techCardStroke, lineWidth: 1)
-        )
     }
 }

@@ -8,6 +8,7 @@ struct LicenseStatusBar: View {
     var body: some View {
         HStack(spacing: 14) {
 
+            // Shield + lock icon
             ZStack {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(
@@ -32,6 +33,7 @@ struct LicenseStatusBar: View {
             }
             .frame(width: 52, height: 52)
 
+            // Key info
             VStack(alignment: .leading, spacing: 5) {
                 Text("KEY \(licenseGate.maskedKeyCode)")
                     .font(.system(size: 15, weight: .bold, design: .monospaced))
@@ -52,6 +54,7 @@ struct LicenseStatusBar: View {
 
             Spacer()
 
+            // Info button
             Button {
                 showInfo = true
             } label: {
@@ -61,6 +64,7 @@ struct LicenseStatusBar: View {
             }
             .buttonStyle(.plain)
 
+            // ĐỔI KEY button
             Button {
                 licenseGate.changeKey()
             } label: {

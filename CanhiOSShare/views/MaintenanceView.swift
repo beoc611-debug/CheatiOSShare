@@ -1,5 +1,8 @@
 import SwiftUI
 
+/// A hard, un-dismissable block shown instead of everything else — including the key-entry
+/// screen — while the web admin has maintenance mode switched on. There is deliberately no close
+/// button and no navigation off this screen.
 struct MaintenanceView: View {
     let notice: MaintenanceNotice
     @Environment(\.appLanguage) private var language

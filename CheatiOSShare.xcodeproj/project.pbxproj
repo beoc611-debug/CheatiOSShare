@@ -39,6 +39,54 @@
 		CA10CAFEDEADBEEF0000B02B /* KeyEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03B /* KeyEntryView.swift */; };
 		CA10CAFEDEADBEEF0000B02C /* LicenseStatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03C /* LicenseStatusBar.swift */; };
 		CA10CAFEDEADBEEF0000B02D /* LicenseInfoSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03D /* LicenseInfoSheetView.swift */; };
+		B03001 /* AppTabNavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04001 /* AppTabNavigationState.swift */; };
+		B03002 /* CleanerCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04002 /* CleanerCatalog.swift */; };
+		B03003 /* ContainerBrowserLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04003 /* ContainerBrowserLogic.swift */; };
+		B03004 /* ContainerIdentityResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04004 /* ContainerIdentityResolver.swift */; };
+		B03005 /* DevicePatchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04005 /* DevicePatchService.swift */; };
+		B03006 /* DisplayIdentityAttribution.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04006 /* DisplayIdentityAttribution.swift */; };
+		B03007 /* FileManagerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04007 /* FileManagerService.swift */; };
+		B03008 /* FileOperationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04008 /* FileOperationCoordinator.swift */; };
+		B03009 /* FileReplacementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04009 /* FileReplacementService.swift */; };
+		B0300A /* KernelExploit.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0400A /* KernelExploit.swift */; };
+		B0300B /* LimitedCleanerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0400B /* LimitedCleanerService.swift */; };
+		B0300C /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0400C /* Localization.swift */; };
+		B0300D /* MG.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0400D /* MG.swift */; };
+		B0300E /* PatchDraftCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0400E /* PatchDraftCoordinator.swift */; };
+		B0300F /* PatchDraftService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0400F /* PatchDraftService.swift */; };
+		B03010 /* PatchKeyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04010 /* PatchKeyStore.swift */; };
+		B03011 /* PatchPackageCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04011 /* PatchPackageCodec.swift */; };
+		B03012 /* PatchProjectLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04012 /* PatchProjectLibrary.swift */; };
+		B03013 /* PatchProjectModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04013 /* PatchProjectModels.swift */; };
+		B03014 /* PatchProjectStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04014 /* PatchProjectStore.swift */; };
+		B03015 /* PatchTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04015 /* PatchTransaction.swift */; };
+		B03016 /* PatchWorkspaceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04016 /* PatchWorkspaceService.swift */; };
+		B03017 /* RemoteImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04017 /* RemoteImageCache.swift */; };
+		B03018 /* SBX.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04018 /* SBX.swift */; };
+		B03019 /* SecureZIPArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04019 /* SecureZIPArchive.swift */; };
+		B0301A /* SmartModeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0401A /* SmartModeStore.swift */; };
+		B0301B /* SupportPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0401B /* SupportPolicy.swift */; };
+		B0301C /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0401C /* Utils.swift */; };
+		B0301D /* WallpaperInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0401D /* WallpaperInstaller.swift */; };
+		B0301E /* WallpaperLabModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0401E /* WallpaperLabModels.swift */; };
+		B0301F /* WallpaperLabService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0401F /* WallpaperLabService.swift */; };
+		B03020 /* ZIPArchiveExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04020 /* ZIPArchiveExtractor.swift */; };
+		B03021 /* ZIPArchiveWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04021 /* ZIPArchiveWriter.swift */; };
+		B03022 /* GamesHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04022 /* GamesHomeView.swift */; };
+		B03023 /* GamePatchesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04023 /* GamePatchesView.swift */; };
+		B03024 /* AnnouncementSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04024 /* AnnouncementSheetView.swift */; };
+		B03025 /* GameNoticeSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04025 /* GameNoticeSheetView.swift */; };
+		B03026 /* SmartModeSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04026 /* SmartModeSheetView.swift */; };
+		B03027 /* PatchProjectEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04027 /* PatchProjectEditorView.swift */; };
+		B03028 /* PatchProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04028 /* PatchProjectsView.swift */; };
+		B03029 /* CleanerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04029 /* CleanerView.swift */; };
+		B0302A /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402A /* LogView.swift */; };
+		B0302B /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402B /* OnboardingView.swift */; };
+		B0302C /* WallpaperLabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402C /* WallpaperLabView.swift */; };
+		B0302D /* FolderPatchSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402D /* FolderPatchSelectionView.swift */; };
+		B0302E /* FilesTabControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402E /* FilesTabControls.swift */; };
+		B0302F /* FilesTabSwitcherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402F /* FilesTabSwitcherView.swift */; };
+		B03030 /* AppDataBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04030 /* AppDataBrowserView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -98,6 +146,54 @@
 		CA10CAFEDEADBEEF0000F03B /* KeyEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyEntryView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F03C /* LicenseStatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseStatusBar.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F03D /* LicenseInfoSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseInfoSheetView.swift; sourceTree = "<group>"; };
+		F04001 /* AppTabNavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTabNavigationState.swift; sourceTree = "<group>"; };
+		F04002 /* CleanerCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanerCatalog.swift; sourceTree = "<group>"; };
+		F04003 /* ContainerBrowserLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerBrowserLogic.swift; sourceTree = "<group>"; };
+		F04004 /* ContainerIdentityResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerIdentityResolver.swift; sourceTree = "<group>"; };
+		F04005 /* DevicePatchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePatchService.swift; sourceTree = "<group>"; };
+		F04006 /* DisplayIdentityAttribution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayIdentityAttribution.swift; sourceTree = "<group>"; };
+		F04007 /* FileManagerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileManagerService.swift; sourceTree = "<group>"; };
+		F04008 /* FileOperationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileOperationCoordinator.swift; sourceTree = "<group>"; };
+		F04009 /* FileReplacementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileReplacementService.swift; sourceTree = "<group>"; };
+		F0400A /* KernelExploit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KernelExploit.swift; sourceTree = "<group>"; };
+		F0400B /* LimitedCleanerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimitedCleanerService.swift; sourceTree = "<group>"; };
+		F0400C /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
+		F0400D /* MG.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MG.swift; sourceTree = "<group>"; };
+		F0400E /* PatchDraftCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchDraftCoordinator.swift; sourceTree = "<group>"; };
+		F0400F /* PatchDraftService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchDraftService.swift; sourceTree = "<group>"; };
+		F04010 /* PatchKeyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchKeyStore.swift; sourceTree = "<group>"; };
+		F04011 /* PatchPackageCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchPackageCodec.swift; sourceTree = "<group>"; };
+		F04012 /* PatchProjectLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchProjectLibrary.swift; sourceTree = "<group>"; };
+		F04013 /* PatchProjectModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchProjectModels.swift; sourceTree = "<group>"; };
+		F04014 /* PatchProjectStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchProjectStore.swift; sourceTree = "<group>"; };
+		F04015 /* PatchTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchTransaction.swift; sourceTree = "<group>"; };
+		F04016 /* PatchWorkspaceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchWorkspaceService.swift; sourceTree = "<group>"; };
+		F04017 /* RemoteImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteImageCache.swift; sourceTree = "<group>"; };
+		F04018 /* SBX.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SBX.swift; sourceTree = "<group>"; };
+		F04019 /* SecureZIPArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureZIPArchive.swift; sourceTree = "<group>"; };
+		F0401A /* SmartModeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartModeStore.swift; sourceTree = "<group>"; };
+		F0401B /* SupportPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportPolicy.swift; sourceTree = "<group>"; };
+		F0401C /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		F0401D /* WallpaperInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallpaperInstaller.swift; sourceTree = "<group>"; };
+		F0401E /* WallpaperLabModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallpaperLabModels.swift; sourceTree = "<group>"; };
+		F0401F /* WallpaperLabService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallpaperLabService.swift; sourceTree = "<group>"; };
+		F04020 /* ZIPArchiveExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPArchiveExtractor.swift; sourceTree = "<group>"; };
+		F04021 /* ZIPArchiveWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPArchiveWriter.swift; sourceTree = "<group>"; };
+		F04022 /* GamesHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamesHomeView.swift; sourceTree = "<group>"; };
+		F04023 /* GamePatchesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePatchesView.swift; sourceTree = "<group>"; };
+		F04024 /* AnnouncementSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnouncementSheetView.swift; sourceTree = "<group>"; };
+		F04025 /* GameNoticeSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameNoticeSheetView.swift; sourceTree = "<group>"; };
+		F04026 /* SmartModeSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartModeSheetView.swift; sourceTree = "<group>"; };
+		F04027 /* PatchProjectEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchProjectEditorView.swift; sourceTree = "<group>"; };
+		F04028 /* PatchProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchProjectsView.swift; sourceTree = "<group>"; };
+		F04029 /* CleanerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanerView.swift; sourceTree = "<group>"; };
+		F0402A /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
+		F0402B /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		F0402C /* WallpaperLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallpaperLabView.swift; sourceTree = "<group>"; };
+		F0402D /* FolderPatchSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderPatchSelectionView.swift; sourceTree = "<group>"; };
+		F0402E /* FilesTabControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesTabControls.swift; sourceTree = "<group>"; };
+		F0402F /* FilesTabSwitcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesTabSwitcherView.swift; sourceTree = "<group>"; };
+		F04030 /* AppDataBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDataBrowserView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -161,6 +257,21 @@
 				CA10CAFEDEADBEEF0000F03B /* KeyEntryView.swift */,
 				CA10CAFEDEADBEEF0000F03C /* LicenseStatusBar.swift */,
 				CA10CAFEDEADBEEF0000F03D /* LicenseInfoSheetView.swift */,
+				F04022 /* GamesHomeView.swift */,
+				F04023 /* GamePatchesView.swift */,
+				F04024 /* AnnouncementSheetView.swift */,
+				F04025 /* GameNoticeSheetView.swift */,
+				F04026 /* SmartModeSheetView.swift */,
+				F04027 /* PatchProjectEditorView.swift */,
+				F04028 /* PatchProjectsView.swift */,
+				F04029 /* CleanerView.swift */,
+				F0402A /* LogView.swift */,
+				F0402B /* OnboardingView.swift */,
+				F0402C /* WallpaperLabView.swift */,
+				F0402D /* FolderPatchSelectionView.swift */,
+				F0402E /* FilesTabControls.swift */,
+				F0402F /* FilesTabSwitcherView.swift */,
+				F04030 /* AppDataBrowserView.swift */,
 			);
 			path = views;
 			sourceTree = "<group>";
@@ -180,6 +291,39 @@
 				CA10CAFEDEADBEEF0000F035 /* LicenseGateStore.swift */,
 				CA10CAFEDEADBEEF0000F036 /* AnnouncementService.swift */,
 				CA10CAFEDEADBEEF0000F037 /* JailbreakDetector.swift */,
+				F04001 /* AppTabNavigationState.swift */,
+				F04002 /* CleanerCatalog.swift */,
+				F04003 /* ContainerBrowserLogic.swift */,
+				F04004 /* ContainerIdentityResolver.swift */,
+				F04005 /* DevicePatchService.swift */,
+				F04006 /* DisplayIdentityAttribution.swift */,
+				F04007 /* FileManagerService.swift */,
+				F04008 /* FileOperationCoordinator.swift */,
+				F04009 /* FileReplacementService.swift */,
+				F0400A /* KernelExploit.swift */,
+				F0400B /* LimitedCleanerService.swift */,
+				F0400C /* Localization.swift */,
+				F0400D /* MG.swift */,
+				F0400E /* PatchDraftCoordinator.swift */,
+				F0400F /* PatchDraftService.swift */,
+				F04010 /* PatchKeyStore.swift */,
+				F04011 /* PatchPackageCodec.swift */,
+				F04012 /* PatchProjectLibrary.swift */,
+				F04013 /* PatchProjectModels.swift */,
+				F04014 /* PatchProjectStore.swift */,
+				F04015 /* PatchTransaction.swift */,
+				F04016 /* PatchWorkspaceService.swift */,
+				F04017 /* RemoteImageCache.swift */,
+				F04018 /* SBX.swift */,
+				F04019 /* SecureZIPArchive.swift */,
+				F0401A /* SmartModeStore.swift */,
+				F0401B /* SupportPolicy.swift */,
+				F0401C /* Utils.swift */,
+				F0401D /* WallpaperInstaller.swift */,
+				F0401E /* WallpaperLabModels.swift */,
+				F0401F /* WallpaperLabService.swift */,
+				F04020 /* ZIPArchiveExtractor.swift */,
+				F04021 /* ZIPArchiveWriter.swift */,
 			);
 			path = helpers;
 			sourceTree = "<group>";
@@ -329,6 +473,54 @@
 				CA10CAFEDEADBEEF0000B00E /* bad_query.c in Sources */,
 				CA10CAFEDEADBEEF0000B00F /* MCMBridge.m in Sources */,
 				CA10CAFEDEADBEEF0000B010 /* MCMFilzaIntegration.m in Sources */,
+				B03001 /* AppTabNavigationState.swift in Sources */,
+				B03002 /* CleanerCatalog.swift in Sources */,
+				B03003 /* ContainerBrowserLogic.swift in Sources */,
+				B03004 /* ContainerIdentityResolver.swift in Sources */,
+				B03005 /* DevicePatchService.swift in Sources */,
+				B03006 /* DisplayIdentityAttribution.swift in Sources */,
+				B03007 /* FileManagerService.swift in Sources */,
+				B03008 /* FileOperationCoordinator.swift in Sources */,
+				B03009 /* FileReplacementService.swift in Sources */,
+				B0300A /* KernelExploit.swift in Sources */,
+				B0300B /* LimitedCleanerService.swift in Sources */,
+				B0300C /* Localization.swift in Sources */,
+				B0300D /* MG.swift in Sources */,
+				B0300E /* PatchDraftCoordinator.swift in Sources */,
+				B0300F /* PatchDraftService.swift in Sources */,
+				B03010 /* PatchKeyStore.swift in Sources */,
+				B03011 /* PatchPackageCodec.swift in Sources */,
+				B03012 /* PatchProjectLibrary.swift in Sources */,
+				B03013 /* PatchProjectModels.swift in Sources */,
+				B03014 /* PatchProjectStore.swift in Sources */,
+				B03015 /* PatchTransaction.swift in Sources */,
+				B03016 /* PatchWorkspaceService.swift in Sources */,
+				B03017 /* RemoteImageCache.swift in Sources */,
+				B03018 /* SBX.swift in Sources */,
+				B03019 /* SecureZIPArchive.swift in Sources */,
+				B0301A /* SmartModeStore.swift in Sources */,
+				B0301B /* SupportPolicy.swift in Sources */,
+				B0301C /* Utils.swift in Sources */,
+				B0301D /* WallpaperInstaller.swift in Sources */,
+				B0301E /* WallpaperLabModels.swift in Sources */,
+				B0301F /* WallpaperLabService.swift in Sources */,
+				B03020 /* ZIPArchiveExtractor.swift in Sources */,
+				B03021 /* ZIPArchiveWriter.swift in Sources */,
+				B03022 /* GamesHomeView.swift in Sources */,
+				B03023 /* GamePatchesView.swift in Sources */,
+				B03024 /* AnnouncementSheetView.swift in Sources */,
+				B03025 /* GameNoticeSheetView.swift in Sources */,
+				B03026 /* SmartModeSheetView.swift in Sources */,
+				B03027 /* PatchProjectEditorView.swift in Sources */,
+				B03028 /* PatchProjectsView.swift in Sources */,
+				B03029 /* CleanerView.swift in Sources */,
+				B0302A /* LogView.swift in Sources */,
+				B0302B /* OnboardingView.swift in Sources */,
+				B0302C /* WallpaperLabView.swift in Sources */,
+				B0302D /* FolderPatchSelectionView.swift in Sources */,
+				B0302E /* FilesTabControls.swift in Sources */,
+				B0302F /* FilesTabSwitcherView.swift in Sources */,
+				B03030 /* AppDataBrowserView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -387,7 +579,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -443,7 +635,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;

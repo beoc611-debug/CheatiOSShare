@@ -1,5 +1,9 @@
 import SwiftUI
 
+/// The face badge used by both the welcome announcement (blue, smiling, "HELLO" eyebrow) and the
+/// maintenance block (yellow, frowning, no eyebrow). Drawn as vector shapes on a 100x100 logical
+/// grid — matching the original UIGraphicsImageRenderer proportions — rather than rasterized, so
+/// it stays crisp at any size.
 struct FaceIcon: View {
     var size: CGFloat = 76
     var color: Color

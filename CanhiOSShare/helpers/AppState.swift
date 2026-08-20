@@ -1,27 +1,28 @@
 import Foundation
 
-enum StartupPhase {
-    case loading
-    case ready
-    case failed(String)
-}
+class AppState: ObservableObject {
+    @Published var exploitStatus: ExploitStatus = .notStarted
+    @Published var unsupportedMessage: String?
 
-@MainActor
-final class AppState: ObservableObject {
-    @Published private(set) var phase: StartupPhase = .loading
-    @Published private(set) var virtualRoot: String = ""
+    var isSupported: Bool { unsupportedMessage == nil }
 
-    func prepare() async {
-        await Task.detached(priority: .userInitiated) {
-            MCMFilzaStart()
-        }.value
-
-        let root = MCMFilzaVirtualRoot()
-        if root.isEmpty {
-            phase = .failed("Không thể khởi tạo hệ thống file. Hãy thử cài lại app.")
-            return
+    func detectSupport() {
+        let v = AppInfo.versionTuple
+        let supported = ExploitSupportPolicy.isSupported(
+            major: v.major,
+            minor: v.minor,
+            patch: v.patch,
+            build: AppInfo.osBuild
+        )
+#if targetEnvironment(simulator)
+        if ProcessInfo.processInfo.arguments.contains("--simulate-access") {
+            exploitStatus = .success(method: "Simulator preview")
         }
-        virtualRoot = root
-        phase = .ready
+#endif
+
+        unsupportedMessage = supported ? nil : "iOS \(AppInfo.osVersion) (\(AppInfo.osBuild))"
+        if let unsupportedMessage {
+            exploitStatus = .unsupported(unsupportedMessage)
+        }
     }
 }

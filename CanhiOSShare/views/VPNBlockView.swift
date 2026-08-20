@@ -1,5 +1,8 @@
 import SwiftUI
 
+/// Hard-blocks the app when VPN or proxy is detected.
+/// Shows the reason and a Retry button — dismissed automatically once the user
+/// turns off VPN/proxy and taps Retry (or the monitor fires again).
 struct VPNBlockView: View {
     let isVPN: Bool
     let onRetry: () -> Void
