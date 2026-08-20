@@ -30,12 +30,14 @@ jobs:
             -project CheatiOSShare.xcodeproj \
             -scheme CheatiOSShare \
             -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -configuration Release \
             CONFIGURATION_BUILD_DIR=$PWD/build/Release \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="-" \
             OTHER_CODE_SIGN_FLAGS="--deep" \
+            SKIP_INSTALL=NO \
             2>&1 | tee build.log
           grep -E "(error:|warning:|BUILD SUCCEEDED|BUILD FAILED)" build.log | tail -50
 
