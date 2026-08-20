@@ -1,0 +1,469 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CA10CAFEDEADBEEF0000B001 /* CanhiOSShareApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F001 /* CanhiOSShareApp.swift */; };
+		CA10CAFEDEADBEEF0000B002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F002 /* ContentView.swift */; };
+		CA10CAFEDEADBEEF0000B003 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F003 /* DesignSystem.swift */; };
+		CA10CAFEDEADBEEF0000B004 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F004 /* HomeView.swift */; };
+		CA10CAFEDEADBEEF0000B005 /* FileBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F005 /* FileBrowserView.swift */; };
+		CA10CAFEDEADBEEF0000B006 /* AppListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F006 /* AppListView.swift */; };
+		CA10CAFEDEADBEEF0000B007 /* VPNBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F007 /* VPNBlockView.swift */; };
+		CA10CAFEDEADBEEF0000B008 /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F008 /* LoadingView.swift */; };
+		CA10CAFEDEADBEEF0000B009 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F009 /* SettingsView.swift */; };
+		CA10CAFEDEADBEEF0000B00A /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F00A /* AppState.swift */; };
+		CA10CAFEDEADBEEF0000B00B /* ContainerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F00B /* ContainerStore.swift */; };
+		CA10CAFEDEADBEEF0000B00C /* InstalledAppService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F00C /* InstalledAppService.swift */; };
+		CA10CAFEDEADBEEF0000B00D /* NetworkSecurityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F00D /* NetworkSecurityMonitor.swift */; };
+		CA10CAFEDEADBEEF0000B00E /* bad_query.c in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F00E /* bad_query.c */; };
+		CA10CAFEDEADBEEF0000B00F /* MCMBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F011 /* MCMBridge.m */; };
+		CA10CAFEDEADBEEF0000B010 /* MCMFilzaIntegration.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F013 /* MCMFilzaIntegration.m */; };
+		CA10CAFEDEADBEEF0000B018 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F027 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		CA10CAFEDEADBEEF0000F001 /* CanhiOSShareApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanhiOSShareApp.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F003 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F004 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F005 /* FileBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileBrowserView.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F006 /* AppListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppListView.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F007 /* VPNBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPNBlockView.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F008 /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F009 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F00A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F00B /* ContainerStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerStore.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F00C /* InstalledAppService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledAppService.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F00D /* NetworkSecurityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkSecurityMonitor.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F00E /* bad_query.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = bad_query.c; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F00F /* bad_query.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bad_query.h; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F010 /* MCMBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCMBridge.h; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F011 /* MCMBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCMBridge.m; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F012 /* MCMFilzaIntegration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MCMFilzaIntegration.h; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F013 /* MCMFilzaIntegration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MCMFilzaIntegration.m; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F014 /* mcm_bridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mcm_bridge.h; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F015 /* mcm_bridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = mcm_bridge.m; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F016 /* kexploit_opa334.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = kexploit_opa334.h; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F017 /* kexploit_opa334.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = kexploit_opa334.m; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F018 /* krw.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = krw.h; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F019 /* krw.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = krw.m; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F01A /* kutils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = kutils.h; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F01B /* kutils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = kutils.m; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F01C /* machine_info.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = machine_info.h; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F01D /* offsets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = offsets.h; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F01E /* offsets.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = offsets.m; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F01F /* sandbox_escape.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sandbox_escape.h; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F020 /* sandbox_escape.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = sandbox_escape.m; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F021 /* vnode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vnode.h; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F022 /* vnode.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = vnode.m; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F023 /* apfs_own.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = apfs_own.h; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F024 /* apfs_own.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = apfs_own.m; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F025 /* xpaci.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = xpaci.h; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F026 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F027 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F028 /* CanhiOSShare-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CanhiOSShare-Bridging-Header.h"; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000000J /* CanhiOSShare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CanhiOSShare.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CA10CAFEDEADBEEF0000000B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		CA10CAFEDEADBEEF0000000C /* MainGroup */ = {
+			isa = PBXGroup;
+			children = (
+				CA10CAFEDEADBEEF0000000D /* CanhiOSShare */,
+				CA10CAFEDEADBEEF0000000I /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CA10CAFEDEADBEEF0000000D /* CanhiOSShare */ = {
+			isa = PBXGroup;
+			children = (
+				CA10CAFEDEADBEEF0000F001 /* CanhiOSShareApp.swift */,
+				CA10CAFEDEADBEEF0000F002 /* ContentView.swift */,
+				CA10CAFEDEADBEEF0000F028 /* CanhiOSShare-Bridging-Header.h */,
+				CA10CAFEDEADBEEF0000F026 /* Info.plist */,
+				CA10CAFEDEADBEEF0000F027 /* Assets.xcassets */,
+				CA10CAFEDEADBEEF0000000E /* views */,
+				CA10CAFEDEADBEEF0000000F /* helpers */,
+				CA10CAFEDEADBEEF0000000G /* exploit */,
+				CA10CAFEDEADBEEF0000000H /* kexploit */,
+			);
+			path = CanhiOSShare;
+			sourceTree = "<group>";
+		};
+		CA10CAFEDEADBEEF0000000E /* views */ = {
+			isa = PBXGroup;
+			children = (
+				CA10CAFEDEADBEEF0000F003 /* DesignSystem.swift */,
+				CA10CAFEDEADBEEF0000F004 /* HomeView.swift */,
+				CA10CAFEDEADBEEF0000F005 /* FileBrowserView.swift */,
+				CA10CAFEDEADBEEF0000F006 /* AppListView.swift */,
+				CA10CAFEDEADBEEF0000F007 /* VPNBlockView.swift */,
+				CA10CAFEDEADBEEF0000F008 /* LoadingView.swift */,
+				CA10CAFEDEADBEEF0000F009 /* SettingsView.swift */,
+			);
+			path = views;
+			sourceTree = "<group>";
+		};
+		CA10CAFEDEADBEEF0000000F /* helpers */ = {
+			isa = PBXGroup;
+			children = (
+				CA10CAFEDEADBEEF0000F00A /* AppState.swift */,
+				CA10CAFEDEADBEEF0000F00B /* ContainerStore.swift */,
+				CA10CAFEDEADBEEF0000F00C /* InstalledAppService.swift */,
+				CA10CAFEDEADBEEF0000F00D /* NetworkSecurityMonitor.swift */,
+			);
+			path = helpers;
+			sourceTree = "<group>";
+		};
+		CA10CAFEDEADBEEF0000000G /* exploit */ = {
+			isa = PBXGroup;
+			children = (
+				CA10CAFEDEADBEEF0000F00E /* bad_query.c */,
+				CA10CAFEDEADBEEF0000F00F /* bad_query.h */,
+				CA10CAFEDEADBEEF0000F010 /* MCMBridge.h */,
+				CA10CAFEDEADBEEF0000F011 /* MCMBridge.m */,
+				CA10CAFEDEADBEEF0000F012 /* MCMFilzaIntegration.h */,
+				CA10CAFEDEADBEEF0000F013 /* MCMFilzaIntegration.m */,
+				CA10CAFEDEADBEEF0000F014 /* mcm_bridge.h */,
+				CA10CAFEDEADBEEF0000F015 /* mcm_bridge.m */,
+			);
+			path = exploit;
+			sourceTree = "<group>";
+		};
+		CA10CAFEDEADBEEF0000000H /* kexploit */ = {
+			isa = PBXGroup;
+			children = (
+				CA10CAFEDEADBEEF0000F016 /* kexploit_opa334.h */,
+				CA10CAFEDEADBEEF0000F017 /* kexploit_opa334.m */,
+				CA10CAFEDEADBEEF0000F018 /* krw.h */,
+				CA10CAFEDEADBEEF0000F019 /* krw.m */,
+				CA10CAFEDEADBEEF0000F01A /* kutils.h */,
+				CA10CAFEDEADBEEF0000F01B /* kutils.m */,
+				CA10CAFEDEADBEEF0000F01C /* machine_info.h */,
+				CA10CAFEDEADBEEF0000F01D /* offsets.h */,
+				CA10CAFEDEADBEEF0000F01E /* offsets.m */,
+				CA10CAFEDEADBEEF0000F01F /* sandbox_escape.h */,
+				CA10CAFEDEADBEEF0000F020 /* sandbox_escape.m */,
+				CA10CAFEDEADBEEF0000F021 /* vnode.h */,
+				CA10CAFEDEADBEEF0000F022 /* vnode.m */,
+				CA10CAFEDEADBEEF0000F023 /* apfs_own.h */,
+				CA10CAFEDEADBEEF0000F024 /* apfs_own.m */,
+				CA10CAFEDEADBEEF0000F025 /* xpaci.h */,
+			);
+			path = kexploit;
+			sourceTree = "<group>";
+		};
+		CA10CAFEDEADBEEF0000000I /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CA10CAFEDEADBEEF0000000J /* CanhiOSShare.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CA10CAFEDEADBEEF00000002 /* CanhiOSShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CA10CAFEDEADBEEF00000008 /* Build configuration list for PBXNativeTarget "CanhiOSShare" */;
+			buildPhases = (
+				CA10CAFEDEADBEEF00000009 /* Sources */,
+				CA10CAFEDEADBEEF0000000B /* Frameworks */,
+				CA10CAFEDEADBEEF0000000A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CanhiOSShare;
+			productName = CanhiOSShare;
+			productReference = CA10CAFEDEADBEEF0000000J /* CanhiOSShare.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CA10CAFEDEADBEEF00000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					CA10CAFEDEADBEEF00000002 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = CA10CAFEDEADBEEF00000007 /* Build configuration list for PBXProject "CanhiOSShare" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = CA10CAFEDEADBEEF0000000C;
+			productRefGroup = CA10CAFEDEADBEEF0000000I /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CA10CAFEDEADBEEF00000002 /* CanhiOSShare */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CA10CAFEDEADBEEF0000000A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CA10CAFEDEADBEEF0000B018 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CA10CAFEDEADBEEF00000009 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CA10CAFEDEADBEEF0000B001 /* CanhiOSShareApp.swift in Sources */,
+				CA10CAFEDEADBEEF0000B002 /* ContentView.swift in Sources */,
+				CA10CAFEDEADBEEF0000B003 /* DesignSystem.swift in Sources */,
+				CA10CAFEDEADBEEF0000B004 /* HomeView.swift in Sources */,
+				CA10CAFEDEADBEEF0000B005 /* FileBrowserView.swift in Sources */,
+				CA10CAFEDEADBEEF0000B006 /* AppListView.swift in Sources */,
+				CA10CAFEDEADBEEF0000B007 /* VPNBlockView.swift in Sources */,
+				CA10CAFEDEADBEEF0000B008 /* LoadingView.swift in Sources */,
+				CA10CAFEDEADBEEF0000B009 /* SettingsView.swift in Sources */,
+				CA10CAFEDEADBEEF0000B00A /* AppState.swift in Sources */,
+				CA10CAFEDEADBEEF0000B00B /* ContainerStore.swift in Sources */,
+				CA10CAFEDEADBEEF0000B00C /* InstalledAppService.swift in Sources */,
+				CA10CAFEDEADBEEF0000B00D /* NetworkSecurityMonitor.swift in Sources */,
+				CA10CAFEDEADBEEF0000B00E /* bad_query.c in Sources */,
+				CA10CAFEDEADBEEF0000B00F /* MCMBridge.m in Sources */,
+				CA10CAFEDEADBEEF0000B010 /* MCMFilzaIntegration.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		CA10CAFEDEADBEEF00000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		CA10CAFEDEADBEEF00000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CA10CAFEDEADBEEF00000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CanhiOSShare/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_CFLAGS = "-ObjC";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.apple.mobile.MobileHouseArrest";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "CanhiOSShare/CanhiOSShare-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CA10CAFEDEADBEEF00000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CanhiOSShare/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_CFLAGS = "-ObjC";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.apple.mobile.MobileHouseArrest";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "CanhiOSShare/CanhiOSShare-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CA10CAFEDEADBEEF00000007 /* Build configuration list for PBXProject "CanhiOSShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CA10CAFEDEADBEEF00000003 /* Debug */,
+				CA10CAFEDEADBEEF00000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CA10CAFEDEADBEEF00000008 /* Build configuration list for PBXNativeTarget "CanhiOSShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CA10CAFEDEADBEEF00000005 /* Debug */,
+				CA10CAFEDEADBEEF00000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CA10CAFEDEADBEEF00000001 /* Project object */;
+}

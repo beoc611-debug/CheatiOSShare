@@ -1,0 +1,26 @@
+# Xcode build
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+xcuserdata/
+
+# IPA / archive
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# CocoaPods / SPM
+.build/
+Pods/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
