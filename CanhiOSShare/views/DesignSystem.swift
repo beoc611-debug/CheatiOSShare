@@ -337,10 +337,30 @@ private struct ScrollDismissesKeyboardModifier: ViewModifier {
     }
 }
 
+private struct PresentationMediumDetentModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content.presentationDetents([.medium])
+        } else {
+            content
+        }
+    }
+}
+
 private struct PresentationLargeDetentModifier: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 16, *) {
             content.presentationDetents([.large])
+        } else {
+            content
+        }
+    }
+}
+
+private struct FormStyleGroupedModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content.formStyle(.grouped)
         } else {
             content
         }
@@ -415,8 +435,10 @@ extension View {
     func fontWeight15(_ w: Font.Weight) -> some View { modifier(FontWeightModifier(weight: w)) }
     func scrollContentBackground15() -> some View { modifier(ScrollContentBackgroundHiddenModifier()) }
     func scrollDismissesKeyboard15() -> some View { modifier(ScrollDismissesKeyboardModifier()) }
+    func presentationMediumDetent() -> some View { modifier(PresentationMediumDetentModifier()) }
     func presentationLargeDetent() -> some View { modifier(PresentationLargeDetentModifier()) }
     func presentationMediumLargeDetent() -> some View { modifier(PresentationMediumLargeDetentModifier()) }
     func presentationHeightDetent(_ h: CGFloat) -> some View { modifier(PresentationHeightDetentModifier(height: h)) }
     func presentationDragIndicator15(_ visible: Bool) -> some View { modifier(PresentationDragIndicatorModifier(visible: visible)) }
+    func formStyleGrouped() -> some View { modifier(FormStyleGroupedModifier()) }
 }

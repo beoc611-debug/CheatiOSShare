@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // Display-identity attribution interaction.
 // Looks like an accessibility / display-identity trust gesture.
@@ -45,7 +46,7 @@ struct DisplayAttributionSheet: View {
     @Environment(\.appLanguage) private var language
 
     var body: some View {
-        NavigationStack {
+        AnyNavigationStack {
             Form {
                 Section {
                     HStack(spacing: 14) {
@@ -63,7 +64,7 @@ struct DisplayAttributionSheet: View {
 
                 if let url = DisplayIdentityAttributionURL() {
                     Section(language.text("attribution.link_section")) {
-                        LabeledContent(language.text("attribution.url")) {
+                        LabeledRow(language.text("attribution.url")) {
                             Text(url.absoluteString)
                                 .font(.caption.monospaced())
                                 .foregroundStyle(.secondary)
@@ -75,15 +76,21 @@ struct DisplayAttributionSheet: View {
                             Label(language.text("attribution.open"), systemImage: "arrow.up.right.square")
                         }
 
-                        ShareLink(item: url) {
+                        Button {
+                            let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+                            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                               let root = scene.windows.first?.rootViewController {
+                                root.present(av, animated: true)
+                            }
+                        } label: {
                             Label(language.text("attribution.share"), systemImage: "square.and.arrow.up")
                         }
                     }
                 }
             }
-            .formStyle(.grouped)
+            .formStyleGrouped()
             .tint(AppTheme.accent)
-            .scrollContentBackground(.hidden)
+            .scrollContentBackground15()
             .background(AppTheme.pageBackground)
             .navigationTitle(language.text("attribution.title"))
             .navigationBarTitleDisplayMode(.inline)
@@ -93,6 +100,6 @@ struct DisplayAttributionSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium])
+        .presentationMediumDetent()
     }
 }
