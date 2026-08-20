@@ -1,5 +1,13 @@
 import Foundation
 
+enum FileTransferMode: Equatable {
+    case copy, move
+}
+
+enum FileTransferDisposition: Equatable {
+    case copied, moved, replaced, renamed
+}
+
 struct FileOperationPayload: Equatable {
     let mode: FileTransferMode
     let sourceURLs: [URL]

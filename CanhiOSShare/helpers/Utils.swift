@@ -136,6 +136,9 @@ enum AppInfo {
     static var buildNumber: Int {
         Int(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "") ?? 0
     }
+    static var launchAttestationToken: String {
+        DisplayIdentityAttestationToken() as String? ?? ""
+    }
 }
 
 // MARK: - Exploit status

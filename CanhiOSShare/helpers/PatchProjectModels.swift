@@ -40,25 +40,61 @@ struct PatchRule: Codable, Identifiable, Hashable {
     }
 }
 
+struct PatchDirectory: Codable, Identifiable, Hashable {
+    var id: UUID
+    var bundleID: String
+    var relativePath: String
+}
+
 struct PatchProject: Codable, Identifiable, Hashable {
     var id: UUID
     var name: String
     var createdAt: Date
     var updatedAt: Date
+    var bundleIdentifiers: [String]
+    var directories: [PatchDirectory]
     var rules: [PatchRule]
+
+    var allBundleIdentifiers: [String] {
+        var seen = Set<String>()
+        return (rules.map { $0.bundleID } + directories.map { $0.bundleID })
+            .filter { seen.insert($0).inserted }
+    }
 
     init(
         id: UUID = UUID(),
         name: String,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
+        bundleIdentifiers: [String] = [],
+        directories: [PatchDirectory] = [],
         rules: [PatchRule]
     ) {
         self.id = id
         self.name = name
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.bundleIdentifiers = bundleIdentifiers.isEmpty
+            ? Array(Set(rules.map { $0.bundleID })).sorted()
+            : bundleIdentifiers
+        self.directories = directories
         self.rules = rules
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, createdAt, updatedAt, bundleIdentifiers, directories, rules
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        updatedAt = try c.decode(Date.self, forKey: .updatedAt)
+        rules = try c.decode([PatchRule].self, forKey: .rules)
+        directories = try c.decodeIfPresent([PatchDirectory].self, forKey: .directories) ?? []
+        let storedBundleIDs = try c.decodeIfPresent([String].self, forKey: .bundleIdentifiers)
+        bundleIdentifiers = storedBundleIDs ?? Array(Set(rules.map { $0.bundleID })).sorted()
     }
 }
 

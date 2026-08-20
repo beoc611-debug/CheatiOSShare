@@ -755,10 +755,11 @@ struct GamePatchesView: View {
             }
 
             let actualState = applicable.allSatisfy { DevicePatchService.currentRuleState(for: $0) == true }
+            let capturedFailure = failure
             await MainActor.run {
                 togglingProjectID = nil
                 projectStates[item.id] = actualState
-                if let failure {
+                if let failure = capturedFailure {
                     store.alert = .failure(
                         appState: appState,
                         fallbackMessageKey: failure.localizationKey,
