@@ -1,0 +1,48 @@
+name: Build IPA
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 16
+        run: sudo xcode-select -switch /Applications/Xcode_16.2.app
+
+      - name: Show SDK & scheme
+        run: |
+          xcodebuild -project CheatiOSShare.xcodeproj -list
+
+      - name: Build .app (ad-hoc signed)
+        run: |
+          xcodebuild build \
+            -project CheatiOSShare.xcodeproj \
+            -scheme CheatiOSShare \
+            -sdk iphoneos \
+            -configuration Release \
+            CONFIGURATION_BUILD_DIR=$PWD/build/Release \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="-" \
+            OTHER_CODE_SIGN_FLAGS="--deep"
+
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/Release/CheatiOSShare.app Payload/
+          zip -r CheatiOSShare.ipa Payload/
+          ls -lh CheatiOSShare.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CheatiOSShare-${{ github.sha }}
+          path: CheatiOSShare.ipa
+          retention-days: 30
