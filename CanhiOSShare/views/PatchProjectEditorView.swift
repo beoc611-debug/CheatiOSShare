@@ -27,7 +27,7 @@ struct PatchProjectEditorView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        AnyNavigationStack {
             Form {
                 Section(language.text("patch.project")) {
                     TextField(language.text("patch.project_name"), text: $name)
@@ -200,7 +200,7 @@ struct PatchRuleEditorView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        AnyNavigationStack {
             Form {
                 Section {
                     TextField("com.example.app", text: $bundleID)
@@ -253,7 +253,7 @@ struct PatchRuleEditorView: View {
                         }
                     }
                     if !replacementFilename.isEmpty {
-                        LabeledContent(
+                        LabeledRow(
                             language.text("patch.file_size"),
                             value: ByteCountFormatter.string(
                                 fromByteCount: Int64(replacementData.count),
@@ -298,7 +298,7 @@ struct PatchRuleEditorView: View {
                         }
                     }
                     if let originalData {
-                        LabeledContent(
+                        LabeledRow(
                             language.text("patch.file_size"),
                             value: ByteCountFormatter.string(
                                 fromByteCount: Int64(originalData.count),

@@ -63,7 +63,7 @@ struct CleanerView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        AnyNavigationStack {
             VStack(spacing: 0) {
                 AppSearchField(
                     text: $searchText,
@@ -76,8 +76,22 @@ struct CleanerView: View {
             }
             .navigationTitle(language.text("cleaner.title"))
             .navigationBarTitleDisplayMode(.inline)
-            .scrollDismissesKeyboard(.interactively)
-            .toolbar { toolbarContent }
+            .scrollDismissesKeyboard15()
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if records.isEmpty {
+                        refreshButton
+                    } else {
+                        selectionMenu
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if !records.isEmpty { sortMenu }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if !records.isEmpty { refreshButton }
+                }
+            }
             .alert(item: $activeAlert, content: alert(for:))
             .onAppear {
                 guard !hasLoaded else { return }
@@ -101,11 +115,11 @@ struct CleanerView: View {
 
     private var summarySection: some View {
         Section {
-            LabeledContent(language.text("cleaner.available")) {
+            LabeledRow(language.text("cleaner.available")) {
                 Text(sizeText(totalAvailableBytes))
                     .monospacedDigit()
             }
-            LabeledContent(language.text("cleaner.selected")) {
+            LabeledRow(language.text("cleaner.selected")) {
                 Text(language.text("cleaner.selected_summary", Int64(selectedBundleIDs.count), sizeText(selectedBytes)))
                     .monospacedDigit()
             }
@@ -201,23 +215,6 @@ struct CleanerView: View {
         )
     }
 
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        if !records.isEmpty {
-            ToolbarItem(placement: .navigationBarLeading) {
-                selectionMenu
-            }
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
-                sortMenu
-                refreshButton
-            }
-        } else {
-            ToolbarItem(placement: .navigationBarLeading) {
-                refreshButton
-            }
-        }
-    }
-
     private var selectionMenu: some View {
         Menu {
             Button {
@@ -298,7 +295,7 @@ struct CleanerView: View {
                         ? language.text("cleaner.cleaning")
                         : language.text("cleaner.clean_button", sizeText(selectedBytes))
                 )
-                .fontWeight(.semibold)
+                .fontWeight15(.semibold)
             }
             .frame(maxWidth: .infinity, minHeight: 44)
         }

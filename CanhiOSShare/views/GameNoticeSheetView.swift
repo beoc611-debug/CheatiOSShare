@@ -67,8 +67,8 @@ struct GameNoticeSheetView: View {
             Spacer()
         }
         .padding(.horizontal, 28)
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
+        .presentationMediumLargeDetent()
+        .presentationDragIndicator15(true)
         .preferredColorScheme(.dark)
     }
 }

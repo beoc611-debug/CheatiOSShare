@@ -7,7 +7,7 @@ struct LogView: View {
     @Environment(\.appLanguage) private var language
 
     var body: some View {
-        NavigationStack {
+        AnyNavigationStack {
             Group {
                 if appLog.entries.isEmpty {
                     VStack(spacing: 14) {
@@ -71,7 +71,7 @@ struct LogView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(language.text("common.done")) { dismiss() }
-                        .fontWeight(.semibold)
+                        .fontWeight15(.semibold)
                 }
             }
         }

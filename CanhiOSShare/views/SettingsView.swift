@@ -40,7 +40,7 @@ struct SettingsView: View {
                 }
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
+        .toolbarHidden15()
     }
 
     // MARK: - Custom Nav Bar
@@ -128,7 +128,7 @@ struct SettingsView: View {
             Text(language.text("common.device").uppercased())
                 .font(.system(size: 12, weight: .heavy))
                 .foregroundStyle(Color(red: 0.60, green: 0.70, blue: 0.88))
-                .tracking(1.2)
+                .tracking15(1.2)
             LinearGradient(colors: [AppTheme.techGlow.opacity(0.28), Color.clear], startPoint: .leading, endPoint: .trailing)
                 .frame(height: 1)
         }
@@ -143,7 +143,7 @@ struct SettingsView: View {
             Text(language.text("settings.verified_versions").uppercased())
                 .font(.system(size: 12, weight: .heavy))
                 .foregroundStyle(Color(red: 0.60, green: 0.70, blue: 0.88))
-                .tracking(1.2)
+                .tracking15(1.2)
             LinearGradient(colors: [AppTheme.techGlow.opacity(0.28), Color.clear], startPoint: .leading, endPoint: .trailing)
                 .frame(height: 1)
             supportStatusPill

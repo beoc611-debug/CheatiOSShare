@@ -32,7 +32,7 @@ struct AppDataBrowserView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        AnyNavigationStack {
             appList
             .navigationTitle(language.text("browser.title"))
             .navigationBarTitleDisplayMode(.inline)
@@ -98,7 +98,7 @@ struct AppDataBrowserView: View {
         }
         .listStyle(.plain)
         .environment(\.defaultMinListRowHeight, 48)
-        .scrollDismissesKeyboard(.interactively)
+        .scrollDismissesKeyboard15()
         .overlay {
             Group {
                 switch overlayState {

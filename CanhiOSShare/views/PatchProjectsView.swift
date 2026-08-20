@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 private enum PatchPackagePickerPolicy {
@@ -176,7 +177,7 @@ struct PatchUnlockView: View {
     @State private var password = ""
 
     var body: some View {
-        NavigationStack {
+        AnyNavigationStack {
             Form {
                 Section {
                     SecureField(language.text("patch.password"), text: $password)
@@ -247,7 +248,7 @@ struct PatchProjectDetailView: View {
                 }
             }
         }
-        .scrollContentBackground(.hidden)
+        .scrollContentBackground15()
         .background(TechBackground())
         .navigationTitle(titleOverride ?? item?.project?.name ?? language.text("patch.title"))
         .navigationBarTitleDisplayMode(.inline)
@@ -274,7 +275,14 @@ struct PatchProjectDetailView: View {
                                 Label(language.text("patch.restore"), systemImage: "arrow.uturn.backward.circle")
                             }
                         }
-                        ShareLink(item: item.packageURL) {
+                        Button {
+                            let url = item.packageURL
+                            let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+                            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                               let root = scene.windows.first?.rootViewController {
+                                root.present(av, animated: true)
+                            }
+                        } label: {
                             Label(language.text("patch.export"), systemImage: "square.and.arrow.up")
                         }
                     } label: {

@@ -16,7 +16,7 @@ struct FaceIcon: View {
             if let eyebrowText {
                 Text(eyebrowText)
                     .font(.system(size: size * 0.16, weight: .bold))
-                    .tracking(size * 0.01)
+                    .tracking15(size * 0.01)
                     .foregroundStyle(eyebrowColor)
             }
 

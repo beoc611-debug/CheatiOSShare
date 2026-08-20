@@ -49,8 +49,8 @@ struct AnnouncementSheetView: View {
             Spacer()
         }
         .padding(.horizontal, 28)
-        .presentationDetents([.large])
-        .presentationDragIndicator(.visible)
+        .presentationLargeDetent()
+        .presentationDragIndicator15(true)
         .preferredColorScheme(.dark)
     }
 }

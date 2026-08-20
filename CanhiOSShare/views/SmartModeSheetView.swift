@@ -48,8 +48,8 @@ struct SmartModeSheetView: View {
         .padding(.bottom, 16)
         .animation(.easeInOut(duration: 0.2), value: store.isEnabled)
         .background(TechBackground())
-        .presentationDetents([.height(store.isEnabled ? 420 : 250)])
-        .presentationDragIndicator(.hidden)
+        .presentationHeightDetent(store.isEnabled ? 420 : 250)
+        .presentationDragIndicator15(false)
         .preferredColorScheme(.dark)
         .onAppear {
             if store.selectedGameID == nil {
@@ -86,7 +86,7 @@ struct SmartModeSheetView: View {
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
-                .tracking(0.4)
+                .tracking15(0.4)
                 .padding(.horizontal, 14)
                 .padding(.top, 12)
                 .padding(.bottom, 6)

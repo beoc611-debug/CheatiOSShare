@@ -17,7 +17,7 @@ struct FolderPatchSelectionView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        AnyNavigationStack {
             Group {
                 if isLoading {
                     ProgressView(language.text("patch.folder_scanning"))

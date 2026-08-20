@@ -87,7 +87,7 @@ struct GamePatchesView: View {
                 }
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
+        .toolbarHidden15()
         .task {
             async let syncTask: () = sync()
             async let containersTask: () = loadContainers()
@@ -371,7 +371,7 @@ struct GamePatchesView: View {
                 .font(.system(size: 16, weight: .heavy))
                 .foregroundStyle(.white)
                 .textCase(.uppercase)
-                .tracking(0.6)
+                .tracking15(0.6)
 
             Spacer()
 
@@ -384,7 +384,7 @@ struct GamePatchesView: View {
                 Text(language.text("patch.menu_auto_badge"))
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(AppTheme.neonCyan)
-                    .tracking(0.5)
+                    .tracking15(0.5)
                     .padding(.horizontal, 11)
                     .padding(.vertical, 5)
                     .background(

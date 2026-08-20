@@ -69,7 +69,7 @@ struct FileBrowserView: View {
         }
         .listStyle(.plain)
         .environment(\.defaultMinListRowHeight, 44)
-        .scrollDismissesKeyboard(.interactively)
+        .scrollDismissesKeyboard15()
         .overlay {
             Group {
                 switch overlayState {

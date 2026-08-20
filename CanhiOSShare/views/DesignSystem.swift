@@ -265,3 +265,158 @@ struct AppLogo: View {
         .accessibilityHidden(true)
     }
 }
+
+// MARK: - iOS 15 Compat
+
+struct AnyNavigationStack<Content: View>: View {
+    @ViewBuilder private var content: () -> Content
+
+    init(@ViewBuilder _ content: @escaping () -> Content) {
+        self.content = content
+    }
+
+    var body: some View {
+        if #available(iOS 16, *) {
+            NavigationStack(root: content)
+        } else {
+            NavigationView(content: content)
+                .navigationViewStyle(.stack)
+        }
+    }
+}
+
+private struct ToolbarHiddenModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content.toolbar(.hidden, for: .navigationBar)
+        } else {
+            content.navigationBarHidden(true)
+        }
+    }
+}
+
+private struct TrackingModifier: ViewModifier {
+    let tracking: CGFloat
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content.tracking(tracking)
+        } else {
+            content
+        }
+    }
+}
+
+private struct FontWeightModifier: ViewModifier {
+    let weight: Font.Weight
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content.fontWeight(weight)
+        } else {
+            content
+        }
+    }
+}
+
+private struct ScrollContentBackgroundHiddenModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content.scrollContentBackground(.hidden)
+        } else {
+            content
+        }
+    }
+}
+
+private struct ScrollDismissesKeyboardModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content.scrollDismissesKeyboard(.interactively)
+        } else {
+            content
+        }
+    }
+}
+
+private struct PresentationLargeDetentModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content.presentationDetents([.large])
+        } else {
+            content
+        }
+    }
+}
+
+private struct PresentationMediumLargeDetentModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content.presentationDetents([.medium, .large])
+        } else {
+            content
+        }
+    }
+}
+
+private struct PresentationHeightDetentModifier: ViewModifier {
+    let height: CGFloat
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content.presentationDetents([.height(height)])
+        } else {
+            content
+        }
+    }
+}
+
+private struct PresentationDragIndicatorModifier: ViewModifier {
+    let visible: Bool
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content.presentationDragIndicator(visible ? .visible : .hidden)
+        } else {
+            content
+        }
+    }
+}
+
+struct LabeledRow<C: View>: View {
+    let label: String
+    @ViewBuilder private var content: () -> C
+
+    init(_ label: String, @ViewBuilder content: @escaping () -> C) {
+        self.label = label
+        self.content = content
+    }
+
+    var body: some View {
+        if #available(iOS 16, *) {
+            LabeledContent(label, content: content)
+        } else {
+            HStack {
+                Text(label)
+                Spacer()
+                content()
+                    .foregroundStyle(Color.secondary)
+            }
+        }
+    }
+}
+
+extension LabeledRow where C == Text {
+    init(_ label: String, value: String) {
+        self.label = label
+        self.content = { Text(value) }
+    }
+}
+
+extension View {
+    func toolbarHidden15() -> some View { modifier(ToolbarHiddenModifier()) }
+    func tracking15(_ v: CGFloat) -> some View { modifier(TrackingModifier(tracking: v)) }
+    func fontWeight15(_ w: Font.Weight) -> some View { modifier(FontWeightModifier(weight: w)) }
+    func scrollContentBackground15() -> some View { modifier(ScrollContentBackgroundHiddenModifier()) }
+    func scrollDismissesKeyboard15() -> some View { modifier(ScrollDismissesKeyboardModifier()) }
+    func presentationLargeDetent() -> some View { modifier(PresentationLargeDetentModifier()) }
+    func presentationMediumLargeDetent() -> some View { modifier(PresentationMediumLargeDetentModifier()) }
+    func presentationHeightDetent(_ h: CGFloat) -> some View { modifier(PresentationHeightDetentModifier(height: h)) }
+    func presentationDragIndicator15(_ visible: Bool) -> some View { modifier(PresentationDragIndicatorModifier(visible: visible)) }
+}

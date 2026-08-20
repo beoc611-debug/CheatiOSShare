@@ -75,7 +75,7 @@ struct GamesHomeView: View {
     // MARK: - Home stack
 
     private var homeStack: some View {
-        NavigationStack {
+        AnyNavigationStack {
             ZStack {
                 TechBackground()
 
@@ -139,14 +139,23 @@ struct GamesHomeView: View {
             .task { await loadGames() }
             .task { await checkAnnouncement() }
             .task { await loadGameNotices() }
-            .navigationDestination(isPresented: Binding(
-                get: { selectedGame != nil },
-                set: { if !$0 { selectedGame = nil } }
-            )) {
-                if let game = selectedGame {
-                    GamePatchesView(game: game, store: store)
-                }
-            }
+            .background(
+                NavigationLink(
+                    isActive: Binding(
+                        get: { selectedGame != nil },
+                        set: { if !$0 { selectedGame = nil } }
+                    ),
+                    destination: {
+                        if let game = selectedGame {
+                            GamePatchesView(game: game, store: store)
+                        } else {
+                            EmptyView()
+                        }
+                    },
+                    label: { EmptyView() }
+                )
+                .hidden()
+            )
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 VStack(spacing: 10) {
                     LicenseStatusBar()
