@@ -1,6 +1,8 @@
 import Foundation
 
 enum ExploitSupportPolicy {
+    static let verifiedIOS15Range = "15.0–15.8.x"
+    static let verifiedIOS16Range = "16.0–16.7.x"
     static let verifiedIOS17Range = "17.0–17.7.x"
     static let verifiedIOS18Range = "18.0–18.7.1"
     static let verifiedIOS26Range = "26.0–26.6.1"
@@ -22,6 +24,14 @@ enum ExploitSupportPolicy {
 
     static func supportsKernelExploit(major: Int, minor: Int, patch: Int) -> Bool {
         guard minor >= 0, patch >= 0 else { return false }
+
+        if major == 15 {
+            return minor <= 8
+        }
+
+        if major == 16 {
+            return minor <= 7
+        }
 
         if major == 17 {
             return minor <= 7

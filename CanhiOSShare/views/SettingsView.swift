@@ -237,6 +237,14 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             currentVersionRow
             rowDivider
+            versionRow(label: "iOS 15", number: "15", range: ExploitSupportPolicy.verifiedIOS15Range,
+                       gradient: [Color(red: 0.20, green: 0.70, blue: 0.40), Color(red: 0.10, green: 0.50, blue: 0.28)],
+                       glow: Color(red: 0.20, green: 0.80, blue: 0.45))
+            rowDivider
+            versionRow(label: "iOS 16", number: "16", range: ExploitSupportPolicy.verifiedIOS16Range,
+                       gradient: [Color(red: 0.30, green: 0.55, blue: 0.90), Color(red: 0.18, green: 0.38, blue: 0.75)],
+                       glow: Color(red: 0.35, green: 0.60, blue: 0.95))
+            rowDivider
             versionRow(label: "iOS 17", number: "17", range: ExploitSupportPolicy.verifiedIOS17Range,
                        gradient: [Color(red: 0.58, green: 0.23, blue: 0.95), Color(red: 0.36, green: 0.18, blue: 0.80)],
                        glow: AppTheme.neonPurple)

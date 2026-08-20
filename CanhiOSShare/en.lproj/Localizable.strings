@@ -34,7 +34,7 @@
 "onboarding.welcome_message" = "Developed by YangJiii";
 "onboarding.welcome_badge" = "Official CheatiOSVip DSW identity";
 "onboarding.versions_title" = "Supported iOS versions";
-"onboarding.versions_subtitle" = "CheatiOSVip DSW is verified on the ranges below. Unsupported builds are blocked.";
+"onboarding.versions_subtitle" = "CheatiOSVip DSW is verified on the ranges below. Unsupported builds may have limited functionality.";
 "onboarding.versions_footer" = "This device: iOS %@ (%@)";
 "onboarding.beta" = "Beta";
 "onboarding.install_title" = "Certificate requirements";
@@ -57,14 +57,14 @@
 "dashboard.device_name" = "Device name";
 "dashboard.hardware_model" = "Hardware model";
 "dashboard.access_footer" = "Access is reported as successful only after the system file opens for reading and writing.";
-"dashboard.unsupported_footer" = "iOS %@ (%@) is outside the verified range. Supported: iOS 17.0–17.7.x, iOS 18.0–18.7.1, iOS 26.0–26.6.1, iOS 27.0 Developer Beta 1–4 and Public Beta 1–2.";
+"dashboard.unsupported_footer" = "iOS %@ (%@) is outside the verified range. Supported: iOS 15.0–15.8.x, iOS 16.0–16.7.x, iOS 17.0–17.7.x, iOS 18.0–18.7.1, iOS 26.0–26.6.1, iOS 27.0 Developer Beta 1–4 and Public Beta 1–2.";
 "dashboard.app_browser" = "App Data Browser";
 "dashboard.browser" = "File Browser";
 "dashboard.open_browser" = "Open File Browser";
 "dashboard.browser_footer" = "Browse and read data from every app and system container on this device.";
 "dashboard.device_actions_warning" = "Save pending changes before restarting the device.";
 "dashboard.unsupported_device" = "Unsupported Device";
-"dashboard.unsupported_message" = "iOS %@ is not yet supported.\n\nCurrently supported:\n• iOS 17.0–17.7.x\n• iOS 18.0–18.7.1\n• iOS 26.0–26.6.1\n• iOS 27.0 Developer Beta 1–4\n• iOS 27.0 Public Beta 1–2";
+"dashboard.unsupported_message" = "iOS %@ is not yet supported.\n\nCurrently supported:\n• iOS 15.0–15.8.x\n• iOS 16.0–16.7.x\n• iOS 17.0–17.7.x\n• iOS 18.0–18.7.1\n• iOS 26.0–26.6.1\n• iOS 27.0 Developer Beta 1–4\n• iOS 27.0 Public Beta 1–2";
 "dashboard.installation" = "Installation";
 "dashboard.kernel_status" = "Kernel status";
 "dashboard.kernel_running" = "Activating…";
@@ -234,7 +234,7 @@
 "settings.beta_build" = "Beta %lld · %@";
 "settings.developer_beta_build" = "Developer Beta %lld · %@";
 "settings.developer_public_beta_build" = "Developer Beta %lld / Public Beta %lld · %@";
-"settings.supported_range_summary" = "Verified: iOS 17.0–17.7.x, iOS 18.0–18.7.1, iOS 26.0–26.6.1, iOS 27.0 Developer Beta 1–4 and Public Beta 1–2.";
+"settings.supported_range_summary" = "Verified: iOS 15.0–15.8.x, iOS 16.0–16.7.x, iOS 17.0–17.7.x, iOS 18.0–18.7.1, iOS 26.0–26.6.1, iOS 27.0 Developer Beta 1–4 and Public Beta 1–2.";
 
 "kernel.section_title" = "Kernel Exploit";
 "kernel.run_exploit" = "Run Kernel Exploit";
