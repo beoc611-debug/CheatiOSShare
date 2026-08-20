@@ -37,6 +37,8 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="-" \
             OTHER_CODE_SIGN_FLAGS="--deep" \
+            SUPPORTED_PLATFORMS=iphoneos \
+            SUPPORTS_MACCATALYST=NO \
             SKIP_INSTALL=NO \
             2>&1 | tee build.log
           grep -E "(error:|warning:|BUILD SUCCEEDED|BUILD FAILED)" build.log | tail -50
