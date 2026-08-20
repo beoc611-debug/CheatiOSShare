@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-14
 
     steps:
       - name: Checkout
@@ -16,12 +16,13 @@ jobs:
       - name: Show available Xcode versions
         run: ls /Applications/Xcode*.app | head -20
 
-      - name: Select Xcode 16
-        run: sudo xcode-select -switch /Applications/Xcode_16.3.0.app
+      - name: Select Xcode 15
+        run: |
+          sudo xcode-select -switch /Applications/Xcode_15.4.app
+          xcodebuild -version
 
       - name: Show SDK & scheme
-        run: |
-          xcodebuild -project CheatiOSShare.xcodeproj -list
+        run: xcodebuild -project CheatiOSShare.xcodeproj -list
 
       - name: Build .app (ad-hoc signed)
         run: |
