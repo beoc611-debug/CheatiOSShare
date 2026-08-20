@@ -15,9 +15,10 @@ final class NetworkSecurityMonitor: ObservableObject {
     func start() {
         let m = NWPathMonitor()
         m.pathUpdateHandler = { [weak self] path in
-            Task { @MainActor in
-                self?.latestPath = path
-                self?.applyPath(path)
+            guard let self = self else { return }
+            Task { @MainActor [self] in
+                self.latestPath = path
+                self.applyPath(path)
             }
         }
         m.start(queue: DispatchQueue(label: "canh.netsec", qos: .utility))
