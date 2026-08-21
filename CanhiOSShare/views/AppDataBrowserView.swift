@@ -29,74 +29,64 @@ final class AppsViewModel: ObservableObject {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
             let bundleMetadata = ContainerStore.applicationBundleMetadataCatalog()
+
+            // Phase 1: fast result via LSApplicationProxy (same as Filza's quick path)
             let apiApps = ContainerStore.applyingBundleMetadata(
                 to: ContainerStore.installedAppsFromAPI(),
                 catalog: bundleMetadata
             )
-            let dynamicIdentifiers = ContainerStore.dynamicAppIdentifiers()
-            let mcmApps = ContainerStore.installedAppsFromMCM(
-                identifiers: dynamicIdentifiers,
-                bundleMetadata: bundleMetadata
-            )
-            let filesystemApps = ContainerStore.containersFromFilesystem()
-            let baseIdentifiedApps = mcmApps + apiApps
-            var result = ContainerDiscoveryMerger.merge(
-                enumerated: filesystemApps,
-                identified: baseIdentifiedApps,
-                path: { $0.containerPath }
-            )
-            result.sort { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
-            let preliminary = result.filter { ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) }
+            var preliminary = apiApps.filter { ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) }
+            preliminary.sort { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
             DispatchQueue.main.async { [weak self] in
                 self?.apps = preliminary
                 self?.isLoading = false
             }
 
-            let launchServicesIdentifiers = ContainerStore.launchServicesStoreIdentifiers()
-            let mhaIdentifiers = MHAIdentifierCatalog.identifiers(
-                dynamic: dynamicIdentifiers,
-                installed: apiApps.map(\.bundleID),
-                research: ContainerStore.researchAppIdentifiers,
-                custom: bundleMetadata.keys.sorted(),
-                launchServices: launchServicesIdentifiers
-            )
-            let mhaApps = ContainerStore.installedAppsFromMHACandidates(
-                identifiers: mhaIdentifiers,
-                bundleMetadata: bundleMetadata
-            ) { [weak self] discoveredApps in
-                guard let self else { return }
-                var progressive = AppDataCatalogMerger.merge(
-                    identified: discoveredApps + baseIdentifiedApps,
-                    fallback: [],
-                    identifier: { $0.bundleID },
-                    path: { $0.containerPath }
-                )
-                progressive = progressive.filter { ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) }
-                progressive.sort { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
-                DispatchQueue.main.async { [weak self] in self?.apps = progressive }
+            // Phase 2: Filza's full pipeline via MCMFilzaGatherAppIdentifiers()
+            // Same order as Filza: MCMDynamic(2) → allApplications → research → custom plist → LS store
+            let identifiers = MCMFilzaGatherAppIdentifiers()
+            var apiByID = [String: InstalledApp]()
+            for app in apiApps { apiByID[app.bundleID] = app }
+
+            var resolved = [InstalledApp]()
+            for bundleID in identifiers {
+                var err: NSString?
+                guard let path = MCMActivateContainerPath(2, bundleID, false, &err),
+                      ContainerStore.isApplicationContainerPath(path) else { continue }
+                let existing = apiByID[bundleID]
+                let rawInfo = appInfoForBundleID(bundleID) as? [String: Any] ?? [:]
+                let meta = bundleMetadata[bundleID]
+                resolved.append(InstalledApp(
+                    bundleID: bundleID,
+                    name: AppDisplayNamePolicy.resolve(bundleID: bundleID, candidates: [
+                        meta?.displayName, existing?.name, rawInfo["name"] as? String
+                    ]),
+                    containerPath: path,
+                    version: rawInfo["version"] as? String ?? existing?.version ?? meta?.version ?? "",
+                    icon: existing?.icon ?? rawInfo["icon"] as? UIImage
+                ))
             }
 
-            let allKnownApps = mhaApps + baseIdentifiedApps
-            let identifiedPaths = Set(allKnownApps.map { ContainerDiscoveryMerger.canonicalPath($0.containerPath) })
+            // Filesystem fallback: containers not matched by any identifier
+            let filesystemApps = ContainerStore.containersFromFilesystem()
+            let knownPaths = Set(resolved.map { ContainerDiscoveryMerger.canonicalPath($0.containerPath) })
             let unmatched = filesystemApps.filter {
-                !identifiedPaths.contains(ContainerDiscoveryMerger.canonicalPath($0.containerPath))
+                !knownPaths.contains(ContainerDiscoveryMerger.canonicalPath($0.containerPath))
             }
             let inferred = ContainerStore.inferUnidentifiedApps(
-                in: unmatched, knownApps: allKnownApps,
-                launchServicesIdentifiers: Set(launchServicesIdentifiers)
+                in: unmatched, knownApps: resolved + apiApps
             ).filter { ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) }
 
-            result = AppDataCatalogMerger.merge(
-                identified: allKnownApps, fallback: inferred,
+            var all = AppDataCatalogMerger.merge(
+                identified: resolved, fallback: inferred,
                 identifier: { $0.bundleID }, path: { $0.containerPath }
             )
-            result = result.filter { ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) }
-            result.sort { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
+            all = all.filter { ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) }
+            all.sort { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
 
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
-                self.apps = result
-                self.isLoading = false
+                self.apps = all
                 self.isResolving = false
             }
         }
