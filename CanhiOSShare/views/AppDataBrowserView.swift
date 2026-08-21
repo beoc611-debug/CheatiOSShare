@@ -131,8 +131,17 @@ final class AppsViewModel: ObservableObject {
     }
 
     private static func isUserApp(_ app: InstalledApp, apiSet: Set<String>) -> Bool {
+        // If LSApplicationWorkspace / MobileInstallation confirms the app, always show
         if apiSet.contains(app.bundleID) { return true }
-        return !app.name.isEmpty && app.name != app.bundleID
+        // When apiSet is empty (API restricted), fall through to name heuristic
+        // but relax the name==bundleID check so MCM-discovered apps still appear
+        guard !app.name.isEmpty else { return false }
+        if apiSet.isEmpty {
+            // Show any app with a non-empty name — MCM enumeration may not resolve
+            // display names for 3rd-party apps, so name may equal bundleID
+            return true
+        }
+        return app.name != app.bundleID
     }
 }
 

@@ -2,31 +2,6 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
-// MARK: - Folder picker (chọn thư mục lưu TRƯỚC khi xuất)
-
-private struct DocumentFolderPicker: UIViewControllerRepresentable {
-    let onPick: (URL) -> Void
-
-    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.folder])
-        picker.allowsMultipleSelection = false
-        picker.delegate = context.coordinator
-        return picker
-    }
-
-    func updateUIViewController(_ vc: UIDocumentPickerViewController, context: Context) {}
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
-
-    class Coordinator: NSObject, UIDocumentPickerDelegate {
-        let parent: DocumentFolderPicker
-        init(_ p: DocumentFolderPicker) { parent = p }
-        func documentPicker(_ c: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            guard let url = urls.first else { return }
-            parent.onPick(url)
-        }
-    }
-}
-
 // MARK: - AppDetailView
 
 struct AppDetailView: View {
@@ -37,181 +12,308 @@ struct AppDetailView: View {
     @State private var isExportingZip = false
     @State private var isExportingIPA = false
     @State private var toast: ToastMessage?
-    @State private var showZipPicker = false
-    @State private var showIPAPicker = false
     @State private var exportProgress: Double = 0
     @State private var isShowingProgress = false
     @State private var progressTitle = ""
 
     var body: some View {
-        List {
-            headerSection
-            quickActionsSection
-            fileManagementSection
-            infoSection
+        ZStack {
+            Color(red: 0.047, green: 0.063, blue: 0.118).ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 16) {
+                    headerCard
+                    quickActionsCard
+                    fileManagementCard
+                    infoCard
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 40)
+            }
         }
-        .listStyle(.insetGrouped)
         .navigationTitle(app.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color(red: 0.047, green: 0.063, blue: 0.118), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .tint(AppTheme.neonPurple)
+        .preferredColorScheme(.dark)
         .toast($toast)
         .task { await loadBundlePath() }
-        .sheet(isPresented: $showZipPicker) {
-            DocumentFolderPicker { folderURL in
-                showZipPicker = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    doZipExport(to: folderURL)
-                }
-            }
-        }
-        .sheet(isPresented: $showIPAPicker) {
-            DocumentFolderPicker { folderURL in
-                showIPAPicker = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    guard let bp = bundlePath else { return }
-                    doIPAExport(bundlePath: bp, to: folderURL)
-                }
-            }
-        }
         .overlay {
             if isShowingProgress { progressOverlay }
         }
     }
 
-    // MARK: - Sections
+    // MARK: - Cards
 
-    private var headerSection: some View {
-        Section {
-            HStack(spacing: 14) {
-                BrowserAppIcon(app: app, size: 60)
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(app.displayName)
-                        .font(.headline)
-                    Text(app.bundleID)
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                        .textSelection(.enabled)
+    private var headerCard: some View {
+        HStack(spacing: 14) {
+            BrowserAppIcon(app: app, size: 64)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(app.displayName)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                Text(app.bundleID)
+                    .font(.caption.monospaced())
+                    .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                    .lineLimit(2)
+                    .textSelection(.enabled)
+                if !app.version.isEmpty {
+                    Text("v\(app.version)")
+                        .font(.caption2)
+                        .foregroundStyle(AppTheme.neonCyan.opacity(0.8))
                 }
-                .padding(.vertical, 4)
             }
+            Spacer()
         }
+        .padding(16)
+        .techCard()
     }
 
-    private var quickActionsSection: some View {
-        Section {
-            Button { openApp() } label: {
-                Label(language.text("appdetail.open"), systemImage: "play.fill")
-            }
-        } header: {
-            Text(language.text("appdetail.quick"))
-        }
-    }
+    private var quickActionsCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionHeader(title: language.text("appdetail.quick"), icon: "bolt.fill", color: AppTheme.neonCyan)
 
-    private var fileManagementSection: some View {
-        Section {
-            // Browse App Bundle
-            if isLoadingBundle {
-                HStack {
-                    Label(language.text("appdetail.browse_bundle"), systemImage: "shippingbox")
-                        .foregroundStyle(.secondary)
+            Button {
+                openApp()
+            } label: {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(AppTheme.neonCyan.opacity(0.15))
+                            .frame(width: 36, height: 36)
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(AppTheme.neonCyan)
+                    }
+                    Text(language.text("appdetail.open"))
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.white)
                     Spacer()
-                    ProgressView().controlSize(.small)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.40, green: 0.50, blue: 0.70))
                 }
-            } else if let bp = bundlePath {
-                NavigationLink {
-                    FileBrowserView(
-                        containerPath: bp,
-                        title: (bp as NSString).lastPathComponent,
-                        bundleID: app.bundleID
-                    )
-                } label: {
-                    Label(language.text("appdetail.browse_bundle"), systemImage: "shippingbox")
-                }
-            } else {
-                Label(language.text("appdetail.browse_bundle"), systemImage: "shippingbox")
-                    .foregroundStyle(.secondary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 13)
             }
+        }
+        .techCard()
+    }
+
+    private var fileManagementCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionHeader(title: language.text("appdetail.files"), icon: "folder.fill", color: AppTheme.neonPurple)
+
+            // Browse App Bundle
+            Group {
+                if isLoadingBundle {
+                    HStack(spacing: 12) {
+                        iconCircle("shippingbox", color: Color(red: 0.52, green: 0.63, blue: 0.82))
+                        Text(language.text("appdetail.browse_bundle"))
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                        Spacer()
+                        ProgressView().controlSize(.small).tint(AppTheme.neonPurple)
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 13)
+                } else if let bp = bundlePath {
+                    NavigationLink {
+                        FileBrowserView(
+                            containerPath: bp,
+                            title: (bp as NSString).lastPathComponent,
+                            bundleID: app.bundleID
+                        )
+                    } label: {
+                        HStack(spacing: 12) {
+                            iconCircle("shippingbox", color: AppTheme.neonPurple)
+                            Text(language.text("appdetail.browse_bundle"))
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.white)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(Color(red: 0.40, green: 0.50, blue: 0.70))
+                        }
+                        .padding(.horizontal, 16).padding(.vertical, 13)
+                    }
+                } else {
+                    HStack(spacing: 12) {
+                        iconCircle("shippingbox", color: Color(red: 0.35, green: 0.40, blue: 0.55))
+                        Text(language.text("appdetail.browse_bundle"))
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(Color(red: 0.35, green: 0.40, blue: 0.55))
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 13)
+                }
+            }
+
+            divider
 
             // Export Data ZIP
             if isExportingZip {
-                HStack {
-                    Label("Đang xuất \(Int(exportProgress * 100))%", systemImage: "archivebox")
-                        .foregroundStyle(AppTheme.neonPurple)
-                    Spacer()
-                    ProgressView(value: exportProgress)
-                        .frame(width: 64)
-                        .tint(AppTheme.neonPurple)
-                        .animation(.linear(duration: 0.15), value: exportProgress)
-                }
+                exportingRow(icon: "archivebox.fill", color: AppTheme.techGlow)
             } else {
-                Button { showZipPicker = true } label: {
-                    Label(language.text("appdetail.export_zip"), systemImage: "archivebox")
+                Button {
+                    startZipExport()
+                } label: {
+                    HStack(spacing: 12) {
+                        iconCircle("archivebox.fill", color: AppTheme.techGlow)
+                        Text(language.text("appdetail.export_zip"))
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Color(red: 0.40, green: 0.50, blue: 0.70))
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 13)
                 }
                 .disabled(app.containerPath.isEmpty || isExportingIPA)
+                .opacity(app.containerPath.isEmpty || isExportingIPA ? 0.45 : 1)
             }
+
+            divider
 
             // Export IPA
             if isExportingIPA {
-                HStack {
-                    let label = exportProgress > 0
-                        ? "Đang xuất \(Int(exportProgress * 100))%"
-                        : "Đang sao chép..."
-                    Label(label, systemImage: "doc.zipper")
-                        .foregroundStyle(AppTheme.neonPurple)
-                    Spacer()
-                    if exportProgress > 0 {
-                        ProgressView(value: exportProgress)
-                            .frame(width: 64)
-                            .tint(AppTheme.neonPurple)
-                            .animation(.linear(duration: 0.15), value: exportProgress)
-                    } else {
-                        ProgressView().controlSize(.small)
-                    }
-                }
+                exportingRow(icon: "doc.zipper", color: AppTheme.neonPurple)
             } else {
-                Button { showIPAPicker = true } label: {
-                    Label(language.text("appdetail.export_ipa"), systemImage: "doc.zipper")
+                Button {
+                    startIPAExport()
+                } label: {
+                    HStack(spacing: 12) {
+                        iconCircle("doc.zipper", color: AppTheme.neonPurple)
+                        Text(language.text("appdetail.export_ipa"))
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Color(red: 0.40, green: 0.50, blue: 0.70))
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 13)
                 }
                 .disabled(bundlePath == nil || isLoadingBundle || isExportingZip)
+                .opacity(bundlePath == nil || isLoadingBundle || isExportingZip ? 0.45 : 1)
             }
+        }
+        .techCard()
+    }
 
-        } header: {
-            Text(language.text("appdetail.files"))
+    private var infoCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionHeader(title: language.text("appdetail.info"), icon: "info.circle.fill", color: AppTheme.techGlow)
+
+            if !app.version.isEmpty {
+                infoRow(label: language.text("appdetail.version"), value: app.version)
+                divider
+            }
+            infoRowMultiline(label: "Bundle ID", value: app.bundleID)
+            if !app.containerPath.isEmpty {
+                divider
+                infoRowMultiline(label: "Container", value: app.containerPath)
+            }
+        }
+        .techCard()
+    }
+
+    // MARK: - Reusable sub-views
+
+    private func sectionHeader(title: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(color)
+            Text(title.uppercased())
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                .tracking15(1.2)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 10)
+    }
+
+    private func iconCircle(_ systemImage: String, color: Color) -> some View {
+        ZStack {
+            Circle()
+                .fill(color.opacity(0.15))
+                .frame(width: 36, height: 36)
+            Image(systemName: systemImage)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(color)
         }
     }
 
-    private var infoSection: some View {
-        Section {
-            if !app.version.isEmpty {
-                LabeledRow(language.text("appdetail.version"), value: app.version)
+    private func exportingRow(icon: String, color: Color) -> some View {
+        HStack(spacing: 12) {
+            iconCircle(icon, color: color)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(progressTitle.isEmpty ? "Đang xuất..." : progressTitle)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(color)
+                ProgressView(value: max(0.02, exportProgress))
+                    .tint(color)
+                    .animation(.linear(duration: 0.15), value: exportProgress)
             }
-            LabeledRow("Bundle ID") {
-                Text(app.bundleID)
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.trailing)
-                    .textSelection(.enabled)
-            }
-            if !app.containerPath.isEmpty {
-                LabeledRow("Container") {
-                    Text(app.containerPath)
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.trailing)
-                        .lineLimit(2)
-                        .textSelection(.enabled)
-                }
-            }
-        } header: {
-            Text(language.text("appdetail.info"))
+            Spacer()
+            Text("\(Int(exportProgress * 100))%")
+                .font(.caption.monospacedDigit().weight(.semibold))
+                .foregroundStyle(color)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 13)
+    }
+
+    private func infoRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.subheadline)
+                .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+            Spacer()
+            Text(value)
+                .font(.subheadline)
+                .foregroundStyle(.white)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private func infoRowMultiline(label: String, value: String) -> some View {
+        HStack(alignment: .top) {
+            Text(label)
+                .font(.subheadline)
+                .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+            Spacer()
+            Text(value)
+                .font(.caption.monospaced())
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.trailing)
+                .textSelection(.enabled)
+                .frame(maxWidth: 220, alignment: .trailing)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(LinearGradient(
+                colors: [Color.clear, AppTheme.techGlow.opacity(0.15), Color.clear],
+                startPoint: .leading, endPoint: .trailing
+            ))
+            .frame(height: 0.5)
+            .padding(.horizontal, 16)
     }
 
     // MARK: - Progress overlay
 
     private var progressOverlay: some View {
         ZStack {
-            Color.black.opacity(0.52).ignoresSafeArea()
+            Color.black.opacity(0.55).ignoresSafeArea()
             VStack(spacing: 22) {
                 ZStack {
                     Circle()
@@ -246,7 +348,7 @@ struct AppDetailView: View {
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
                             .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
                     )
-                    .shadow(color: AppTheme.neonPurple.opacity(0.25), radius: 30)
+                    .shadow(color: AppTheme.neonPurple.opacity(0.3), radius: 30)
             )
             .padding(.horizontal, 60)
         }
@@ -274,9 +376,9 @@ struct AppDetailView: View {
         ws.perform(Selector(("openApplicationWithBundleID:")), with: app.bundleID)
     }
 
-    // MARK: - ZIP export
+    // MARK: - ZIP export (export to temp first, then forExporting: picker)
 
-    private func doZipExport(to folderURL: URL) {
+    private func startZipExport() {
         guard !app.containerPath.isEmpty else { return }
         isExportingZip = true
         exportProgress = 0
@@ -285,44 +387,39 @@ struct AppDetailView: View {
 
         let containerURL = URL(fileURLWithPath: app.containerPath)
         let appName = app.displayName.isEmpty ? app.bundleID : app.displayName
-        let destURL = folderURL.appendingPathComponent("\(appName)-data.zip")
+        let dest = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(appName)-data-\(Int(Date().timeIntervalSince1970)).zip")
 
         DispatchQueue.global(qos: .userInitiated).async {
-            // Count files first for accurate progress
             var total = 0
             if let e = FileManager.default.enumerator(at: containerURL, includingPropertiesForKeys: nil) {
                 while e.nextObject() != nil { total += 1 }
             }
             let totalFiles = max(1, total)
             var done = 0
-
-            let didAccess = folderURL.startAccessingSecurityScopedResource()
-            let fm = FileManager.default
-            try? fm.removeItem(at: destURL)
+            try? FileManager.default.removeItem(at: dest)
 
             do {
                 _ = try ZIPArchiveWriter.write(
                     items: [containerURL],
-                    to: destURL,
+                    to: dest,
                     fileWritten: {
                         done += 1
                         let p = min(0.97, Double(done) / Double(totalFiles))
                         DispatchQueue.main.async { exportProgress = p }
                     }
                 )
-                if didAccess { folderURL.stopAccessingSecurityScopedResource() }
                 DispatchQueue.main.async {
                     progressTitle = "Hoàn thành!"
-                    withAnimation(.easeOut(duration: 0.25)) { exportProgress = 1.0 }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-                        isExportingZip = false
+                    withAnimation { exportProgress = 1.0 }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         isShowingProgress = false
+                        isExportingZip = false
                         exportProgress = 0
-                        toast = ToastMessage(text: "✓ Đã lưu vào Tệp thành công!")
+                        presentExportPicker(url: dest)
                     }
                 }
             } catch {
-                if didAccess { folderURL.stopAccessingSecurityScopedResource() }
                 DispatchQueue.main.async {
                     isExportingZip = false
                     isShowingProgress = false
@@ -335,33 +432,31 @@ struct AppDetailView: View {
 
     // MARK: - IPA export
 
-    private func doIPAExport(bundlePath: String, to folderURL: URL) {
+    private func startIPAExport() {
+        guard let bp = bundlePath else { return }
         isExportingIPA = true
         exportProgress = 0
         isShowingProgress = true
         progressTitle = "Đang sao chép bundle..."
 
         let appName = app.displayName.isEmpty ? app.bundleID : app.displayName
-        let destURL = folderURL.appendingPathComponent("\(appName).ipa")
-        let bundleURL = URL(fileURLWithPath: bundlePath)
+        let dest = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(appName)-\(Int(Date().timeIntervalSince1970)).ipa")
+        let bundleURL = URL(fileURLWithPath: bp)
 
         DispatchQueue.global(qos: .userInitiated).async {
-            // Count bundle files for ZIP progress phase
             var total = 0
             if let e = FileManager.default.enumerator(at: bundleURL, includingPropertiesForKeys: nil) {
                 while e.nextObject() != nil { total += 1 }
             }
             let totalFiles = max(1, total)
             var done = 0
-
-            let didAccess = folderURL.startAccessingSecurityScopedResource()
-            let fm = FileManager.default
-            try? fm.removeItem(at: destURL)
+            try? FileManager.default.removeItem(at: dest)
 
             do {
                 try ContainerStore.exportIPABundle(
-                    at: bundlePath,
-                    to: destURL,
+                    at: bp,
+                    to: dest,
                     onCopied: {
                         DispatchQueue.main.async { progressTitle = "Đang nén IPA..." }
                     },
@@ -371,19 +466,17 @@ struct AppDetailView: View {
                         DispatchQueue.main.async { exportProgress = p }
                     }
                 )
-                if didAccess { folderURL.stopAccessingSecurityScopedResource() }
                 DispatchQueue.main.async {
                     progressTitle = "Hoàn thành!"
-                    withAnimation(.easeOut(duration: 0.25)) { exportProgress = 1.0 }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-                        isExportingIPA = false
+                    withAnimation { exportProgress = 1.0 }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         isShowingProgress = false
+                        isExportingIPA = false
                         exportProgress = 0
-                        toast = ToastMessage(text: "✓ Đã lưu IPA vào Tệp thành công!")
+                        presentExportPicker(url: dest)
                     }
                 }
             } catch {
-                if didAccess { folderURL.stopAccessingSecurityScopedResource() }
                 DispatchQueue.main.async {
                     isExportingIPA = false
                     isShowingProgress = false
@@ -394,12 +487,18 @@ struct AppDetailView: View {
         }
     }
 
-    private func shareFile(_ url: URL) {
-        let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+    // MARK: - UIDocumentPickerViewController forExporting (nút "Xuất" thay vì "Mở")
+
+    private func presentExportPicker(url: URL) {
+        let picker = UIDocumentPickerViewController(forExporting: [url], asCopy: true)
+        picker.shouldShowFileExtensions = true
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let root = scene.windows.first?.rootViewController else { return }
+              let root = scene.windows.first?.rootViewController else {
+            toast = ToastMessage(text: "✓ File đã tạo, chia sẻ thủ công từ Tệp")
+            return
+        }
         var presenter = root
         while let p = presenter.presentedViewController { presenter = p }
-        presenter.present(av, animated: true)
+        presenter.present(picker, animated: true)
     }
 }
