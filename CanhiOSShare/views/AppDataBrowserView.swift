@@ -1,12 +1,19 @@
 import SwiftUI
 import UIKit
 
+// MARK: - Sort
+
+enum AppSortOrder: Equatable {
+    case nameAsc, nameDesc, sizeAsc, sizeDesc
+}
+
 // MARK: - ViewModel
 
 final class AppsViewModel: ObservableObject {
     @Published var apps: [InstalledApp] = []
     @Published var isLoading = false
     @Published var isResolving = false
+    @Published var sizeCache: [String: Int64] = [:]
     private var hasLoaded = false
 
     func loadIfNeeded() {
@@ -18,6 +25,7 @@ final class AppsViewModel: ObservableObject {
     func reload() {
         isLoading = true
         isResolving = true
+        sizeCache = [:]
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
             let bundleMetadata = ContainerStore.applicationBundleMetadataCatalog()
@@ -37,13 +45,8 @@ final class AppsViewModel: ObservableObject {
                 identified: baseIdentifiedApps,
                 path: { $0.containerPath }
             )
-            log("browser: merged api=\(apiApps.count), MCM=\(mcmApps.count), filesystem=\(filesystemApps.count) -> \(result.count)")
             result.sort { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
-
-            // Preliminary: show all valid MCM containers (no user-app filter)
-            let preliminary = result.filter {
-                ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID)
-            }
+            let preliminary = result.filter { ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) }
             DispatchQueue.main.async { [weak self] in
                 self?.apps = preliminary
                 self?.isLoading = false
@@ -62,51 +65,33 @@ final class AppsViewModel: ObservableObject {
                 bundleMetadata: bundleMetadata
             ) { [weak self] discoveredApps in
                 guard let self else { return }
-                var progressiveResult = AppDataCatalogMerger.merge(
+                var progressive = AppDataCatalogMerger.merge(
                     identified: discoveredApps + baseIdentifiedApps,
                     fallback: [],
                     identifier: { $0.bundleID },
                     path: { $0.containerPath }
                 )
-                progressiveResult = progressiveResult.filter {
-                    ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID)
-                }
-                progressiveResult.sort {
-                    $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
-                }
-                DispatchQueue.main.async { [weak self] in
-                    self?.apps = progressiveResult
-                }
+                progressive = progressive.filter { ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) }
+                progressive.sort { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
+                DispatchQueue.main.async { [weak self] in self?.apps = progressive }
             }
 
             let allKnownApps = mhaApps + baseIdentifiedApps
-            let identifiedPaths = Set(allKnownApps.map {
-                ContainerDiscoveryMerger.canonicalPath($0.containerPath)
-            })
-            let unmatchedFilesystemApps = filesystemApps.filter {
-                !identifiedPaths.contains(
-                    ContainerDiscoveryMerger.canonicalPath($0.containerPath)
-                )
+            let identifiedPaths = Set(allKnownApps.map { ContainerDiscoveryMerger.canonicalPath($0.containerPath) })
+            let unmatched = filesystemApps.filter {
+                !identifiedPaths.contains(ContainerDiscoveryMerger.canonicalPath($0.containerPath))
             }
-            let inferredFilesystemApps = ContainerStore.inferUnidentifiedApps(
-                in: unmatchedFilesystemApps,
-                knownApps: allKnownApps,
+            let inferred = ContainerStore.inferUnidentifiedApps(
+                in: unmatched, knownApps: allKnownApps,
                 launchServicesIdentifiers: Set(launchServicesIdentifiers)
-            ).filter {
-                ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID)
-            }
+            ).filter { ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) }
+
             result = AppDataCatalogMerger.merge(
-                identified: allKnownApps,
-                fallback: inferredFilesystemApps,
-                identifier: { $0.bundleID },
-                path: { $0.containerPath }
+                identified: allKnownApps, fallback: inferred,
+                identifier: { $0.bundleID }, path: { $0.containerPath }
             )
-            result = result.filter {
-                ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID)
-            }
-            result.sort {
-                $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
-            }
+            result = result.filter { ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) }
+            result.sort { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
 
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
@@ -116,258 +101,267 @@ final class AppsViewModel: ObservableObject {
             }
         }
     }
+
+    func fetchSize(for app: InstalledApp) {
+        guard !app.containerPath.isEmpty, sizeCache[app.bundleID] == nil else { return }
+        sizeCache[app.bundleID] = -1 // loading sentinel
+        let path = app.containerPath
+        let bid = app.bundleID
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            var total: Int64 = 0
+            if let e = FileManager.default.enumerator(
+                at: URL(fileURLWithPath: path),
+                includingPropertiesForKeys: [.fileSizeKey],
+                options: [.skipsHiddenFiles]
+            ) {
+                for case let url as URL in e {
+                    total += Int64((try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0)
+                    if total > 50 * 1024 * 1024 * 1024 { break }
+                }
+            }
+            DispatchQueue.main.async { [weak self] in self?.sizeCache[bid] = total }
+        }
+    }
 }
 
-// MARK: - App list view
+// MARK: - AppDataBrowserView (Filza-style)
 
 struct AppDataBrowserView: View {
     @ObservedObject var viewModel: AppsViewModel
     @Environment(\.appLanguage) private var language
     @State private var searchText = ""
+    @State private var sortOrder: AppSortOrder = .nameAsc
+    @State private var isEditing = false
 
     private var filteredApps: [InstalledApp] {
-        guard !searchText.isEmpty else { return viewModel.apps }
-        let q = searchText.lowercased()
-        return viewModel.apps.filter {
-            $0.displayName.lowercased().contains(q) || $0.bundleID.lowercased().contains(q)
+        let base: [InstalledApp]
+        if searchText.isEmpty {
+            base = viewModel.apps
+        } else {
+            let q = searchText.lowercased()
+            base = viewModel.apps.filter {
+                $0.displayName.lowercased().contains(q) || $0.bundleID.lowercased().contains(q)
+            }
+        }
+        switch sortOrder {
+        case .nameAsc:  return base
+        case .nameDesc: return base.reversed()
+        case .sizeAsc:
+            return base.sorted {
+                (viewModel.sizeCache[$0.bundleID] ?? 0) < (viewModel.sizeCache[$1.bundleID] ?? 0)
+            }
+        case .sizeDesc:
+            return base.sorted {
+                (viewModel.sizeCache[$0.bundleID] ?? 0) > (viewModel.sizeCache[$1.bundleID] ?? 0)
+            }
         }
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 14) {
-                sectionHeader
-                    .padding(.horizontal, 20)
-                appsList
-                    .padding(.horizontal, 16)
-            }
-            .padding(.top, 12)
-            .padding(.bottom, 40)
+        VStack(spacing: 0) {
+            sortBar
+            Divider().background(Color.white.opacity(0.08))
+            appListContent
         }
+        .background(Color(red: 0.047, green: 0.063, blue: 0.118))
         .searchable(
             text: $searchText,
             placement: .navigationBarDrawer(displayMode: .always),
             prompt: language.text("applist.search_prompt")
         )
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button { viewModel.reload() } label: {
-                    if viewModel.isResolving {
-                        ProgressView().tint(AppTheme.neonPurple)
-                    } else {
-                        Image(systemName: "arrow.clockwise")
-                            .foregroundStyle(AppTheme.neonPurple)
-                    }
-                }
-                .disabled(viewModel.isResolving)
-            }
-        }
+        .navigationBarItems(trailing: Button(isEditing ? "Xong" : "Sửa") {
+            isEditing.toggle()
+        }.foregroundStyle(AppTheme.neonPurple))
         .onAppear { viewModel.loadIfNeeded() }
     }
 
-    // MARK: - Section header
+    // MARK: - Sort bar (matches Filza layout)
 
-    private var sectionHeader: some View {
-        HStack(spacing: 10) {
-            Rectangle()
-                .fill(LinearGradient(
-                    colors: [Color.clear, AppTheme.neonPurple.opacity(0.45)],
-                    startPoint: .leading, endPoint: .trailing
-                ))
-                .frame(height: 1)
+    private var sortBar: some View {
+        HStack(spacing: 0) {
+            // Search icon (matches Filza left icon)
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(Color(red: 0.50, green: 0.58, blue: 0.75))
+                .frame(width: 44)
 
-            HStack(spacing: 6) {
-                Image(systemName: "square.grid.2x2.fill")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [AppTheme.neonCyan, AppTheme.neonPurple],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        )
-                    )
-                Text(language.text("applist.apps_count", Int64(filteredApps.count)).uppercased())
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
-                    .tracking15(1.5)
-            }
-
-            Rectangle()
-                .fill(LinearGradient(
-                    colors: [AppTheme.neonPurple.opacity(0.45), Color.clear],
-                    startPoint: .leading, endPoint: .trailing
-                ))
-                .frame(height: 1)
-
-            if viewModel.isResolving {
+            // Tên column sort
+            Button {
+                if sortOrder == .nameAsc { sortOrder = .nameDesc }
+                else { sortOrder = .nameAsc }
+            } label: {
                 HStack(spacing: 4) {
-                    ProgressView().controlSize(.mini).tint(AppTheme.neonCyan)
-                    Text(language.text("applist.scanning"))
-                        .font(.caption2)
-                        .foregroundStyle(AppTheme.neonCyan.opacity(0.8))
+                    Text("Tên")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(sortOrder == .nameAsc || sortOrder == .nameDesc
+                            ? AppTheme.neonPurple : Color(red: 0.55, green: 0.62, blue: 0.78))
+                    Image(systemName: sortOrder == .nameDesc ? "chevron.down" : "chevron.up")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(sortOrder == .nameAsc || sortOrder == .nameDesc
+                            ? AppTheme.neonPurple : Color(red: 0.55, green: 0.62, blue: 0.78))
+                        .opacity(sortOrder == .nameAsc || sortOrder == .nameDesc ? 1 : 0.4)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            // Kích thước column sort
+            Button {
+                if sortOrder == .sizeDesc { sortOrder = .sizeAsc }
+                else { sortOrder = .sizeDesc }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: sortOrder == .sizeAsc ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(sortOrder == .sizeAsc || sortOrder == .sizeDesc
+                            ? AppTheme.neonPurple : Color(red: 0.55, green: 0.62, blue: 0.78))
+                        .opacity(sortOrder == .sizeAsc || sortOrder == .sizeDesc ? 1 : 0.4)
+                    Text("Kích thước")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(sortOrder == .sizeAsc || sortOrder == .sizeDesc
+                            ? AppTheme.neonPurple : Color(red: 0.55, green: 0.62, blue: 0.78))
+                }
+            }
+            .frame(width: 110, alignment: .trailing)
+
+            // Grid/list toggle (decorative, matches Filza)
+            HStack(spacing: 6) {
+                Image(systemName: "lessthan")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color(red: 0.50, green: 0.58, blue: 0.75))
+                Image(systemName: "square.grid.2x2")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color(red: 0.50, green: 0.58, blue: 0.75))
+            }
+            .frame(width: 52)
         }
+        .frame(height: 38)
+        .padding(.horizontal, 4)
+        .background(Color(red: 0.068, green: 0.090, blue: 0.155))
     }
 
-    // MARK: - List content
+    // MARK: - List
 
     @ViewBuilder
-    private var appsList: some View {
+    private var appListContent: some View {
         if (viewModel.isLoading || viewModel.isResolving) && viewModel.apps.isEmpty {
-            loadingCard
+            Spacer()
+            VStack(spacing: 14) {
+                ProgressView().tint(AppTheme.neonPurple).scaleEffect(1.2)
+                Text(language.text("browser.loading"))
+                    .font(.subheadline)
+                    .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+            }
+            Spacer()
         } else if viewModel.apps.isEmpty {
-            emptyCard
-        } else if filteredApps.isEmpty {
-            searchEmptyCard
+            Spacer()
+            VStack(spacing: 14) {
+                Image(systemName: "tray")
+                    .font(.system(size: 40, weight: .light))
+                    .foregroundStyle(AppTheme.neonPurple.opacity(0.6))
+                Text(language.text("browser.empty"))
+                    .font(.subheadline)
+                    .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                    .multilineTextAlignment(.center)
+                Button(language.text("browser.retry")) { viewModel.reload() }
+                    .foregroundStyle(AppTheme.neonPurple)
+                    .font(.subheadline.weight(.semibold))
+            }
+            Spacer()
         } else {
-            VStack(spacing: 0) {
-                ForEach(Array(filteredApps.enumerated()), id: \.element.id) { idx, app in
-                    NavigationLink {
-                        AppDetailView(app: app)
-                    } label: {
-                        AppRow(app: app)
+            ScrollView {
+                LazyVStack(spacing: 0, pinnedViews: []) {
+                    // Scanning indicator row
+                    if viewModel.isResolving {
+                        HStack(spacing: 8) {
+                            ProgressView().controlSize(.mini).tint(AppTheme.neonCyan)
+                            Text(language.text("applist.scanning"))
+                                .font(.caption)
+                                .foregroundStyle(AppTheme.neonCyan.opacity(0.8))
+                            Spacer()
+                            Text("\(filteredApps.count) ứng dụng")
+                                .font(.caption)
+                                .foregroundStyle(Color(red: 0.45, green: 0.55, blue: 0.72))
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color(red: 0.068, green: 0.090, blue: 0.155))
+                        Divider().background(Color.white.opacity(0.07))
                     }
-                    .buttonStyle(.plain)
 
-                    if idx < filteredApps.count - 1 {
-                        Rectangle()
-                            .fill(LinearGradient(
-                                colors: [Color.clear, AppTheme.techGlow.opacity(0.12), Color.clear],
-                                startPoint: .leading, endPoint: .trailing
-                            ))
-                            .frame(height: 0.5)
-                            .padding(.leading, 64)
+                    ForEach(filteredApps) { app in
+                        FilzaAppRow(
+                            app: app,
+                            cachedSize: viewModel.sizeCache[app.bundleID]
+                        )
+                        .onAppear { viewModel.fetchSize(for: app) }
+
+                        Divider()
+                            .background(Color.white.opacity(0.07))
+                            .padding(.leading, 72)
                     }
                 }
+                .padding(.bottom, 32)
             }
-            .techCard(16)
         }
-    }
-
-    // MARK: - State cards
-
-    private var loadingCard: some View {
-        VStack(spacing: 12) {
-            ProgressView().tint(AppTheme.neonPurple)
-            Text(language.text("browser.loading"))
-                .font(.caption)
-                .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 36)
-        .techCard(16)
-    }
-
-    private var emptyCard: some View {
-        VStack(spacing: 14) {
-            Image(systemName: "folder.badge.questionmark")
-                .font(.system(size: 36))
-                .foregroundStyle(AppTheme.neonPurple.opacity(0.7))
-            Text(language.text("browser.empty"))
-                .font(.subheadline)
-                .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
-                .multilineTextAlignment(.center)
-            Button(language.text("browser.retry")) { viewModel.reload() }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(AppTheme.neonPurple)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 36)
-        .techCard(16)
-    }
-
-    private var searchEmptyCard: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 28, weight: .light))
-                .foregroundStyle(AppTheme.techGlow.opacity(0.7))
-            Text(language.text("browser.search_empty"))
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.white)
-            Text(language.text("browser.search_apps_empty_message"))
-                .font(.caption)
-                .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 28)
-        .techCard(16)
     }
 }
 
-// MARK: - App row with lazy size
+// MARK: - Filza-style row
 
-private struct AppRow: View {
+private struct FilzaAppRow: View {
     let app: InstalledApp
-    @State private var sizeText: String = ""
-    @State private var didCalcSize = false
+    let cachedSize: Int64?      // nil=not fetched, -1=loading, 0+=done
+
+    private var sizeText: String {
+        guard let s = cachedSize, s >= 0 else { return "" }
+        return ByteCountFormatter.string(fromByteCount: s, countStyle: .file)
+    }
 
     var body: some View {
-        HStack(spacing: 12) {
-            BrowserAppIcon(app: app)
+        NavigationLink(destination: AppDetailView(app: app)) {
+            HStack(spacing: 12) {
+                BrowserAppIcon(app: app, size: 44)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(app.displayName)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                Text(app.bundleID)
-                    .font(.caption2.monospaced())
-                    .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
-
-            Spacer(minLength: 8)
-
-            VStack(alignment: .trailing, spacing: 3) {
-                if !sizeText.isEmpty {
-                    Text(sizeText)
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(app.displayName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    if app.displayName != app.bundleID {
+                        Text(app.bundleID)
+                            .font(.caption2.monospaced())
+                            .foregroundStyle(Color(red: 0.48, green: 0.57, blue: 0.74))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
                 }
-                if !app.version.isEmpty {
-                    Text("v\(app.version)")
-                        .font(.system(size: 10))
-                        .foregroundStyle(AppTheme.neonCyan.opacity(0.7))
+
+                Spacer(minLength: 8)
+
+                // Size column
+                Group {
+                    if cachedSize == -1 {
+                        ProgressView().controlSize(.mini).tint(Color(red: 0.48, green: 0.57, blue: 0.74))
+                    } else if !sizeText.isEmpty {
+                        Text(sizeText)
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundStyle(Color(red: 0.55, green: 0.64, blue: 0.80))
+                    }
                 }
+                .frame(width: 80, alignment: .trailing)
+
+                // ⓘ info button (navigates same destination via NavigationLink)
+                Image(systemName: "info.circle")
+                    .font(.system(size: 18, weight: .regular))
+                    .foregroundStyle(AppTheme.techGlow)
+                    .frame(width: 36)
             }
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Color(red: 0.35, green: 0.45, blue: 0.65))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 11)
-        .contentShape(Rectangle())
-        .onAppear { calcSizeIfNeeded() }
-    }
-
-    private func calcSizeIfNeeded() {
-        guard !didCalcSize, !app.containerPath.isEmpty else { return }
-        didCalcSize = true
-        let path = app.containerPath
-        DispatchQueue.global(qos: .background).async {
-            let bytes = Self.containerSize(at: path)
-            guard bytes > 0 else { return }
-            let text = ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
-            DispatchQueue.main.async { sizeText = text }
-        }
-    }
-
-    private static func containerSize(at path: String) -> Int64 {
-        guard let enumerator = FileManager.default.enumerator(
-            at: URL(fileURLWithPath: path),
-            includingPropertiesForKeys: [.fileSizeKey],
-            options: [.skipsHiddenFiles, .skipsPackageDescendants]
-        ) else { return 0 }
-        var total: Int64 = 0
-        for case let url as URL in enumerator {
-            let size = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
-            total += Int64(size)
-            if total > 10 * 1024 * 1024 * 1024 { break } // cap at 10 GB sanity
-        }
-        return total
+        .buttonStyle(.plain)
+        .background(Color(red: 0.047, green: 0.063, blue: 0.118))
     }
 }
 
