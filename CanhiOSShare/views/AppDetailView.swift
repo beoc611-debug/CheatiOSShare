@@ -34,8 +34,6 @@ struct AppDetailView: View {
         }
         .navigationTitle(app.displayName)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Color(red: 0.047, green: 0.063, blue: 0.118), for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
         .tint(AppTheme.neonPurple)
         .preferredColorScheme(.dark)
         .toast($toast)
