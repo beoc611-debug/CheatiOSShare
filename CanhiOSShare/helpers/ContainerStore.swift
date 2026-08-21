@@ -262,27 +262,41 @@ enum ContainerStore {
         }
 
         let fileManager = FileManager.default
-        guard let rootEntries = try? fileManager.contentsOfDirectory(atPath: rootPath) else {
-            log("browser: app-bundle metadata unavailable root=\(rootPath) grant=\(handle)")
-            return []
-        }
+        let rootEntries = try? fileManager.contentsOfDirectory(atPath: rootPath)
 
+        // If contentsOfDirectory fails (sandbox restriction on iOS < 26),
+        // fall back to inode walk which bypasses directory-listing restrictions.
+        // File reads (Data(contentsOf:)) still work for world-readable paths like /System/Applications.
         let bundlePaths: [String]
-        if nested {
-            bundlePaths = rootEntries.prefix(2_048).flatMap { entry -> [String] in
-                guard UUID(uuidString: entry) != nil else { return [] }
-                let containerPath = (rootPath as NSString).appendingPathComponent(entry)
-                let children = (try? fileManager.contentsOfDirectory(atPath: containerPath)) ?? []
-                return children.prefix(16).compactMap { child in
-                    guard child.hasSuffix(".app") else { return nil }
-                    return (containerPath as NSString).appendingPathComponent(child)
+        if let entries = rootEntries {
+            if nested {
+                bundlePaths = entries.prefix(2_048).flatMap { entry -> [String] in
+                    guard UUID(uuidString: entry) != nil else { return [] }
+                    let containerPath = (rootPath as NSString).appendingPathComponent(entry)
+                    let children = (try? fileManager.contentsOfDirectory(atPath: containerPath)) ?? []
+                    return children.prefix(16).compactMap { child in
+                        guard child.hasSuffix(".app") else { return nil }
+                        return (containerPath as NSString).appendingPathComponent(child)
+                    }
+                }
+            } else {
+                bundlePaths = entries.prefix(2_048).compactMap { entry in
+                    guard entry.hasSuffix(".app") else { return nil }
+                    return (rootPath as NSString).appendingPathComponent(entry)
                 }
             }
         } else {
-            bundlePaths = rootEntries.prefix(2_048).compactMap { entry in
-                guard entry.hasSuffix(".app") else { return nil }
-                return (rootPath as NSString).appendingPathComponent(entry)
+            // Inode walk fallback: enumerateDirectories uses bad_query_list to bypass readdir sandbox.
+            // The walk returns all directories (including .app bundles) underneath rootPath.
+            // Info.plist inside these bundles is world-readable for system paths even without sandbox escape.
+            let allDirs = enumerateDirectories(path: rootPath)
+            guard !allDirs.isEmpty else {
+                log("browser: app-bundle metadata unavailable root=\(rootPath) grant=\(handle)")
+                return []
             }
+            // Filter to only .app directories (the inode walk returns ALL subdirs at all depths)
+            bundlePaths = allDirs.filter { $0.hasSuffix(".app") }.prefix(2_048).map { $0 }
+            log("browser: app-bundle inode-walk fallback root=\(rootPath) found \(bundlePaths.count) bundles")
         }
 
         return bundlePaths.compactMap { bundlePath in

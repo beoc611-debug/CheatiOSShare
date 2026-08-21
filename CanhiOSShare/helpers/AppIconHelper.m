@@ -51,9 +51,53 @@ static UIImage *iconImageFromProxy(id proxy) {
     return nil;
 }
 
-// Read icon PNG directly from the app bundle (.app directory).
-// Works even without jailbreak: app bundles in /var/containers/Bundle/Application/
-// are typically world-readable; system bundles in /System/Applications/ always are.
+// SpringBoardServices IPC: ask SpringBoard for the localized display name.
+// SpringBoard caches all installed app names; the IPC is allowed from MHA sandbox.
+static NSString *displayNameViaSBS(NSString *bundleID) {
+    static void *sbsHandle = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sbsHandle = dlopen(
+            "/System/Library/PrivateFrameworks/SpringBoardServices.framework/SpringBoardServices",
+            RTLD_LAZY | RTLD_LOCAL
+        );
+    });
+    if (!sbsHandle) return nil;
+
+    // One-argument candidates (bundleID → NSString* name)
+    const char *oneArgSymbols[] = {
+        "SBSCopyDisplayNameForApplicationIdentifier",
+        "SBSLocalizedApplicationNameForDisplayIdentifier",
+        "SBSApplicationDisplayNameForIdentifier",
+        "SBSCopyLocalizedNameForBundleIdentifier"
+    };
+    for (int i = 0; i < 4; i++) {
+        typedef NSString *(*Fn1)(NSString *);
+        Fn1 fn = (Fn1)dlsym(sbsHandle, oneArgSymbols[i]);
+        if (!fn) continue;
+        NSString *name = fn(bundleID);
+        if ([name isKindOfClass:[NSString class]] && name.length > 0 &&
+            ![name isEqualToString:bundleID]) return name;
+    }
+
+    // Two-argument candidates (bundleID, deploymentTarget → NSString*)
+    const char *twoArgSymbols[] = {
+        "SBSApplicationDisplayNameForDeploymentTarget",
+        "SBSCopyApplicationDisplayNameForDeploymentTarget"
+    };
+    for (int i = 0; i < 2; i++) {
+        typedef NSString *(*Fn2)(NSString *, NSInteger);
+        Fn2 fn = (Fn2)dlsym(sbsHandle, twoArgSymbols[i]);
+        if (!fn) continue;
+        for (NSInteger target = 0; target <= 4; target++) {
+            NSString *name = fn(bundleID, target);
+            if ([name isKindOfClass:[NSString class]] && name.length > 0 &&
+                ![name isEqualToString:bundleID]) return name;
+        }
+    }
+    return nil;
+}
+
 static UIImage *iconFromBundleURL(NSURL *bundleURL) {
     if (!bundleURL) return nil;
 
@@ -256,6 +300,11 @@ static NSDictionary *appsFromWorkspace(void) {
                 if ([v isKindOfClass:[NSString class]] && [v length] > 0 &&
                     ![v isEqualToString:bundleID]) { name = v; break; }
             }
+            // SBS IPC fallback: ask SpringBoard for the display name when LS proxy returned nothing useful
+            if (!name || [name isEqualToString:bundleID]) {
+                NSString *sbsName = displayNameViaSBS(bundleID);
+                if (sbsName.length > 0) name = sbsName;
+            }
             if (!name) name = bundleID;
 
             NSMutableDictionary *entry = [NSMutableDictionary dictionary];
@@ -419,6 +468,14 @@ NSDictionary *appInfoForBundleID(NSString *bundleID) {
             bundleName = stringForFirstKey(bundleInfo, @[@"CFBundleDisplayName", @"CFBundleName"]);
         if (bundleName.length > 0 && ![bundleName isEqualToString:bundleID])
             result[@"name"] = bundleName;
+    }
+
+    // 3. SpringBoardServices IPC fallback: ask SpringBoard for the display name.
+    //    SpringBoard caches all installed app names internally; the IPC works from MHA sandbox.
+    if ([result[@"name"] isEqualToString:bundleID]) {
+        NSString *sbsName = displayNameViaSBS(bundleID);
+        if (sbsName.length > 0 && ![sbsName isEqualToString:bundleID])
+            result[@"name"] = sbsName;
     }
 
     // Version
