@@ -657,7 +657,7 @@ enum ContainerStore {
         let fm = FileManager.default
         for root in applicationBundleRoots {
             let handle = grantContainerAccess(root.path)
-            if handle >= 0 { defer { bad_query_release(handle) } }
+            defer { if handle >= 0 { bad_query_release(handle) } }
             guard let entries = try? fm.contentsOfDirectory(atPath: root.path) else { continue }
             if root.nested {
                 for entry in entries.prefix(2_048) {
@@ -683,6 +683,33 @@ enum ContainerStore {
             }
         }
         return nil
+    }
+
+    // MARK: IPA export
+
+    static func exportIPABundle(
+        at bundlePath: String,
+        to destination: URL,
+        onCopied: (() -> Void)? = nil,
+        fileWritten: (() -> Void)? = nil
+    ) throws {
+        let payloadDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("Payload-\(UUID().uuidString)")
+        let fm = FileManager.default
+        try? fm.removeItem(at: destination)
+        try? fm.removeItem(at: payloadDir)
+        try fm.createDirectory(at: payloadDir, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: payloadDir) }
+        let bundleName = (bundlePath as NSString).lastPathComponent
+        let bundleParent = (bundlePath as NSString).deletingLastPathComponent
+        let handle = grantContainerAccess(bundleParent)
+        defer { if handle >= 0 { bad_query_release(handle) } }
+        try fm.copyItem(
+            at: URL(fileURLWithPath: bundlePath),
+            to: payloadDir.appendingPathComponent(bundleName)
+        )
+        onCopied?()
+        _ = try ZIPArchiveWriter.write(items: [payloadDir], to: destination, fileWritten: fileWritten)
     }
 
     // MARK: File browsing

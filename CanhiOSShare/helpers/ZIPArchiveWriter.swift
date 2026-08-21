@@ -37,6 +37,7 @@ enum ZIPArchiveWriter {
     static func write(
         items sourceURLs: [URL],
         to destinationURL: URL,
+        fileWritten: (() -> Void)? = nil,
         fileManager: FileManager = .default
     ) throws -> ZIPArchiveWriteResult {
         guard !sourceURLs.isEmpty else { throw ZIPArchiveWriterError.emptySelection }
@@ -66,7 +67,8 @@ enum ZIPArchiveWriter {
                     entries: &entries,
                     seenPaths: &seenPaths,
                     sourceBytes: &sourceBytes,
-                    fileManager: fileManager
+                    fileManager: fileManager,
+                    fileWritten: fileWritten
                 )
             }
 
@@ -106,7 +108,8 @@ enum ZIPArchiveWriter {
         entries: inout [Entry],
         seenPaths: inout Set<String>,
         sourceBytes: inout Int64,
-        fileManager: FileManager
+        fileManager: FileManager,
+        fileWritten: (() -> Void)? = nil
     ) throws {
         let rootValues = try safeValues(sourceURL)
         guard rootValues.isDirectory == true || rootValues.isRegularFile == true else {
@@ -120,7 +123,8 @@ enum ZIPArchiveWriter {
                 handle: handle,
                 entries: &entries,
                 seenPaths: &seenPaths,
-                sourceBytes: &sourceBytes
+                sourceBytes: &sourceBytes,
+                fileWritten: fileWritten
             )
             var enumerationFailed = false
             guard let enumerator = fileManager.enumerator(
@@ -154,7 +158,8 @@ enum ZIPArchiveWriter {
                     handle: handle,
                     entries: &entries,
                     seenPaths: &seenPaths,
-                    sourceBytes: &sourceBytes
+                    sourceBytes: &sourceBytes,
+                    fileWritten: fileWritten
                 )
             }
             guard !enumerationFailed else {
@@ -168,7 +173,8 @@ enum ZIPArchiveWriter {
                 handle: handle,
                 entries: &entries,
                 seenPaths: &seenPaths,
-                sourceBytes: &sourceBytes
+                sourceBytes: &sourceBytes,
+                fileWritten: fileWritten
             )
         }
     }
@@ -180,7 +186,8 @@ enum ZIPArchiveWriter {
         handle: FileHandle,
         entries: inout [Entry],
         seenPaths: inout Set<String>,
-        sourceBytes: inout Int64
+        sourceBytes: inout Int64,
+        fileWritten: (() -> Void)? = nil
     ) throws {
         guard let nameData = archivePath.data(using: .utf8),
               !nameData.isEmpty,
@@ -224,6 +231,7 @@ enum ZIPArchiveWriter {
             sourceBytes = nextBytes
         }
         entries.append(entry)
+        fileWritten?()
     }
 
     private static var resourceKeys: [URLResourceKey] {

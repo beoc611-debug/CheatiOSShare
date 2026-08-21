@@ -42,6 +42,7 @@ struct GamesHomeView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var licenseGate: LicenseGateStore
     @StateObject private var store = PatchProjectStore()
+    @StateObject private var appsVM = AppsViewModel()
     @State private var games: [RemoteGameSummary] = []
     @State private var isLoadingGames = false
     @State private var showLanguagePicker = false
@@ -127,7 +128,7 @@ struct GamesHomeView: View {
                         }
                     }
                 } else {
-                    AppDataBrowserView()
+                    AppDataBrowserView(viewModel: appsVM)
                 }
             }
             .navigationTitle(selectedTab == 1 ? "Ứng dụng" : "")
@@ -140,6 +141,7 @@ struct GamesHomeView: View {
             .task { await loadGames() }
             .task { await checkAnnouncement() }
             .task { await loadGameNotices() }
+            .task { appsVM.loadIfNeeded() }
             .background(
                 NavigationLink(
                     isActive: Binding(
