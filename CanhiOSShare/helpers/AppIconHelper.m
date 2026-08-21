@@ -51,6 +51,51 @@ static UIImage *iconImageFromProxy(id proxy) {
     return nil;
 }
 
+// Read icon PNG directly from the app bundle (.app directory).
+// Works even without jailbreak: app bundles in /var/containers/Bundle/Application/
+// are typically world-readable; system bundles in /System/Applications/ always are.
+static UIImage *iconFromBundleURL(NSURL *bundleURL) {
+    if (!bundleURL) return nil;
+
+    // Gather icon file names declared in Info.plist
+    NSMutableArray<NSString *> *iconNames = [NSMutableArray array];
+    NSURL *infoPlistURL = [bundleURL URLByAppendingPathComponent:@"Info.plist"];
+    NSDictionary *infoPlist = [NSDictionary dictionaryWithContentsOfURL:infoPlistURL];
+    if (infoPlist) {
+        for (NSString *iconsKey in @[@"CFBundleIcons", @"CFBundleIcons~ipad"]) {
+            NSDictionary *icons = infoPlist[iconsKey];
+            if (![icons isKindOfClass:[NSDictionary class]]) continue;
+            NSDictionary *primary = icons[@"CFBundlePrimaryIcon"];
+            if (![primary isKindOfClass:[NSDictionary class]]) continue;
+            id files = primary[@"CFBundleIconFiles"];
+            if ([files isKindOfClass:[NSArray class]])  [iconNames addObjectsFromArray:files];
+            else if ([files isKindOfClass:[NSString class]]) [iconNames addObject:files];
+            id name = primary[@"CFBundleIconName"];
+            if ([name isKindOfClass:[NSString class]] && [name length] > 0)
+                [iconNames addObject:name];
+        }
+    }
+    // Standard fallback names, largest first
+    [iconNames addObjectsFromArray:@[
+        @"AppIcon60x60", @"AppIcon76x76", @"AppIcon83.5x83.5",
+        @"AppIcon", @"Icon-60", @"Icon-76", @"Icon"
+    ]];
+
+    NSArray<NSString *> *suffixes = @[@"@3x.png", @"@2x.png", @".png"];
+    for (NSString *baseName in iconNames) {
+        for (NSString *suffix in suffixes) {
+            NSURL *iconURL = [bundleURL URLByAppendingPathComponent:
+                [baseName stringByAppendingString:suffix]];
+            NSData *data = [NSData dataWithContentsOfURL:iconURL];
+            if (data.length > 0) {
+                UIImage *img = [UIImage imageWithData:data];
+                if (img) return img;
+            }
+        }
+    }
+    return nil;
+}
+
 static UIImage *iconViaSBSForBundleID(NSString *bundleID) {
     static void *sbsHandle = nil;
     static dispatch_once_t onceToken;
@@ -227,6 +272,15 @@ static NSDictionary *appsFromWorkspace(void) {
             }
             // Pre-cache the icon during the bulk scan so iconForBundleID() hits cache immediately
             UIImage *icon = iconImageFromProxy(app);
+            if (!icon) {
+                NSURL *bURL = nil;
+                SEL buSel = NSSelectorFromString(@"bundleURL");
+                if ([app respondsToSelector:buSel]) {
+                    id v = ((id (*)(id, SEL))objc_msgSend)(app, buSel);
+                    if ([v isKindOfClass:[NSURL class]]) bURL = v;
+                }
+                if (bURL) icon = iconFromBundleURL(bURL);
+            }
             if (!icon) icon = iconViaSBSForBundleID(bundleID);
             if (icon) entry[@"icon"] = icon;
             result[bundleID] = entry;
@@ -236,9 +290,32 @@ static NSDictionary *appsFromWorkspace(void) {
 }
 
 NSDictionary<NSString *, NSDictionary *> *installedAppInfo(void) {
-    NSDictionary *workspace = appsFromWorkspace();
-    if (workspace.count > 0) return workspace;
-    return appsFromMobileInstallation();
+    NSDictionary *wsApps = appsFromWorkspace();
+    NSDictionary *miApps = appsFromMobileInstallation();
+
+    if (wsApps.count == 0) return miApps.count > 0 ? miApps : @{};
+    if (miApps.count == 0) return wsApps;
+
+    // Workspace (WS) carries icons + container paths.
+    // MobileInstallation (MI) carries accurate CFBundleDisplayName for every installed app.
+    // Merge: start from WS, promote MI name whenever WS fell back to the bundle ID.
+    NSMutableDictionary *merged = [NSMutableDictionary dictionaryWithDictionary:wsApps];
+    for (NSString *bundleID in miApps) {
+        NSDictionary *miEntry = miApps[bundleID];
+        NSMutableDictionary *entry = merged[bundleID]
+            ? [merged[bundleID] mutableCopy]
+            : [NSMutableDictionary dictionary];
+        NSString *wsName = entry[@"name"];
+        NSString *miName = miEntry[@"name"];
+        if (miName.length > 0 && ![miName isEqualToString:bundleID] &&
+            (!wsName || [wsName isEqualToString:bundleID])) {
+            entry[@"name"] = miName;
+        }
+        if (!entry[@"container"] && miEntry[@"container"]) entry[@"container"] = miEntry[@"container"];
+        if (!entry[@"version"]   && miEntry[@"version"])   entry[@"version"]   = miEntry[@"version"];
+        merged[bundleID] = entry;
+    }
+    return merged;
 }
 
 // Icon via LSApplicationProxy (per bundle ID)
@@ -259,6 +336,15 @@ UIImage *iconForBundleID(NSString *bundleID) {
     id proxy = ((id (*)(id, SEL, id))objc_msgSend)(proxyClass, appProxySel, bundleID);
     if (!proxy) return nil;
     UIImage *icon = iconImageFromProxy(proxy);
+    if (!icon) {
+        NSURL *bundleURL = nil;
+        SEL bundleURLSel = NSSelectorFromString(@"bundleURL");
+        if ([proxy respondsToSelector:bundleURLSel]) {
+            id value = ((id (*)(id, SEL))objc_msgSend)(proxy, bundleURLSel);
+            if ([value isKindOfClass:[NSURL class]]) bundleURL = value;
+        }
+        if (bundleURL) icon = iconFromBundleURL(bundleURL);
+    }
     if (!icon) icon = iconViaSBSForBundleID(bundleID);
     if (icon) [cache setObject:icon forKey:bundleID];
     return icon;
@@ -276,15 +362,32 @@ NSDictionary *appInfoForBundleID(NSString *bundleID) {
     id proxy = ((id (*)(id, SEL, id))objc_msgSend)(proxyClass, appProxySel, bundleID);
     if (!proxy) return result;
 
-    BOOL matchesRequestedIdentifier = NO;
+    // Check if this proxy is for the bundleID we asked for (case-insensitive).
+    // If neither selector responds, assume it's correct (we explicitly requested it).
+    BOOL matchesRequestedIdentifier = YES;
     for (NSString *selectorName in @[@"applicationIdentifier", @"bundleIdentifier"]) {
         SEL identifierSel = NSSelectorFromString(selectorName);
         if (![proxy respondsToSelector:identifierSel]) continue;
         id value = ((id (*)(id, SEL))objc_msgSend)(proxy, identifierSel);
-        if ([value isKindOfClass:[NSString class]] && [value isEqualToString:bundleID])
-            matchesRequestedIdentifier = YES;
+        if ([value isKindOfClass:[NSString class]] && [value length] > 0) {
+            matchesRequestedIdentifier = ([value caseInsensitiveCompare:bundleID] == NSOrderedSame);
+            break;
+        }
     }
-    if (!matchesRequestedIdentifier) return result;
+    if (!matchesRequestedIdentifier) {
+        // Still try localizedName as a best-effort
+        for (NSString *selectorName in @[@"localizedName", @"localizedShortName"]) {
+            SEL nameSel = NSSelectorFromString(selectorName);
+            if (![proxy respondsToSelector:nameSel]) continue;
+            NSString *name = ((id (*)(id, SEL))objc_msgSend)(proxy, nameSel);
+            if ([name isKindOfClass:[NSString class]] && name.length > 0 &&
+                ![name isEqualToString:bundleID]) {
+                result[@"name"] = name;
+                break;
+            }
+        }
+        return result;
+    }
     result[@"found"] = @YES;
 
     NSURL *bundleURL = nil;
@@ -294,45 +397,46 @@ NSDictionary *appInfoForBundleID(NSString *bundleID) {
         if ([value isKindOfClass:[NSURL class]]) bundleURL = value;
     }
 
-    NSBundle *applicationBundle = bundleURL ? [NSBundle bundleWithURL:bundleURL] : nil;
-    NSDictionary *localizedInfo = applicationBundle.localizedInfoDictionary;
-    NSDictionary *bundleInfo = applicationBundle.infoDictionary;
-    NSString *bundleName = stringForFirstKey(localizedInfo, @[
-        @"CFBundleDisplayName", @"CFBundleName"
-    ]);
-    if (bundleName.length == 0) {
-        bundleName = stringForFirstKey(bundleInfo, @[
-            @"CFBundleDisplayName", @"CFBundleName"
-        ]);
-    }
-    if (bundleName.length > 0) result[@"name"] = bundleName;
-
-    if ([result[@"name"] isEqualToString:bundleID]) {
-        for (NSString *selectorName in @[@"localizedName", @"localizedShortName"]) {
-            SEL nameSel = NSSelectorFromString(selectorName);
-            if (![proxy respondsToSelector:nameSel]) continue;
-            NSString *name = ((id (*)(id, SEL))objc_msgSend)(proxy, nameSel);
-            if ([name isKindOfClass:[NSString class]] && name.length > 0) {
-                result[@"name"] = name;
-                break;
-            }
+    // 1. Try proxy's localizedName first (fast LS-database lookup, no file I/O)
+    for (NSString *selectorName in @[@"localizedName", @"localizedShortName"]) {
+        SEL nameSel = NSSelectorFromString(selectorName);
+        if (![proxy respondsToSelector:nameSel]) continue;
+        NSString *name = ((id (*)(id, SEL))objc_msgSend)(proxy, nameSel);
+        if ([name isKindOfClass:[NSString class]] && name.length > 0 &&
+            ![name isEqualToString:bundleID]) {
+            result[@"name"] = name;
+            break;
         }
     }
 
-    NSString *bundleVersion = stringForFirstKey(bundleInfo, @[
-        @"CFBundleShortVersionString"
-    ]);
-    if (bundleVersion.length > 0) result[@"version"] = bundleVersion;
+    // 2. Bundle Info.plist (fallback if proxy name failed)
+    if ([result[@"name"] isEqualToString:bundleID] && bundleURL) {
+        NSBundle *applicationBundle = [NSBundle bundleWithURL:bundleURL];
+        NSDictionary *localizedInfo = applicationBundle.localizedInfoDictionary;
+        NSDictionary *bundleInfo    = applicationBundle.infoDictionary;
+        NSString *bundleName = stringForFirstKey(localizedInfo, @[@"CFBundleDisplayName", @"CFBundleName"]);
+        if (bundleName.length == 0)
+            bundleName = stringForFirstKey(bundleInfo, @[@"CFBundleDisplayName", @"CFBundleName"]);
+        if (bundleName.length > 0 && ![bundleName isEqualToString:bundleID])
+            result[@"name"] = bundleName;
+    }
+
+    // Version
+    if (bundleURL) {
+        NSBundle *appBundle = [NSBundle bundleWithURL:bundleURL];
+        NSString *v = stringForFirstKey(appBundle.infoDictionary, @[@"CFBundleShortVersionString"]);
+        if (v.length > 0) result[@"version"] = v;
+    }
     if (!result[@"version"]) {
         SEL versionSel = NSSelectorFromString(@"shortVersionString");
         if ([proxy respondsToSelector:versionSel]) {
             NSString *version = ((id (*)(id, SEL))objc_msgSend)(proxy, versionSel);
-            if ([version isKindOfClass:[NSString class]] && version.length > 0) {
+            if ([version isKindOfClass:[NSString class]] && version.length > 0)
                 result[@"version"] = version;
-            }
         }
     }
 
+    // Container path
     for (NSString *selectorName in @[@"dataContainerURL", @"containerURL"]) {
         SEL containerSel = NSSelectorFromString(selectorName);
         if (![proxy respondsToSelector:containerSel]) continue;
@@ -344,7 +448,10 @@ NSDictionary *appInfoForBundleID(NSString *bundleID) {
         }
     }
 
+    // Icon: proxy variant → bundle PNG → SBS IPC
     UIImage *icon = iconImageFromProxy(proxy);
+    if (!icon && bundleURL) icon = iconFromBundleURL(bundleURL);
+    if (!icon) icon = iconViaSBSForBundleID(bundleID);
     if (icon) result[@"icon"] = icon;
 
     return result;

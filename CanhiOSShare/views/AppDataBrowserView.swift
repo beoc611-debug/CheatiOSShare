@@ -57,7 +57,7 @@ final class AppsViewModel: ObservableObject {
                 // so the MCM metadata plist is directly readable — use it as the primary name source.
                 let containerMeta = ContainerStore.readContainerMetadata(containerPath: path)
                 let existing = apiByID[bundleID]
-                let rawInfo = appInfoForBundleID(bundleID) as? [String: Any] ?? [:]
+                let rawInfo = appInfoForBundleID(bundleID) as NSDictionary
                 let meta = bundleMetadata[bundleID]
                 resolved.append(InstalledApp(
                     bundleID: bundleID,
