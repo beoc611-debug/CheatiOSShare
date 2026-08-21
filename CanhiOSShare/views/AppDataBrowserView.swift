@@ -53,13 +53,19 @@ final class AppsViewModel: ObservableObject {
                 var err: NSString?
                 guard let path = MCMActivateContainerPath(2, bundleID, false, &err),
                       ContainerStore.isApplicationContainerPath(path) else { continue }
+                // After MCMActivateContainerPath the sandbox extension is active for `path`,
+                // so the MCM metadata plist is directly readable — use it as the primary name source.
+                let containerMeta = ContainerStore.readContainerMetadata(containerPath: path)
                 let existing = apiByID[bundleID]
                 let rawInfo = appInfoForBundleID(bundleID) as? [String: Any] ?? [:]
                 let meta = bundleMetadata[bundleID]
                 resolved.append(InstalledApp(
                     bundleID: bundleID,
                     name: AppDisplayNamePolicy.resolve(bundleID: bundleID, candidates: [
-                        meta?.displayName, existing?.name, rawInfo["name"] as? String
+                        containerMeta?.displayName,
+                        meta?.displayName,
+                        existing?.name,
+                        rawInfo["name"] as? String
                     ]),
                     containerPath: path,
                     version: rawInfo["version"] as? String ?? existing?.version ?? meta?.version ?? "",

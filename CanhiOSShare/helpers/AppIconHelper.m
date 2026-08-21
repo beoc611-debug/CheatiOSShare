@@ -17,13 +17,15 @@ static UIImage *iconFromData(NSData *data, CGFloat targetSize) {
 }
 
 static UIImage *iconImageFromProxy(id proxy) {
-    const int variants[] = {2, 0, 1, 3, 4, 5, 6, 7, 15};
+    // Try both int and NSUInteger cast since variant arg type varies by iOS version
+    const NSUInteger variants[] = {2, 0, 1, 3, 4, 5, 6, 7, 15};
+    NSUInteger variantCount = sizeof(variants) / sizeof(variants[0]);
 
     // iOS 16+: iconForVariant: returns UIImage directly
     SEL iconVariantSel = NSSelectorFromString(@"iconForVariant:");
     if ([proxy respondsToSelector:iconVariantSel]) {
-        for (NSUInteger i = 0; i < sizeof(variants) / sizeof(variants[0]); i++) {
-            id img = ((id (*)(id, SEL, int))objc_msgSend)(proxy, iconVariantSel, variants[i]);
+        for (NSUInteger i = 0; i < variantCount; i++) {
+            id img = ((id (*)(id, SEL, NSUInteger))objc_msgSend)(proxy, iconVariantSel, variants[i]);
             if ([img isKindOfClass:[UIImage class]]) return img;
         }
     }
@@ -31,21 +33,45 @@ static UIImage *iconImageFromProxy(id proxy) {
     // Older path: iconDataForVariant: returns NSData
     SEL iconDataSel = NSSelectorFromString(@"iconDataForVariant:");
     if ([proxy respondsToSelector:iconDataSel]) {
-        for (NSUInteger i = 0; i < sizeof(variants) / sizeof(variants[0]); i++) {
-            id data = ((id (*)(id, SEL, int))objc_msgSend)(proxy, iconDataSel, variants[i]);
+        for (NSUInteger i = 0; i < variantCount; i++) {
+            id data = ((id (*)(id, SEL, NSUInteger))objc_msgSend)(proxy, iconDataSel, variants[i]);
             if ([data isKindOfClass:[NSData class]] && [data length] > 0)
                 return iconFromData(data, 60.0);
         }
     }
 
-    // Last resort: iconImage / icon property
-    for (NSString *selName in @[@"iconImage", @"icon"]) {
-        SEL s = NSSelectorFromString(selName);
-        if ([proxy respondsToSelector:s]) {
-            id img = ((id (*)(id, SEL))objc_msgSend)(proxy, s);
+    // KVC: iconImage / icon / cachedIcon as UIImage
+    for (NSString *key in @[@"iconImage", @"icon", @"cachedIcon", @"_iconImage"]) {
+        @try {
+            id img = [proxy valueForKey:key];
             if ([img isKindOfClass:[UIImage class]]) return img;
-        }
+        } @catch (__unused NSException *e) {}
     }
+
+    return nil;
+}
+
+static UIImage *iconViaSBSForBundleID(NSString *bundleID) {
+    static void *sbsHandle = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sbsHandle = dlopen(
+            "/System/Library/PrivateFrameworks/SpringBoardServices.framework/SpringBoardServices",
+            RTLD_LAZY | RTLD_LOCAL
+        );
+    });
+    if (!sbsHandle) return nil;
+
+    // SBSCopyIconImagePNGDataForDisplayIdentifier — available since iOS 4
+    typedef NSData *(*SBSIconFn)(NSString *);
+    static SBSIconFn sbsFn = nil;
+    static dispatch_once_t fnOnce;
+    dispatch_once(&fnOnce, ^{
+        sbsFn = (SBSIconFn)dlsym(sbsHandle, "SBSCopyIconImagePNGDataForDisplayIdentifier");
+    });
+    if (!sbsFn) return nil;
+    NSData *pngData = sbsFn(bundleID);
+    if (pngData.length > 0) return iconFromData(pngData, 60.0);
     return nil;
 }
 
@@ -201,6 +227,7 @@ static NSDictionary *appsFromWorkspace(void) {
             }
             // Pre-cache the icon during the bulk scan so iconForBundleID() hits cache immediately
             UIImage *icon = iconImageFromProxy(app);
+            if (!icon) icon = iconViaSBSForBundleID(bundleID);
             if (icon) entry[@"icon"] = icon;
             result[bundleID] = entry;
         }
@@ -232,6 +259,7 @@ UIImage *iconForBundleID(NSString *bundleID) {
     id proxy = ((id (*)(id, SEL, id))objc_msgSend)(proxyClass, appProxySel, bundleID);
     if (!proxy) return nil;
     UIImage *icon = iconImageFromProxy(proxy);
+    if (!icon) icon = iconViaSBSForBundleID(bundleID);
     if (icon) [cache setObject:icon forKey:bundleID];
     return icon;
 }
