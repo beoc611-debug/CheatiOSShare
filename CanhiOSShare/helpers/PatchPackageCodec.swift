@@ -5,6 +5,7 @@ import Security
 
 enum PatchPackageCodec {
     private static let magic = Data("CHEATIOSPATCH\0".utf8)
+    private static let magic3105 = Data("3105PATCH\0".utf8)
     private static let schemaVersion = 1
 
     private struct Envelope: Codable {
@@ -276,10 +277,14 @@ enum PatchPackageCodec {
         guard data.count <= PatchPackageLimits.maximumPackageBytes else {
             throw PatchPackageError.sizeLimitExceeded
         }
-        guard data.prefix(magic.count) == magic else {
+        let headerLen: Int
+        if data.prefix(magic.count) == magic {
+            headerLen = magic.count
+        } else if data.prefix(magic3105.count) == magic3105 {
+            headerLen = magic3105.count
+        } else {
             throw PatchPackageError.unsupportedFormat
         }
-        let headerLen = magic.count
         let encoded = data.dropFirst(headerLen)
         let envelope: Envelope
         do {
