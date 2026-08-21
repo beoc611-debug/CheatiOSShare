@@ -17,6 +17,7 @@ struct PatchPasswordRequest: Identifiable {
 }
 
 private let localStorageMagic = Data("CHEATIOSPATCH\0".utf8)
+private let localStorageMagic3105 = Data("3105PATCH\0".utf8)
 
 enum PatchProjectLibrary {
     // Key derived from device UUID — files encrypted with this key cannot be used on other devices
@@ -108,7 +109,8 @@ enum PatchProjectLibrary {
             return decrypted
         }
         // Fall back to legacy plain format (pre-device-lock)
-        if raw.prefix(localStorageMagic.count) == localStorageMagic {
+        if raw.prefix(localStorageMagic.count) == localStorageMagic ||
+           raw.prefix(localStorageMagic3105.count) == localStorageMagic3105 {
             return raw
         }
         throw PatchPackageError.invalidPasswordOrCorruptedPackage
