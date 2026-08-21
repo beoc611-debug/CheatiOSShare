@@ -383,10 +383,24 @@ struct AppDetailView: View {
         isShowingProgress = true
         progressTitle = "Đang nén DATA..."
 
+        // Re-activate MCM sandbox extension so the container remains readable during ZIP writing.
+        // The extension obtained during the initial scan may have been consumed or timed out.
+        var mcmErr: NSString?
+        _ = MCMActivateContainerPath(2, app.bundleID, false, &mcmErr)
+
         let containerURL = URL(fileURLWithPath: app.containerPath)
         let appName = app.displayName.isEmpty ? app.bundleID : app.displayName
-        let dest = FileManager.default.temporaryDirectory
-            .appendingPathComponent("\(appName)-data-\(Int(Date().timeIntervalSince1970)).zip")
+        let safeName = appName.components(separatedBy: "/").last ?? appName
+        let fileName = "\(safeName)-data-\(Int(Date().timeIntervalSince1970)).zip"
+        // /private/var/tmp is world-writable on iOS and doesn't require a sandbox token;
+        // this avoids failures when the process's NSTemporaryDirectory is unavailable.
+        let tmpRoot: URL
+        if FileManager.default.isWritableFile(atPath: "/private/var/tmp") {
+            tmpRoot = URL(fileURLWithPath: "/private/var/tmp")
+        } else {
+            tmpRoot = FileManager.default.temporaryDirectory
+        }
+        let dest = tmpRoot.appendingPathComponent(fileName)
 
         DispatchQueue.global(qos: .userInitiated).async {
             var total = 0
@@ -417,12 +431,28 @@ struct AppDetailView: View {
                         presentExportPicker(url: dest)
                     }
                 }
+            } catch let zipErr as ZIPArchiveWriterError {
+                let msg: String
+                switch zipErr {
+                case .writeFailed:          msg = "Lỗi ghi ZIP (thiếu quyền sandbox hoặc disk đầy)"
+                case .invalidSource:        msg = "Không thể đọc container (sandbox bị block)"
+                case .symbolicLinkUnsupported: msg = "Container chứa symlink, bỏ qua"
+                case .archiveTooLarge:      msg = "Container quá lớn để xuất (>4 GB)"
+                case .duplicateEntry:       msg = "Lỗi file trùng trong ZIP"
+                case .emptySelection:       msg = "Không có file để xuất"
+                }
+                DispatchQueue.main.async {
+                    isExportingZip = false
+                    isShowingProgress = false
+                    exportProgress = 0
+                    toast = ToastMessage(text: msg)
+                }
             } catch {
                 DispatchQueue.main.async {
                     isExportingZip = false
                     isShowingProgress = false
                     exportProgress = 0
-                    toast = ToastMessage(text: "Lỗi: \(error.localizedDescription)")
+                    toast = ToastMessage(text: "Lỗi xuất ZIP: \(error.localizedDescription)")
                 }
             }
         }
@@ -438,8 +468,14 @@ struct AppDetailView: View {
         progressTitle = "Đang sao chép bundle..."
 
         let appName = app.displayName.isEmpty ? app.bundleID : app.displayName
-        let dest = FileManager.default.temporaryDirectory
-            .appendingPathComponent("\(appName)-\(Int(Date().timeIntervalSince1970)).ipa")
+        let safeName2 = appName.components(separatedBy: "/").last ?? appName
+        let tmpRoot2: URL
+        if FileManager.default.isWritableFile(atPath: "/private/var/tmp") {
+            tmpRoot2 = URL(fileURLWithPath: "/private/var/tmp")
+        } else {
+            tmpRoot2 = FileManager.default.temporaryDirectory
+        }
+        let dest = tmpRoot2.appendingPathComponent("\(safeName2)-\(Int(Date().timeIntervalSince1970)).ipa")
         let bundleURL = URL(fileURLWithPath: bp)
 
         DispatchQueue.global(qos: .userInitiated).async {

@@ -139,9 +139,20 @@ enum ZIPArchiveWriter {
                 throw ZIPArchiveWriterError.invalidSource
             }
             while let child = enumerator.nextObject() as? URL {
-                let values = try safeValues(child)
+                let values: URLResourceValues
+                do {
+                    values = try safeValues(child)
+                } catch ZIPArchiveWriterError.symbolicLinkUnsupported {
+                    enumerator.skipDescendants()
+                    continue
+                } catch ZIPArchiveWriterError.invalidSource {
+                    // File attributes unreadable (e.g. socket, FIFO, or permission denied) — skip
+                    enumerator.skipDescendants()
+                    continue
+                }
                 if values.isDirectory != true && values.isRegularFile != true {
-                    throw ZIPArchiveWriterError.invalidSource
+                    enumerator.skipDescendants()
+                    continue
                 }
                 let relativePath = child.pathComponents
                     .suffix(enumerator.level)
