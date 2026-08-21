@@ -108,9 +108,14 @@ enum ContainerStore {
     // MARK: Primary — MobileInstallation / LSApplicationWorkspace
 
     static func installedAppsFromAPI() -> [InstalledApp] {
-        let raw = installedAppInfo() as? [String: [String: Any]] ?? [:]
+        // installedAppInfo() returns NSDictionary* which bridges as [AnyHashable:Any] in Swift.
+        // Casting to [String:[String:Any]] always fails (nested cast can't pierce Any erasure),
+        // so use NSDictionary directly to avoid getting an empty dict.
+        let raw = installedAppInfo() as NSDictionary
         var apps: [InstalledApp] = []
-        for (bundleID, info) in raw {
+        for (key, value) in raw {
+            guard let bundleID = key as? String,
+                  let info = value as? NSDictionary else { continue }
             apps.append(InstalledApp(
                 bundleID: bundleID,
                 name: info["name"] as? String ?? "",
@@ -176,7 +181,7 @@ enum ContainerStore {
             }
             if index < 3 { log("mcm[\(index)]: \(bundleID) -> \(containerPath)") }
 
-            let rawInfo = appInfoForBundleID(bundleID) as? [String: Any] ?? [:]
+            let rawInfo = appInfoForBundleID(bundleID) as NSDictionary
             let metadata = bundleMetadata[bundleID]
             apps.append(InstalledApp(
                 bundleID: bundleID,
@@ -222,7 +227,7 @@ enum ContainerStore {
                 continue
             }
 
-            let rawInfo = appInfoForBundleID(bundleID) as? [String: Any] ?? [:]
+            let rawInfo = appInfoForBundleID(bundleID) as NSDictionary
             let metadata = bundleMetadata[bundleID]
             apps.append(InstalledApp(
                 bundleID: bundleID,
@@ -512,7 +517,7 @@ enum ContainerStore {
                 let bundleID = metadata.bundleID.trimmingCharacters(in: .whitespacesAndNewlines)
                 if ContainerBundleCandidateResolver.isValidBundleIdentifier(bundleID),
                    !bundleID.hasPrefix("systemgroup.") {
-                    let info = appInfoForBundleID(bundleID) as? [String: Any] ?? [:]
+                    let info = appInfoForBundleID(bundleID) as NSDictionary
                     let resolvedName = metadata.displayName.isEmpty
                         ? (info["name"] as? String ?? bundleID)
                         : metadata.displayName
@@ -557,7 +562,7 @@ enum ContainerStore {
                     )
                 }
 
-                let info = appInfoForBundleID(bundleID) as? [String: Any] ?? [:]
+                let info = appInfoForBundleID(bundleID) as NSDictionary
                 guard info["found"] as? Bool == true else { continue }
                 return InstalledApp(
                     bundleID: bundleID,
