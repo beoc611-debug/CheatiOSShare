@@ -237,7 +237,7 @@ struct AppDataBrowserView: View {
                 Text(language.text("applist.apps_count", Int64(filteredApps.count)).uppercased())
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
-                    .tracking(1.5)
+                    .tracking15(1.5)
             }
 
             Rectangle()
