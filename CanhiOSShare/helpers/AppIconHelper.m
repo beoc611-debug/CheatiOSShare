@@ -51,6 +51,34 @@ static UIImage *iconImageFromProxy(id proxy) {
     return nil;
 }
 
+// SpringBoardServices IPC: ask SpringBoard for the app bundle path.
+// SpringBoard knows the bundle path for every installed app; this works without
+// enumerating /var/containers/Bundle/Application (which is sandbox-blocked on iOS 18).
+NSString *bundlePathViaSBS(NSString *bundleID) {
+    static void *sbsHandle = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sbsHandle = dlopen(
+            "/System/Library/PrivateFrameworks/SpringBoardServices.framework/SpringBoardServices",
+            RTLD_LAZY | RTLD_LOCAL
+        );
+    });
+    if (!sbsHandle) return nil;
+    const char *syms[] = {
+        "SBSCopyBundlePathForApplicationIdentifier",
+        "SBSCopyApplicationBundlePath",
+        "SBSCopyBundlePathForDisplayIdentifier"
+    };
+    for (int i = 0; i < 3; i++) {
+        typedef NSString *(*Fn)(NSString *);
+        Fn fn = (Fn)dlsym(sbsHandle, syms[i]);
+        if (!fn) continue;
+        NSString *path = fn(bundleID);
+        if ([path isKindOfClass:[NSString class]] && path.length > 0) return path;
+    }
+    return nil;
+}
+
 // SpringBoardServices IPC: ask SpringBoard for the localized display name.
 // SpringBoard caches all installed app names; the IPC is allowed from MHA sandbox.
 static NSString *displayNameViaSBS(NSString *bundleID) {
@@ -504,6 +532,9 @@ NSDictionary *appInfoForBundleID(NSString *bundleID) {
             break;
         }
     }
+
+    // Expose bundleURL so callers can locate the .app bundle without re-querying LS.
+    if (bundleURL) result[@"bundleURL"] = bundleURL;
 
     // Icon: proxy variant → bundle PNG → SBS IPC
     UIImage *icon = iconImageFromProxy(proxy);

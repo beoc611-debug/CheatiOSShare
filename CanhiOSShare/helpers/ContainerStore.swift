@@ -673,18 +673,46 @@ enum ContainerStore {
     // MARK: Bundle path lookup
 
     static func bundlePathForBundleID(_ bundleID: String) -> String? {
+        // 1. LSApplicationProxy.bundleURL — fast LS database lookup, no filesystem scan needed.
+        //    appInfoForBundleID now includes "bundleURL" in its result dict.
+        let rawInfo = appInfoForBundleID(bundleID) as NSDictionary
+        if let url = rawInfo["bundleURL"] as? URL, !url.path.isEmpty {
+            log("browser: bundlePath via LS proxy for \(bundleID): \(url.path)")
+            return url.path
+        }
+
+        // 2. SpringBoardServices IPC — SpringBoard knows every installed app's bundle path.
+        if let sbsPath = bundlePathViaSBS(bundleID), !sbsPath.isEmpty {
+            log("browser: bundlePath via SBS IPC for \(bundleID): \(sbsPath)")
+            return sbsPath
+        }
+
+        // 3. Filesystem scan — works for system apps (/System/Applications, /Applications)
+        //    and for user apps when grantContainerAccess succeeds (iOS 26+).
+        //    On iOS 18, contentsOfDirectory fails for /var/containers/Bundle/Application;
+        //    the inode walk fallback below handles that path.
         let fm = FileManager.default
         for root in applicationBundleRoots {
             let handle = grantContainerAccess(root.path)
             defer { if handle >= 0 { bad_query_release(handle) } }
-            guard let entries = try? fm.contentsOfDirectory(atPath: root.path) else { continue }
-            if root.nested {
-                for entry in entries.prefix(2_048) {
-                    guard UUID(uuidString: entry) != nil else { continue }
-                    let containerPath = (root.path as NSString).appendingPathComponent(entry)
-                    let children = (try? fm.contentsOfDirectory(atPath: containerPath)) ?? []
-                    for child in children where child.hasSuffix(".app") {
-                        let appPath = (containerPath as NSString).appendingPathComponent(child)
+
+            if let entries = try? fm.contentsOfDirectory(atPath: root.path) {
+                if root.nested {
+                    for entry in entries.prefix(2_048) {
+                        guard UUID(uuidString: entry) != nil else { continue }
+                        let containerPath = (root.path as NSString).appendingPathComponent(entry)
+                        let children = (try? fm.contentsOfDirectory(atPath: containerPath)) ?? []
+                        for child in children where child.hasSuffix(".app") {
+                            let appPath = (containerPath as NSString).appendingPathComponent(child)
+                            guard let data = try? Data(contentsOf: URL(fileURLWithPath: (appPath as NSString).appendingPathComponent("Info.plist"))),
+                                  let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+                                  plist["CFBundleIdentifier"] as? String == bundleID else { continue }
+                            return appPath
+                        }
+                    }
+                } else {
+                    for entry in entries.prefix(2_048) where entry.hasSuffix(".app") {
+                        let appPath = (root.path as NSString).appendingPathComponent(entry)
                         guard let data = try? Data(contentsOf: URL(fileURLWithPath: (appPath as NSString).appendingPathComponent("Info.plist"))),
                               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
                               plist["CFBundleIdentifier"] as? String == bundleID else { continue }
@@ -692,8 +720,9 @@ enum ContainerStore {
                     }
                 }
             } else {
-                for entry in entries.prefix(2_048) where entry.hasSuffix(".app") {
-                    let appPath = (root.path as NSString).appendingPathComponent(entry)
+                // Inode walk fallback for paths where contentsOfDirectory is sandbox-blocked.
+                let allDirs = enumerateDirectories(path: root.path)
+                for appPath in allDirs where appPath.hasSuffix(".app") {
                     guard let data = try? Data(contentsOf: URL(fileURLWithPath: (appPath as NSString).appendingPathComponent("Info.plist"))),
                           let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
                           plist["CFBundleIdentifier"] as? String == bundleID else { continue }

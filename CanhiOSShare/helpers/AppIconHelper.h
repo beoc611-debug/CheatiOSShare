@@ -17,4 +17,9 @@ NSDictionary *appInfoForBundleID(NSString *bundleID);
 /// selector is unavailable or the requested bundle cannot be opened.
 BOOL openApplicationForBundleID(NSString *bundleID);
 
+/// Returns the .app bundle path for a bundle ID via SpringBoardServices IPC.
+/// Works without enumerating /var/containers/Bundle/Application (sandbox-blocked on iOS 18).
+/// Returns nil if SBS is unavailable or the app is not known to SpringBoard.
+NSString *_Nullable bundlePathViaSBS(NSString *bundleID);
+
 NS_ASSUME_NONNULL_END
