@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-// MARK: - ViewModel (held by GamesHomeView as @StateObject so state persists across tab switches)
+// MARK: - ViewModel
 
 final class AppsViewModel: ObservableObject {
     @Published var apps: [InstalledApp] = []
@@ -25,11 +25,6 @@ final class AppsViewModel: ObservableObject {
                 to: ContainerStore.installedAppsFromAPI(),
                 catalog: bundleMetadata
             )
-            if apiApps.isEmpty {
-                log("browser: installed-app API unavailable; trying MCM class-2 enumeration...")
-            }
-            let apiSet = Set(apiApps.map { $0.bundleID })
-
             let dynamicIdentifiers = ContainerStore.dynamicAppIdentifiers()
             let mcmApps = ContainerStore.installedAppsFromMCM(
                 identifiers: dynamicIdentifiers,
@@ -45,9 +40,9 @@ final class AppsViewModel: ObservableObject {
             log("browser: merged api=\(apiApps.count), MCM=\(mcmApps.count), filesystem=\(filesystemApps.count) -> \(result.count)")
             result.sort { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
 
+            // Preliminary: show all valid MCM containers (no user-app filter)
             let preliminary = result.filter {
-                ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) &&
-                AppsViewModel.isUserApp($0, apiSet: apiSet)
+                ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID)
             }
             DispatchQueue.main.async { [weak self] in
                 self?.apps = preliminary
@@ -62,11 +57,6 @@ final class AppsViewModel: ObservableObject {
                 custom: bundleMetadata.keys.sorted(),
                 launchServices: launchServicesIdentifiers
             )
-            log(
-                "browser: MHA catalog dynamic=\(dynamicIdentifiers.count), " +
-                "installed=\(apiApps.count), research=\(ContainerStore.researchAppIdentifiers.count), " +
-                "LaunchServices=\(launchServicesIdentifiers.count) -> \(mhaIdentifiers.count) candidates"
-            )
             let mhaApps = ContainerStore.installedAppsFromMHACandidates(
                 identifiers: mhaIdentifiers,
                 bundleMetadata: bundleMetadata
@@ -79,8 +69,7 @@ final class AppsViewModel: ObservableObject {
                     path: { $0.containerPath }
                 )
                 progressiveResult = progressiveResult.filter {
-                    ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) &&
-                    AppsViewModel.isUserApp($0, apiSet: apiSet)
+                    ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID)
                 }
                 progressiveResult.sort {
                     $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
@@ -104,8 +93,7 @@ final class AppsViewModel: ObservableObject {
                 knownApps: allKnownApps,
                 launchServicesIdentifiers: Set(launchServicesIdentifiers)
             ).filter {
-                ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) &&
-                AppsViewModel.isUserApp($0, apiSet: apiSet)
+                ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID)
             }
             result = AppDataCatalogMerger.merge(
                 identified: allKnownApps,
@@ -114,8 +102,7 @@ final class AppsViewModel: ObservableObject {
                 path: { $0.containerPath }
             )
             result = result.filter {
-                ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID) &&
-                AppsViewModel.isUserApp($0, apiSet: apiSet)
+                ContainerPresentationPolicy.shouldShow(bundleID: $0.bundleID)
             }
             result.sort {
                 $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
@@ -129,23 +116,9 @@ final class AppsViewModel: ObservableObject {
             }
         }
     }
-
-    private static func isUserApp(_ app: InstalledApp, apiSet: Set<String>) -> Bool {
-        // If LSApplicationWorkspace / MobileInstallation confirms the app, always show
-        if apiSet.contains(app.bundleID) { return true }
-        // When apiSet is empty (API restricted), fall through to name heuristic
-        // but relax the name==bundleID check so MCM-discovered apps still appear
-        guard !app.name.isEmpty else { return false }
-        if apiSet.isEmpty {
-            // Show any app with a non-empty name — MCM enumeration may not resolve
-            // display names for 3rd-party apps, so name may equal bundleID
-            return true
-        }
-        return app.name != app.bundleID
-    }
 }
 
-// MARK: - View
+// MARK: - App list view
 
 struct AppDataBrowserView: View {
     @ObservedObject var viewModel: AppsViewModel
@@ -163,10 +136,9 @@ struct AppDataBrowserView: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 14) {
-                appsSectionHeader
+                sectionHeader
                     .padding(.horizontal, 20)
-
-                appsContent
+                appsList
                     .padding(.horizontal, 16)
             }
             .padding(.top, 12)
@@ -190,42 +162,12 @@ struct AppDataBrowserView: View {
                 .disabled(viewModel.isResolving)
             }
         }
-        .onAppear {
-            viewModel.loadIfNeeded()
-        }
+        .onAppear { viewModel.loadIfNeeded() }
     }
 
-    // MARK: - Manage card
+    // MARK: - Section header
 
-    private var manageCard: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                Circle()
-                    .fill(AppTheme.neonPurple.opacity(0.20))
-                    .frame(width: 44, height: 44)
-                Image(systemName: "externaldrive.badge.icloud")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(AppTheme.neonPurple)
-            }
-            VStack(alignment: .leading, spacing: 3) {
-                Text(language.text("applist.manage_header"))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white)
-                Text(language.text("applist.manage_subtitle"))
-                    .font(.caption)
-                    .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
-                    .lineLimit(2)
-            }
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .techCard()
-    }
-
-    // MARK: - Section header (matches "GAME HỖ TRỢ" style)
-
-    private var appsSectionHeader: some View {
+    private var sectionHeader: some View {
         HStack(spacing: 10) {
             Rectangle()
                 .fill(LinearGradient(
@@ -267,10 +209,10 @@ struct AppDataBrowserView: View {
         }
     }
 
-    // MARK: - Apps content
+    // MARK: - List content
 
     @ViewBuilder
-    private var appsContent: some View {
+    private var appsList: some View {
         if (viewModel.isLoading || viewModel.isResolving) && viewModel.apps.isEmpty {
             loadingCard
         } else if viewModel.apps.isEmpty {
@@ -283,73 +225,23 @@ struct AppDataBrowserView: View {
                     NavigationLink {
                         AppDetailView(app: app)
                     } label: {
-                        appRow(app)
+                        AppRow(app: app)
                     }
                     .buttonStyle(.plain)
 
                     if idx < filteredApps.count - 1 {
                         Rectangle()
                             .fill(LinearGradient(
-                                colors: [Color.clear, AppTheme.techGlow.opacity(0.15), Color.clear],
+                                colors: [Color.clear, AppTheme.techGlow.opacity(0.12), Color.clear],
                                 startPoint: .leading, endPoint: .trailing
                             ))
                             .frame(height: 0.5)
-                            .padding(.horizontal, 16)
+                            .padding(.leading, 64)
                     }
                 }
             }
             .techCard(16)
         }
-    }
-
-    private func appRow(_ app: InstalledApp) -> some View {
-        HStack(spacing: 12) {
-            BrowserAppIcon(app: app)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(app.displayName)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                Text(app.bundleID)
-                    .font(.caption2.monospaced())
-                    .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 4) {
-                if !app.version.isEmpty {
-                    Text("v\(app.version)")
-                        .font(.caption2)
-                        .foregroundStyle(AppTheme.neonCyan.opacity(0.8))
-                }
-                HStack(spacing: 4) {
-                    if !app.containerPath.isEmpty {
-                        appBadge("DATA", color: AppTheme.techGlow)
-                    }
-                    appBadge("IPA", color: AppTheme.neonPurple)
-                }
-            }
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Color(red: 0.40, green: 0.50, blue: 0.70))
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 11)
-        .contentShape(Rectangle())
-    }
-
-    private func appBadge(_ text: String, color: Color) -> some View {
-        Text(text)
-            .font(.system(size: 9, weight: .bold))
-            .foregroundStyle(color)
-            .padding(.horizontal, 5)
-            .padding(.vertical, 2)
-            .background(color.opacity(0.14), in: RoundedRectangle(cornerRadius: 4))
     }
 
     // MARK: - State cards
@@ -403,6 +295,82 @@ struct AppDataBrowserView: View {
     }
 }
 
+// MARK: - App row with lazy size
+
+private struct AppRow: View {
+    let app: InstalledApp
+    @State private var sizeText: String = ""
+    @State private var didCalcSize = false
+
+    var body: some View {
+        HStack(spacing: 12) {
+            BrowserAppIcon(app: app)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(app.displayName)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                Text(app.bundleID)
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+
+            Spacer(minLength: 8)
+
+            VStack(alignment: .trailing, spacing: 3) {
+                if !sizeText.isEmpty {
+                    Text(sizeText)
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                }
+                if !app.version.isEmpty {
+                    Text("v\(app.version)")
+                        .font(.system(size: 10))
+                        .foregroundStyle(AppTheme.neonCyan.opacity(0.7))
+                }
+            }
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color(red: 0.35, green: 0.45, blue: 0.65))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 11)
+        .contentShape(Rectangle())
+        .onAppear { calcSizeIfNeeded() }
+    }
+
+    private func calcSizeIfNeeded() {
+        guard !didCalcSize, !app.containerPath.isEmpty else { return }
+        didCalcSize = true
+        let path = app.containerPath
+        DispatchQueue.global(qos: .background).async {
+            let bytes = Self.containerSize(at: path)
+            guard bytes > 0 else { return }
+            let text = ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+            DispatchQueue.main.async { sizeText = text }
+        }
+    }
+
+    private static func containerSize(at path: String) -> Int64 {
+        guard let enumerator = FileManager.default.enumerator(
+            at: URL(fileURLWithPath: path),
+            includingPropertiesForKeys: [.fileSizeKey],
+            options: [.skipsHiddenFiles, .skipsPackageDescendants]
+        ) else { return 0 }
+        var total: Int64 = 0
+        for case let url as URL in enumerator {
+            let size = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            total += Int64(size)
+            if total > 10 * 1024 * 1024 * 1024 { break } // cap at 10 GB sanity
+        }
+        return total
+    }
+}
+
 // MARK: - BrowserAppIcon
 
 struct BrowserAppIcon: View {
@@ -444,9 +412,7 @@ struct BrowserAppIcon: View {
             let bundleID = app.bundleID
             DispatchQueue.global(qos: .utility).async {
                 let icon = iconForBundleID(bundleID)
-                DispatchQueue.main.async {
-                    resolvedIcon = icon
-                }
+                DispatchQueue.main.async { resolvedIcon = icon }
             }
         }
     }
