@@ -14,6 +14,7 @@ struct GamePatchesView: View {
     @State private var containers: [RemoteContainerSummary] = []
     @State private var selectedContainerID: String?
     @State private var containersLoaded = false
+    @State private var gameNotice: GameNotice?
     @AppStorage("patch.importedOnlineIDs") private var importedOnlineIDsRaw = ""
     @AppStorage("patch.gameAssignments") private var gameAssignmentsRaw = "{}"
     @AppStorage("patch.remoteToLocalMap") private var remoteToLocalMapRaw = "{}"
@@ -86,13 +87,19 @@ struct GamePatchesView: View {
                     await loadProjectStates()
                 }
             }
+
+
         }
         .toolbarHidden15()
         .task {
             async let syncTask: () = sync()
             async let containersTask: () = loadContainers()
-            _ = await (syncTask, containersTask)
+            async let noticeTask: () = fetchNotice()
+            _ = await (syncTask, containersTask, noticeTask)
             await loadProjectStates()
+        }
+        .sheet(item: $gameNotice) { notice in
+            GameNoticeSheetView(notice: notice, onContinue: { gameNotice = nil })
         }
         .sheet(item: $store.passwordRequest, onDismiss: store.cancelUnlock) { _ in
             PatchUnlockView(store: store)
@@ -487,7 +494,6 @@ struct GamePatchesView: View {
             } else {
                 Toggle("", isOn: projectToggleBinding(for: item))
                     .labelsHidden()
-                    .tint(AppTheme.neonPurple)
                     .disabled(toggleableCount == 0)
             }
         }
@@ -504,7 +510,7 @@ struct GamePatchesView: View {
             HStack(spacing: 10) {
                 Image(systemName: "play.fill")
                     .font(.system(size: 16, weight: .bold))
-                Text(language.text("patch.open_game_now"))
+                Text(game.type == "app" ? "Mở ứng dụng ngay" : language.text("patch.open_game_now"))
                     .font(.system(size: 18, weight: .bold))
             }
             .foregroundStyle(.white)
@@ -680,6 +686,13 @@ struct GamePatchesView: View {
         }
         if didChange {
             store.reload()
+        }
+    }
+
+    private func fetchNotice() async {
+        let notices = await PatchHubService.fetchGameNotices()
+        if let notice = notices[game.id] {
+            await MainActor.run { gameNotice = notice }
         }
     }
 

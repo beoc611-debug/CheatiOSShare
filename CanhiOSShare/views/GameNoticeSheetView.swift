@@ -9,22 +9,6 @@ struct GameNoticeSheetView: View {
         VStack(spacing: 14) {
             Spacer()
 
-            ZStack {
-                Circle()
-                    .fill(AppTheme.neonPurple.opacity(0.18))
-                    .frame(width: 80, height: 80)
-                    .blur(radius: 10)
-                Image(systemName: "megaphone.fill")
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [AppTheme.neonPurple, AppTheme.techGlow],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        )
-                    )
-                    .shadow(color: AppTheme.neonPurple.opacity(0.55), radius: 14, y: 4)
-            }
-
             if !notice.title.isEmpty {
                 Text(notice.title)
                     .font(.title3.weight(.bold))

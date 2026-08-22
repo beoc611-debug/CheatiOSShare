@@ -41,6 +41,7 @@ struct RemoteGameSummary: Decodable, Identifiable, Equatable, Hashable {
     let bannerColor: String
     let iconPath: String?
     let createdAt: String
+    let type: String?
 
     var iconURL: URL? {
         guard let iconPath else { return nil }

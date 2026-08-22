@@ -110,7 +110,8 @@ struct GamesHomeView: View {
                                             subtitle: game.bundleID.isEmpty ? " " : game.bundleID,
                                             bannerColor: AppTheme.resolvedBannerColor(game.bannerColor),
                                             iconURL: game.iconURL,
-                                            systemIconName: "app.fill"
+                                            systemIconName: "app.fill",
+                                            actionLabel: game.type == "app" ? "MỞ ỨNG DỤNG" : "MỞ GAME"
                                         )
                                     }
                                     .buttonStyle(.plain)
@@ -586,6 +587,7 @@ struct GameCardView: View {
     let bannerColor: Color
     let iconURL: URL?
     let systemIconName: String
+    var actionLabel: String = "MỞ GAME"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -633,7 +635,7 @@ struct GameCardView: View {
                 // Action button (visual — card NavigationLink handles tap)
                 HStack(spacing: 4) {
                     Spacer()
-                    Text("MỞ GAME")
+                    Text(actionLabel)
                         .font(.system(size: 11, weight: .heavy))
                         .kerning(0.8)
                     Image(systemName: "chevron.right")
