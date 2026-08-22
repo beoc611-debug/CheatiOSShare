@@ -4,6 +4,7 @@ struct GamePatchesView: View {
     @Environment(\.appLanguage) private var language
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var licenseGate: LicenseGateStore
     let game: RemoteGameSummary
     @ObservedObject var store: PatchProjectStore
 
@@ -738,7 +739,7 @@ struct GamePatchesView: View {
         togglingProjectID = item.id
         Task.detached(priority: .userInitiated) {
             if isOn {
-                guard await PatchHubService.verifyAccess() else {
+                guard await PatchHubService.verifyAccess(licenseKey: licenseGate.storedKeyCode) else {
                     await MainActor.run {
                         togglingProjectID = nil
                         projectStates[item.id] = false
