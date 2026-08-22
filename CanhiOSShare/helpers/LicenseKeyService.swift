@@ -96,11 +96,11 @@ enum LicenseKeyService {
         var request = URLRequest(url: baseURL.appendingPathComponent(PatchHubService.pathRedeem))
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        request.setValue(PatchHubService.clientToken, forHTTPHeaderField: "X-App-Token")
+        request.setValue(PatchHubService.clientToken, forHTTPHeaderField: PatchHubService.hAppToken)
         let (ts, nonce, sig) = PatchHubService.signKeyRequest(code: code, deviceId: deviceId)
-        request.setValue(ts,    forHTTPHeaderField: "X-Request-Time")
-        request.setValue(nonce, forHTTPHeaderField: "X-Request-Nonce")
-        request.setValue(sig,   forHTTPHeaderField: "X-Request-Sig")
+        request.setValue(ts,    forHTTPHeaderField: PatchHubService.hReqTime)
+        request.setValue(nonce, forHTTPHeaderField: PatchHubService.hReqNonce)
+        request.setValue(sig,   forHTTPHeaderField: PatchHubService.hReqSig)
         request.httpBody = formBody(["code": code, "deviceId": deviceId, "deviceModel": deviceModel])
 
         let data: Data
@@ -130,11 +130,11 @@ enum LicenseKeyService {
             URLQueryItem(name: "deviceId", value: deviceId)
         ]
         var statusRequest = URLRequest(url: components.url!)
-        statusRequest.setValue(PatchHubService.clientToken, forHTTPHeaderField: "X-App-Token")
+        statusRequest.setValue(PatchHubService.clientToken, forHTTPHeaderField: PatchHubService.hAppToken)
         let (ts, nonce, sig) = PatchHubService.signKeyRequest(code: code, deviceId: deviceId)
-        statusRequest.setValue(ts,    forHTTPHeaderField: "X-Request-Time")
-        statusRequest.setValue(nonce, forHTTPHeaderField: "X-Request-Nonce")
-        statusRequest.setValue(sig,   forHTTPHeaderField: "X-Request-Sig")
+        statusRequest.setValue(ts,    forHTTPHeaderField: PatchHubService.hReqTime)
+        statusRequest.setValue(nonce, forHTTPHeaderField: PatchHubService.hReqNonce)
+        statusRequest.setValue(sig,   forHTTPHeaderField: PatchHubService.hReqSig)
         let data: Data
         let response: URLResponse
         do {

@@ -55,43 +55,67 @@ enum PatchHubError: Error {
 }
 
 enum PatchHubService {
-    static let baseURL = URL(string: "https://patches.cheatiosvip.net")!
-
-    // XOR key = 0x4B — strings are never stored as plaintext in the compiled binary
+    // XOR key = 0x4B — no plaintext strings in the compiled binary
+    // Base URL: https://patches.cheatiosvip.net
+    private static let _bu: [UInt8] = [
+        0x23, 0x3F, 0x3F, 0x3B, 0x38, 0x71, 0x64, 0x64, 0x3B, 0x2A, 0x3F, 0x28, 0x23, 0x2E,
+        0x38, 0x65, 0x28, 0x23, 0x2E, 0x2A, 0x3F, 0x22, 0x24, 0x38, 0x3D, 0x22, 0x3B, 0x65,
+        0x25, 0x2E, 0x3F
+    ]
+    // CLIENT_TOKEN: DSW_InpcJAQBCl3U_VCAPI2026X1
     private static let _t: [UInt8] = [
         0x0F, 0x18, 0x1C, 0x14, 0x02, 0x25, 0x3B, 0x28, 0x01, 0x0A, 0x1A, 0x09, 0x08, 0x27,
         0x78, 0x1E, 0x14, 0x1D, 0x08, 0x0A, 0x1B, 0x02, 0x79, 0x7B, 0x79, 0x7D, 0x13, 0x7A
     ]
-    private static let _g: [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x2C]
-    private static let _p: [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x3B]
-    private static let _c: [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x28]
-    private static let _n: [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x25]
-    private static let _a: [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x2A] // cv/sa
-    // /cv/cl  (contact link)
-    private static let _cl: [UInt8] = [0x28, 0x3D, 0x64, 0x28, 0x27]
-    // /api/game-notices
-    private static let _gn: [UInt8] = [0x64, 0x2A, 0x3B, 0x22, 0x64, 0x2C, 0x2A, 0x26, 0x2E, 0x66, 0x25, 0x24, 0x3F, 0x22, 0x28, 0x2E, 0x38]
-    private static let _r: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x39, 0x2E, 0x2F, 0x2E, 0x2E, 0x26]
-    private static let _s: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x38, 0x3F, 0x2A, 0x3F, 0x3E, 0x38]
-    // HMAC signing secret — XOR key 0x4B, decodes to "D5W_hmac_sig_v2_9mQx7nR4pLk8"
+    // API paths (obfuscated)
+    private static let _g:  [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x2C]                                                                                  // cv/sg
+    private static let _p:  [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x3B]                                                                                  // cv/sp
+    private static let _c:  [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x28]                                                                                  // cv/sc
+    private static let _n:  [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x25]                                                                                  // cv/sn
+    private static let _a:  [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x2A]                                                                                  // cv/sa
+    private static let _cl: [UInt8] = [0x28, 0x3D, 0x64, 0x28, 0x27]                                                                                  // cv/cl
+    private static let _gn: [UInt8] = [0x64, 0x2A, 0x3B, 0x22, 0x64, 0x2C, 0x2A, 0x26, 0x2E, 0x66, 0x25, 0x24, 0x3F, 0x22, 0x28, 0x2E, 0x38]       // api/game-notices
+    private static let _r:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x39, 0x2E, 0x2F, 0x2E, 0x2E, 0x26]                   // api/keys/redeem
+    private static let _s:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x38, 0x3F, 0x2A, 0x3F, 0x3E, 0x38]                   // api/keys/status
+    // HMAC signing secret: D5W_hmac_sig_v2_9mQx7nR4pLk8
     private static let _sk: [UInt8] = [
         0x0F, 0x7E, 0x1C, 0x14, 0x23, 0x26, 0x2A, 0x28, 0x14, 0x38, 0x22, 0x2C, 0x14, 0x3D,
         0x79, 0x14, 0x72, 0x26, 0x1A, 0x33, 0x7C, 0x25, 0x19, 0x7F, 0x3B, 0x07, 0x20, 0x73
     ]
+    // HTTP header names — XOR-encoded so a strings dump doesn't reveal the request protocol
+    private static let _hat:   [UInt8] = [0x13, 0x66, 0x0A, 0x3B, 0x3B, 0x66, 0x1F, 0x24, 0x20, 0x2E, 0x25]                        // X-App-Token
+    private static let _hdi:   [UInt8] = [0x13, 0x66, 0x0F, 0x2E, 0x3D, 0x22, 0x28, 0x2E, 0x66, 0x02, 0x2F]                        // X-Device-Id
+    private static let _hlk:   [UInt8] = [0x13, 0x66, 0x07, 0x22, 0x28, 0x2E, 0x25, 0x38, 0x2E, 0x66, 0x00, 0x2E, 0x32]            // X-License-Key
+    private static let _hts:   [UInt8] = [0x13, 0x66, 0x1F, 0x22, 0x26, 0x2E, 0x38, 0x3F, 0x2A, 0x26, 0x3B]                        // X-Timestamp
+    private static let _hn:    [UInt8] = [0x13, 0x66, 0x05, 0x24, 0x25, 0x28, 0x2E]                                                 // X-Nonce
+    private static let _hsg:   [UInt8] = [0x13, 0x66, 0x18, 0x22, 0x2C]                                                             // X-Sig
+    private static let _hrs:   [UInt8] = [0x13, 0x66, 0x19, 0x2E, 0x38, 0x3B, 0x24, 0x25, 0x38, 0x2E, 0x66, 0x18, 0x22, 0x2C]    // X-Response-Sig
+    private static let _hrt:   [UInt8] = [0x13, 0x66, 0x19, 0x2E, 0x3A, 0x3E, 0x2E, 0x38, 0x3F, 0x66, 0x1F, 0x22, 0x26, 0x2E]    // X-Request-Time
+    private static let _hrn:   [UInt8] = [0x13, 0x66, 0x19, 0x2E, 0x3A, 0x3E, 0x2E, 0x38, 0x3F, 0x66, 0x05, 0x24, 0x25, 0x28, 0x2E] // X-Request-Nonce
+    private static let _hrsig: [UInt8] = [0x13, 0x66, 0x19, 0x2E, 0x3A, 0x3E, 0x2E, 0x38, 0x3F, 0x66, 0x18, 0x22, 0x2C]          // X-Request-Sig
 
     private static func d(_ b: [UInt8]) -> String {
         String(bytes: b.map { $0 ^ 0x4B }, encoding: .utf8) ?? ""
     }
 
-    static var clientToken: String { d(_t) }
-    static var pathGames: String { d(_g) }
-    static var pathPatches: String { d(_p) }
-    static var pathContainers: String { d(_c) }
-    static var pathNotice: String { d(_n) }
-    static var pathContact: String { d(_cl) }
-    static var pathRedeem: String { d(_r) }
-    static var pathStatus: String { d(_s) }
+    static let baseURL: URL = URL(string: d(_bu))!
+
+    static var clientToken: String     { d(_t) }
+    static var pathGames: String       { d(_g) }
+    static var pathPatches: String     { d(_p) }
+    static var pathContainers: String  { d(_c) }
+    static var pathNotice: String      { d(_n) }
+    static var pathContact: String     { d(_cl) }
+    static var pathRedeem: String      { d(_r) }
+    static var pathStatus: String      { d(_s) }
     static var pathGameNotices: String { d(_gn) }
+
+    // Header name accessors used by LicenseKeyService
+    static var hAppToken: String    { d(_hat) }
+    static var hDeviceId: String    { d(_hdi) }
+    static var hReqTime: String     { d(_hrt) }
+    static var hReqNonce: String    { d(_hrn) }
+    static var hReqSig: String      { d(_hrsig) }
 
     /// Signs a key-API request with HMAC-SHA256 so the server can reject forged/replayed calls.
     /// Returns (timestamp ms string, nonce UUID string, hex signature).
@@ -110,7 +134,7 @@ enum PatchHubService {
     /// Returns false if the signature is missing or doesn't match — indicating proxy tampering.
     static func verifyResponse(data: Data, httpResponse: URLResponse) -> Bool {
         guard let http = httpResponse as? HTTPURLResponse,
-              let sig = http.value(forHTTPHeaderField: "X-Response-Sig") else { return false }
+              let sig = http.value(forHTTPHeaderField: d(_hrs)) else { return false }
         let key = SymmetricKey(data: Data(d(_sk).utf8))
         let mac = HMAC<SHA256>.authenticationCode(for: data, using: key)
         let expected = Data(mac).map { String(format: "%02x", $0) }.joined()
@@ -119,8 +143,8 @@ enum PatchHubService {
 
     private static func get(_ url: URL) -> URLRequest {
         var r = URLRequest(url: url)
-        r.setValue(clientToken, forHTTPHeaderField: "X-App-Token")
-        r.setValue(DeviceIdentity.current, forHTTPHeaderField: "X-Device-Id")
+        r.setValue(clientToken, forHTTPHeaderField: d(_hat))
+        r.setValue(DeviceIdentity.current, forHTTPHeaderField: d(_hdi))
         return r
     }
 
@@ -132,11 +156,11 @@ enum PatchHubService {
         let url = baseURL.appendingPathComponent(d(_a))
         var request = get(url) // adds X-App-Token + X-Device-Id
         let key = licenseKey ?? ""
-        request.setValue(key, forHTTPHeaderField: "X-License-Key")
+        request.setValue(key, forHTTPHeaderField: d(_hlk))
         let (ts, nonce, sig) = signKeyRequest(code: key, deviceId: DeviceIdentity.current)
-        request.setValue(ts, forHTTPHeaderField: "X-Timestamp")
-        request.setValue(nonce, forHTTPHeaderField: "X-Nonce")
-        request.setValue(sig, forHTTPHeaderField: "X-Sig")
+        request.setValue(ts,    forHTTPHeaderField: d(_hts))
+        request.setValue(nonce, forHTTPHeaderField: d(_hn))
+        request.setValue(sig,   forHTTPHeaderField: d(_hsg))
         guard let (data, response) = try? await URLSession.shared.data(for: request),
               let http = response as? HTTPURLResponse,
               (200...299).contains(http.statusCode),
