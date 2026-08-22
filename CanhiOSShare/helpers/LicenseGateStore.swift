@@ -139,6 +139,8 @@ final class LicenseGateStore: ObservableObject {
             isUnlocked = true
         } catch LicenseKeyError.network {
             // Connectivity issue only — keep whatever unlocked state we already had.
+        } catch LicenseKeyError.expired {
+            changeKey()
         } catch {
             isUnlocked = false
         }
