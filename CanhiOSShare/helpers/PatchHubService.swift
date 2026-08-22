@@ -124,18 +124,24 @@ enum PatchHubService {
         return r
     }
 
-    /// Lightweight server-side key check. Called before loading games so bypassing the local
-    /// license gate (e.g. binary NOP patch) still can't reach content without a valid server key.
-    /// Sends the stored license key + device ID; server rejects if missing, revoked, or expired.
+    /// Server-side gate called before loading games. Sends a signed request so the server can
+    /// reject: missing/revoked/expired keys, unregistered devices, replayed requests, and
+    /// forged requests from binaries that don't know _sk. Also verifies the response HMAC so
+    /// a proxy that swaps 403→200 can't fool the app.
     static func verifyAccess(licenseKey: String? = nil) async -> Bool {
         let url = baseURL.appendingPathComponent(d(_a))
-        var request = get(url)
-        if let key = licenseKey {
-            request.setValue(key, forHTTPHeaderField: "X-License-Key")
-        }
-        guard let (_, response) = try? await URLSession.shared.data(for: request),
-              let http = response as? HTTPURLResponse else { return false }
-        return (200...299).contains(http.statusCode)
+        var request = get(url) // adds X-App-Token + X-Device-Id
+        let key = licenseKey ?? ""
+        request.setValue(key, forHTTPHeaderField: "X-License-Key")
+        let (ts, nonce, sig) = signKeyRequest(code: key, deviceId: DeviceIdentity.current)
+        request.setValue(ts, forHTTPHeaderField: "X-Timestamp")
+        request.setValue(nonce, forHTTPHeaderField: "X-Nonce")
+        request.setValue(sig, forHTTPHeaderField: "X-Sig")
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              let http = response as? HTTPURLResponse,
+              (200...299).contains(http.statusCode),
+              verifyResponse(data: data, httpResponse: response) else { return false }
+        return true
     }
 
     static func fetchContactURL() async -> URL? {
