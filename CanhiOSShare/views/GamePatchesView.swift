@@ -1,4 +1,30 @@
 import SwiftUI
+import UIKit
+
+// UISwitch wrapper — bypasses SwiftUI .tint() chain so iOS 26 liquid-glass style renders natively
+private struct NativeToggle: UIViewRepresentable {
+    @Binding var isOn: Bool
+    var isDisabled: Bool = false
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeUIView(context: Context) -> UISwitch {
+        let s = UISwitch()
+        s.addTarget(context.coordinator, action: #selector(Coordinator.changed(_:)), for: .valueChanged)
+        return s
+    }
+
+    func updateUIView(_ uiView: UISwitch, context: Context) {
+        if uiView.isOn != isOn { uiView.setOn(isOn, animated: true) }
+        uiView.isEnabled = !isDisabled
+    }
+
+    class Coordinator: NSObject {
+        var parent: NativeToggle
+        init(_ parent: NativeToggle) { self.parent = parent }
+        @objc func changed(_ s: UISwitch) { parent.isOn = s.isOn }
+    }
+}
 
 struct GamePatchesView: View {
     @Environment(\.appLanguage) private var language
@@ -492,9 +518,8 @@ struct GamePatchesView: View {
                 ProgressView()
                     .tint(AppTheme.techGlow)
             } else {
-                Toggle("", isOn: projectToggleBinding(for: item))
-                    .labelsHidden()
-                    .disabled(toggleableCount == 0)
+                NativeToggle(isOn: projectToggleBinding(for: item), isDisabled: toggleableCount == 0)
+                    .fixedSize()
             }
         }
         .padding(.horizontal, 18)
