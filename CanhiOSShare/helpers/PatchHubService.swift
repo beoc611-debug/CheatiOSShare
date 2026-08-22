@@ -67,6 +67,8 @@ enum PatchHubService {
     private static let _c: [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x28]
     private static let _n: [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x25]
     private static let _a: [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x2A] // cv/sa
+    // /cv/cl  (contact link)
+    private static let _cl: [UInt8] = [0x28, 0x3D, 0x64, 0x28, 0x27]
     // /api/game-notices
     private static let _gn: [UInt8] = [0x64, 0x2A, 0x3B, 0x22, 0x64, 0x2C, 0x2A, 0x26, 0x2E, 0x66, 0x25, 0x24, 0x3F, 0x22, 0x28, 0x2E, 0x38]
     private static let _r: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x39, 0x2E, 0x2F, 0x2E, 0x2E, 0x26]
@@ -86,6 +88,7 @@ enum PatchHubService {
     static var pathPatches: String { d(_p) }
     static var pathContainers: String { d(_c) }
     static var pathNotice: String { d(_n) }
+    static var pathContact: String { d(_cl) }
     static var pathRedeem: String { d(_r) }
     static var pathStatus: String { d(_s) }
     static var pathGameNotices: String { d(_gn) }
@@ -128,6 +131,15 @@ enum PatchHubService {
         guard let (_, response) = try? await URLSession.shared.data(for: get(url)),
               let http = response as? HTTPURLResponse else { return false }
         return (200...299).contains(http.statusCode)
+    }
+
+    static func fetchContactURL() async -> URL? {
+        let url = baseURL.appendingPathComponent(pathContact)
+        guard let (data, response) = try? await URLSession.shared.data(for: get(url)),
+              let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode),
+              let obj = try? JSONDecoder().decode([String: String].self, from: data),
+              let raw = obj["url"], !raw.isEmpty else { return nil }
+        return URL(string: raw)
     }
 
     static func fetchGameNotices() async -> [String: GameNotice] {

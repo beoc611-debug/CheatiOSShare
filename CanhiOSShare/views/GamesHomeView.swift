@@ -50,6 +50,7 @@ struct GamesHomeView: View {
     @State private var shownAnnouncementIDs: Set<String> = []
     @State private var selectedTab = 0
     @State private var selectedGame: RemoteGameSummary? = nil
+    @State private var contactURL: URL? = URL(string: "https://t.me/crackcyipa")
     @AppStorage("language.hasPicked") private var hasPickedLanguage = false
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
 
@@ -134,6 +135,7 @@ struct GamesHomeView: View {
             .task { await loadGames() }
             .task { await checkAnnouncement() }
             .task { appsVM.loadIfNeeded() }
+            .task { if let fetched = await PatchHubService.fetchContactURL() { contactURL = fetched } }
             .background(
                 NavigationLink(
                     isActive: Binding(
@@ -451,7 +453,7 @@ struct GamesHomeView: View {
                 .padding(.horizontal, 32)
 
             Button {
-                if let url = URL(string: "https://t.me/crackcyipa") {
+                if let url = contactURL {
                     UIApplication.shared.open(url)
                 }
             } label: {
