@@ -546,12 +546,14 @@ struct GamesHomeView: View {
     private func loadGames() async {
         isLoadingGames = true
         let keyCode = licenseGate.storedKeyCode
-        guard await PatchHubService.verifyAccess(licenseKey: keyCode) else {
+        async let accessOk = PatchHubService.verifyAccess(licenseKey: keyCode)
+        async let fetched = PatchHubService.fetchGames()
+        guard await accessOk else {
             isLoadingGames = false
             return
         }
-        if let fetched = try? await PatchHubService.fetchGames() {
-            games = fetched
+        if let result = try? await fetched {
+            games = result
         }
         isLoadingGames = false
     }
