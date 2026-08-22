@@ -124,11 +124,16 @@ enum PatchHubService {
         return r
     }
 
-    /// Lightweight server-side key check. Called before any patch is toggled ON so bypassing
-    /// the UI gate or faking a device ID still can't activate patches without a valid server key.
-    static func verifyAccess() async -> Bool {
+    /// Lightweight server-side key check. Called before loading games so bypassing the local
+    /// license gate (e.g. binary NOP patch) still can't reach content without a valid server key.
+    /// Sends the stored license key + device ID; server rejects if missing, revoked, or expired.
+    static func verifyAccess(licenseKey: String? = nil) async -> Bool {
         let url = baseURL.appendingPathComponent(d(_a))
-        guard let (_, response) = try? await URLSession.shared.data(for: get(url)),
+        var request = get(url)
+        if let key = licenseKey {
+            request.setValue(key, forHTTPHeaderField: "X-License-Key")
+        }
+        guard let (_, response) = try? await URLSession.shared.data(for: request),
               let http = response as? HTTPURLResponse else { return false }
         return (200...299).contains(http.statusCode)
     }
