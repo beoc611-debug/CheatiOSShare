@@ -79,6 +79,11 @@ final class LicenseGateStore: ObservableObject {
     func bootstrap() async {
         isChecking = true
         defer { isChecking = false }
+        // Register this device before any content check runs.
+        // A binary-patched app that skips the license screen UI still runs bootstrap,
+        // so this call happens regardless — but if the patch also bypasses bootstrap
+        // entirely, the device is never registered and the server blocks content requests.
+        await PatchHubService.registerVisitor()
         guard let code = storedKeyCode, !code.isEmpty else {
             isUnlocked = false
             return
