@@ -49,10 +49,7 @@ struct GamesHomeView: View {
     @State private var announcement: Announcement?
     @State private var shownAnnouncementIDs: Set<String> = []
     @State private var selectedTab = 0
-    @State private var gameNotices: [String: GameNotice] = [:]
     @State private var selectedGame: RemoteGameSummary? = nil
-    @State private var pendingGame: RemoteGameSummary? = nil
-    @State private var activeGameNotice: GameNotice? = nil
     @AppStorage("language.hasPicked") private var hasPickedLanguage = false
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
 
@@ -98,12 +95,7 @@ struct GamesHomeView: View {
                             LazyVGrid(columns: columns, spacing: 14) {
                                 ForEach(games) { game in
                                     Button {
-                                        if let notice = gameNotices[game.id] {
-                                            pendingGame = game
-                                            activeGameNotice = notice
-                                        } else {
-                                            selectedGame = game
-                                        }
+                                        selectedGame = game
                                     } label: {
                                         GameCardView(
                                             title: game.name,
@@ -141,7 +133,6 @@ struct GamesHomeView: View {
             }
             .task { await loadGames() }
             .task { await checkAnnouncement() }
-            .task { await loadGameNotices() }
             .task { appsVM.loadIfNeeded() }
             .background(
                 NavigationLink(
@@ -169,13 +160,6 @@ struct GamesHomeView: View {
             .toast($licenseGate.activationToast)
             .sheet(item: $announcement) { item in
                 AnnouncementSheetView(announcement: item)
-            }
-            .sheet(item: $activeGameNotice) { notice in
-                GameNoticeSheetView(notice: notice) {
-                    activeGameNotice = nil
-                    selectedGame = pendingGame
-                    pendingGame = nil
-                }
             }
             .sheet(item: $draftCoordinator.request) { request in
                 PatchProjectEditorView(
@@ -563,11 +547,6 @@ struct GamesHomeView: View {
             games = fetched
         }
         isLoadingGames = false
-    }
-
-    private func loadGameNotices() async {
-        let fetched = await PatchHubService.fetchGameNotices()
-        gameNotices = fetched
     }
 
     private func checkAnnouncement() async {
