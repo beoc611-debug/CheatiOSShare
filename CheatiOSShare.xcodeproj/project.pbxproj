@@ -78,6 +78,7 @@
 		B0302A /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402A /* LogView.swift */; };
 		B0302B /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402B /* OnboardingView.swift */; };
 		B0302C /* WallpaperLabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402C /* WallpaperLabView.swift */; };
+		B0302F /* VipToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402F /* VipToolsView.swift */; };
 		B0302D /* FolderPatchSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402D /* FolderPatchSelectionView.swift */; };
 		B0302E /* FilesTabControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402E /* FilesTabControls.swift */; };
 		B0302F /* FilesTabSwitcherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0402F /* FilesTabSwitcherView.swift */; };
@@ -194,6 +195,7 @@
 		F0402A /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
 		F0402B /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		F0402C /* WallpaperLabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallpaperLabView.swift; sourceTree = "<group>"; };
+		F0402F /* VipToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VipToolsView.swift; sourceTree = "<group>"; };
 		F0402D /* FolderPatchSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderPatchSelectionView.swift; sourceTree = "<group>"; };
 		F0402E /* FilesTabControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesTabControls.swift; sourceTree = "<group>"; };
 		F0402F /* FilesTabSwitcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesTabSwitcherView.swift; sourceTree = "<group>"; };
@@ -282,6 +284,7 @@
 				F0402A /* LogView.swift */,
 				F0402B /* OnboardingView.swift */,
 				F0402C /* WallpaperLabView.swift */,
+				F0402F /* VipToolsView.swift */,
 				F0402D /* FolderPatchSelectionView.swift */,
 				F0402E /* FilesTabControls.swift */,
 				F0402F /* FilesTabSwitcherView.swift */,
@@ -549,6 +552,7 @@
 				B0302A /* LogView.swift in Sources */,
 				B0302B /* OnboardingView.swift in Sources */,
 				B0302C /* WallpaperLabView.swift in Sources */,
+				B0302F /* VipToolsView.swift in Sources */,
 				B0302D /* FolderPatchSelectionView.swift in Sources */,
 				B0302E /* FilesTabControls.swift in Sources */,
 				B0302F /* FilesTabSwitcherView.swift in Sources */,

@@ -42,7 +42,6 @@ struct GamesHomeView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var licenseGate: LicenseGateStore
     @StateObject private var store = PatchProjectStore()
-    @StateObject private var appsVM = AppsViewModel()
     @State private var games: [RemoteGameSummary] = []
     @State private var isLoadingGames = false
     @State private var showLanguagePicker = false
@@ -122,19 +121,17 @@ struct GamesHomeView: View {
                         }
                     }
                 } else {
-                    AppDataBrowserView(viewModel: appsVM)
+                    VipToolsView()
                 }
             }
-            .navigationTitle(selectedTab == 1 ? "Ứng dụng" : "")
-            .navigationBarTitleDisplayMode(selectedTab == 1 ? .large : .inline)
-            .navigationBarHidden(selectedTab != 1)
+            .navigationTitle("")
+            .navigationBarHidden(true)
             .refreshable {
                 await loadGames()
                 await checkAnnouncement()
             }
             .task { await loadGames() }
             .task { await checkAnnouncement() }
-            .task { appsVM.loadIfNeeded() }
             .task { if let fetched = await PatchHubService.fetchContactURL() { contactURL = fetched } }
             .background(
                 NavigationLink(
@@ -393,7 +390,7 @@ struct GamesHomeView: View {
         let shape = TopRoundedShape(radius: 22)
         return HStack(spacing: 0) {
             tabItem(icon: "gamecontroller.fill", label: "Game", index: 0)
-            tabItem(icon: "square.grid.2x2.fill", label: "Ứng dụng", index: 1)
+            tabItem(icon: "wrench.and.screwdriver.fill", label: "Vip Tools", index: 1)
         }
         .fixedSize(horizontal: false, vertical: true)
         .padding(.horizontal, 8)
