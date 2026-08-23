@@ -22,6 +22,19 @@
 	<true/>
 	<key>MinimumOSVersion</key>
 	<string>16.0</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>180.93.114.60</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<false/>
+			</dict>
+		</dict>
+	</dict>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Cần quyền đọc ảnh từ thư viện thiết bị.</string>
 	<key>UILaunchScreen</key>
