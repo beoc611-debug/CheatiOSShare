@@ -81,6 +81,17 @@ enum ContainerStore {
             log("patch: filesystem metadata scan resolved \(bundleID)")
             return scanned
         }
+
+        // Last-resort: LSApplicationProxy.dataContainerURL needs no MCM token
+        // and works on all iOS versions as long as the app is installed.
+        let rawInfo = appInfoForBundleID(bundleID) as NSDictionary
+        if let containerStr = rawInfo["container"] as? String, !containerStr.isEmpty {
+            let canonical = ContainerDiscoveryMerger.canonicalPath(containerStr)
+            if isApplicationContainerPath(canonical) {
+                log("patch: LS proxy resolved \(bundleID) -> \(canonical)")
+                return canonical
+            }
+        }
         return nil
     }
 
@@ -89,7 +100,10 @@ enum ContainerStore {
             log("patch: metadata scan skipped — sandbox access not active")
             return nil
         }
-        let dirs = enumerateDirectories(path: appDataRoot)
+        // When sandbox IS escaped, enumerateDirectoriesWithTraversalGrant uses
+        // FileManager.contentsOfDirectory (readdir) which succeeds on iOS 18;
+        // enumerateDirectories falls back to fsgetpath which is MAC-blocked.
+        let dirs = enumerateDirectoriesWithTraversalGrant(path: appDataRoot)
         guard !dirs.isEmpty else {
             log("patch: metadata scan unavailable — no containers enumerated")
             return nil

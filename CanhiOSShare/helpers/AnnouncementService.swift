@@ -42,7 +42,7 @@ enum AnnouncementService {
         var request = URLRequest(url: url)
         request.setValue(PatchHubService.clientToken, forHTTPHeaderField: "X-App-Token")
         request.setValue(DeviceIdentity.current, forHTTPHeaderField: "X-Device-Id")
-        guard let (data, response) = try? await URLSession.shared.data(for: request),
+        guard let (data, response) = try? await PinnedSession.shared.data(for: request),
               let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode),
               let decoded = try? JSONDecoder().decode(AnnouncementResponse.self, from: data)
         else {

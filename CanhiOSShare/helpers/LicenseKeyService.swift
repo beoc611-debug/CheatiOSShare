@@ -106,7 +106,7 @@ enum LicenseKeyService {
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await URLSession.shared.data(for: request)
+            (data, response) = try await PinnedSession.shared.data(for: request)
         } catch {
             throw LicenseKeyError.network
         }
@@ -138,7 +138,7 @@ enum LicenseKeyService {
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await URLSession.shared.data(for: statusRequest)
+            (data, response) = try await PinnedSession.shared.data(for: statusRequest)
         } catch {
             throw LicenseKeyError.network
         }

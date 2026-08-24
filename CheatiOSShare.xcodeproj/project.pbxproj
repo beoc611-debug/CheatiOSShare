@@ -34,6 +34,7 @@
 		CA10CAFEDEADBEEF0000B02B /* KeyEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03B /* KeyEntryView.swift */; };
 		CA10CAFEDEADBEEF0000B02C /* LicenseStatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03C /* LicenseStatusBar.swift */; };
 		CA10CAFEDEADBEEF0000B02D /* LicenseInfoSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03D /* LicenseInfoSheetView.swift */; };
+		CA10CAFEDEADBEEF0000B02E /* PinnedSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03E /* PinnedSession.swift */; };
 		B03001 /* AppTabNavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04001 /* AppTabNavigationState.swift */; };
 		B03002 /* CleanerCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04002 /* CleanerCatalog.swift */; };
 		B03003 /* ContainerBrowserLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04003 /* ContainerBrowserLogic.swift */; };
@@ -151,6 +152,7 @@
 		CA10CAFEDEADBEEF0000F03B /* KeyEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyEntryView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F03C /* LicenseStatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseStatusBar.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F03D /* LicenseInfoSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseInfoSheetView.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F03E /* PinnedSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinnedSession.swift; sourceTree = "<group>"; };
 		F04001 /* AppTabNavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTabNavigationState.swift; sourceTree = "<group>"; };
 		F04002 /* CleanerCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanerCatalog.swift; sourceTree = "<group>"; };
 		F04003 /* ContainerBrowserLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerBrowserLogic.swift; sourceTree = "<group>"; };
@@ -273,6 +275,7 @@
 				CA10CAFEDEADBEEF0000F03B /* KeyEntryView.swift */,
 				CA10CAFEDEADBEEF0000F03C /* LicenseStatusBar.swift */,
 				CA10CAFEDEADBEEF0000F03D /* LicenseInfoSheetView.swift */,
+				CA10CAFEDEADBEEF0000F03E /* PinnedSession.swift */,
 				F04022 /* GamesHomeView.swift */,
 				F04023 /* GamePatchesView.swift */,
 				F04024 /* AnnouncementSheetView.swift */,
@@ -505,6 +508,7 @@
 				CA10CAFEDEADBEEF0000B02B /* KeyEntryView.swift in Sources */,
 				CA10CAFEDEADBEEF0000B02C /* LicenseStatusBar.swift in Sources */,
 				CA10CAFEDEADBEEF0000B02D /* LicenseInfoSheetView.swift in Sources */,
+				CA10CAFEDEADBEEF0000B02E /* PinnedSession.swift in Sources */,
 				CA10CAFEDEADBEEF0000B00E /* bad_query.c in Sources */,
 				CA10CAFEDEADBEEF0000B00F /* MCMBridge.m in Sources */,
 				CA10CAFEDEADBEEF0000B010 /* MCMFilzaIntegration.m in Sources */,

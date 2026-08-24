@@ -1,6 +1,16 @@
 import CryptoKit
 import Foundation
 
+struct RemotePackage: Decodable, Identifiable {
+    let id: String
+    let title: String
+    let subtitle: String
+    let icon: String
+    let color1: String
+    let color2: String
+    let tools: [RemoteTool]
+}
+
 struct RemoteTool: Decodable, Identifiable {
     let id: String
     let title: String
@@ -193,7 +203,7 @@ enum PatchHubService {
         request.setValue(ts,    forHTTPHeaderField: d(_hts))
         request.setValue(nonce, forHTTPHeaderField: d(_hn))
         request.setValue(sig,   forHTTPHeaderField: d(_hsg))
-        guard let (data, response) = try? await URLSession.shared.data(for: request),
+        guard let (data, response) = try? await PinnedSession.shared.data(for: request),
               let http = response as? HTTPURLResponse,
               (200...299).contains(http.statusCode),
               verifyResponse(data: data, httpResponse: response) else { return false }
@@ -210,12 +220,12 @@ enum PatchHubService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body = try? JSONSerialization.data(withJSONObject: ["model": AppInfo.hardwareDisplayName])
         request.httpBody = body
-        _ = try? await URLSession.shared.data(for: request)
+        _ = try? await PinnedSession.shared.data(for: request)
     }
 
     static func fetchContactURL() async -> URL? {
         let url = baseURL.appendingPathComponent(pathContact)
-        guard let (data, response) = try? await URLSession.shared.data(for: get(url)),
+        guard let (data, response) = try? await PinnedSession.shared.data(for: get(url)),
               let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode),
               let obj = try? JSONDecoder().decode([String: String].self, from: data),
               let raw = obj["url"], !raw.isEmpty else { return nil }
@@ -224,7 +234,7 @@ enum PatchHubService {
 
     static func fetchGameNotices() async -> [String: GameNotice] {
         let url = baseURL.appendingPathComponent(pathGameNotices)
-        guard let (data, response) = try? await URLSession.shared.data(for: get(url)),
+        guard let (data, response) = try? await PinnedSession.shared.data(for: get(url)),
               let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             return [:]
         }
@@ -235,7 +245,7 @@ enum PatchHubService {
 
     static func fetchGames() async throws -> [RemoteGameSummary] {
         let url = baseURL.appendingPathComponent(pathGames)
-        let (data, response) = try await URLSession.shared.data(for: get(url))
+        let (data, response) = try await PinnedSession.shared.data(for: get(url))
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw PatchHubError.invalidResponse
         }
@@ -245,7 +255,7 @@ enum PatchHubService {
 
     static func fetchPatches() async throws -> [RemotePatchSummary] {
         let url = baseURL.appendingPathComponent(pathPatches)
-        let (data, response) = try await URLSession.shared.data(for: get(url))
+        let (data, response) = try await PinnedSession.shared.data(for: get(url))
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw PatchHubError.invalidResponse
         }
@@ -253,19 +263,34 @@ enum PatchHubService {
         return try JSONDecoder().decode(Envelope.self, from: data).patches
     }
 
-    static func fetchTools() async throws -> [RemoteTool] {
+    struct ToolsPayload {
+        let packages: [RemotePackage]
+        let freeKeyBlocked: Bool
+        let notice: String?
+    }
+
+    static func fetchTools() async throws -> ToolsPayload {
         let url = baseURL.appendingPathComponent(pathTools)
-        let (data, response) = try await URLSession.shared.data(for: get(url))
+        let (data, response) = try await PinnedSession.shared.data(for: get(url))
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw PatchHubError.invalidResponse
         }
-        struct Envelope: Decodable { let tools: [RemoteTool] }
-        return try JSONDecoder().decode(Envelope.self, from: data).tools
+        struct Envelope: Decodable {
+            let packages: [RemotePackage]?
+            let freeKeyBlocked: Bool?
+            let notice: String?
+        }
+        let env = try JSONDecoder().decode(Envelope.self, from: data)
+        return ToolsPayload(
+            packages: env.packages ?? [],
+            freeKeyBlocked: env.freeKeyBlocked ?? false,
+            notice: (env.notice?.isEmpty == false) ? env.notice : nil
+        )
     }
 
     static func fetchContainers() async throws -> [RemoteContainerSummary] {
         let url = baseURL.appendingPathComponent(pathContainers)
-        let (data, response) = try await URLSession.shared.data(for: get(url))
+        let (data, response) = try await PinnedSession.shared.data(for: get(url))
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw PatchHubError.invalidResponse
         }
@@ -275,7 +300,7 @@ enum PatchHubService {
 
     static func downloadPatch(_ summary: RemotePatchSummary) async throws -> URL {
         let url = baseURL.appendingPathComponent("\(pathPatches)/\(summary.id)/download")
-        let (tempURL, response) = try await URLSession.shared.download(for: get(url))
+        let (tempURL, response) = try await PinnedSession.shared.download(for: get(url))
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             try? FileManager.default.removeItem(at: tempURL)
             throw PatchHubError.invalidResponse

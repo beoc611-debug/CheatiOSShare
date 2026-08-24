@@ -23,15 +23,25 @@ private let trustAllSession: URLSession = {
 
 @MainActor
 final class VipToolsViewModel: ObservableObject {
-    @Published var tools: [RemoteTool] = []
+    static var noticeShownThisSession = false
+
+    @Published var packages: [RemotePackage] = []
     @Published var isLoading = false
     @Published var loadError: String? = nil
+    @Published var freeKeyBlocked = false
+    @Published var pendingNotice: String? = nil
 
     func load() async {
         isLoading = true
         loadError = nil
+        freeKeyBlocked = false
         do {
-            tools = try await PatchHubService.fetchTools()
+            let payload = try await PatchHubService.fetchTools()
+            packages = payload.packages
+            freeKeyBlocked = payload.freeKeyBlocked
+            if !VipToolsViewModel.noticeShownThisSession, let notice = payload.notice {
+                pendingNotice = notice
+            }
         } catch {
             loadError = "Không tải được danh sách công cụ"
         }
@@ -43,7 +53,9 @@ final class VipToolsViewModel: ObservableObject {
 
 struct VipToolsView: View {
     @StateObject private var vm = VipToolsViewModel()
-    @State private var activeTool: RemoteTool? = nil
+    @State private var activePackage: RemotePackage? = nil
+    @State private var showBlockedAlert = false
+    @State private var noticeText: String? = nil
 
     var body: some View {
         ZStack {
@@ -54,18 +66,42 @@ struct VipToolsView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 16)
                         .padding(.bottom, 20)
-                    toolsList
+                    packageList
                         .padding(.horizontal, 14)
                     Spacer(minLength: 40)
                 }
             }
             .refreshable { await vm.load() }
         }
-        .sheet(item: $activeTool) { tool in
-            DynamicToolSheet(tool: tool)
+        .sheet(item: $activePackage) { pkg in
+            PackageToolsSheet(package: pkg)
+        }
+        .sheet(item: Binding(
+            get: { noticeText.map { NoticeWrapper(text: $0) } },
+            set: { if $0 == nil { noticeText = nil } }
+        )) { wrapper in
+            VipToolsNoticeSheet(text: wrapper.text)
+        }
+        .alert("Chỉ dành cho VIP trả phí", isPresented: $showBlockedAlert) {
+            Button("Đã hiểu", role: .cancel) {}
+        } message: {
+            Text("Vip Tools chỉ dành cho key trả phí. Key miễn phí (GetKey) không thể sử dụng tính năng này. Hãy liên hệ admin để nâng cấp key.")
         }
         .task { await vm.load() }
+        .onChange(of: vm.pendingNotice) { notice in
+            if let notice {
+                VipToolsViewModel.noticeShownThisSession = true
+                vm.pendingNotice = nil
+                noticeText = notice
+            }
+        }
     }
+}
+
+private struct NoticeWrapper: Identifiable {
+    let id = UUID()
+    let text: String
+}
 
     // MARK: Header
 
@@ -100,21 +136,47 @@ struct VipToolsView: View {
         }
     }
 
-    // MARK: Tools list
+    // MARK: Package list
 
     @ViewBuilder
-    private var toolsList: some View {
-        if vm.isLoading && vm.tools.isEmpty {
+    private var packageList: some View {
+        if vm.isLoading && vm.packages.isEmpty && !vm.freeKeyBlocked {
             VStack(spacing: 10) {
                 ForEach(0..<3, id: \.self) { _ in
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(Color(red: 0.08, green: 0.12, blue: 0.20).opacity(0.60))
-                        .frame(height: 70)
+                        .frame(height: 80)
                         .redacted(reason: .placeholder)
                         .shimmering()
                 }
             }
-        } else if let err = vm.loadError, vm.tools.isEmpty {
+        } else if vm.freeKeyBlocked {
+            VStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 0.60, green: 0.15, blue: 0.90).opacity(0.12))
+                        .frame(width: 72, height: 72)
+                    Image(systemName: "lock.shield.fill")
+                        .font(.system(size: 32, weight: .semibold))
+                        .foregroundStyle(LinearGradient(
+                            colors: [Color(red: 0.80, green: 0.30, blue: 1.00),
+                                     Color(red: 0.50, green: 0.20, blue: 0.90)],
+                            startPoint: .top, endPoint: .bottom))
+                }
+                VStack(spacing: 6) {
+                    Text("Chỉ dành cho VIP trả phí")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.primary)
+                    Text("Vip Tools yêu cầu key trả phí.\nKey miễn phí (GetKey) không thể sử dụng tính năng này.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color(red: 0.55, green: 0.63, blue: 0.80))
+                        .multilineTextAlignment(.center)
+                }
+            }
+            .padding(.vertical, 52)
+            .padding(.horizontal, 24)
+            .frame(maxWidth: .infinity)
+        } else if let err = vm.loadError, vm.packages.isEmpty {
             VStack(spacing: 14) {
                 Image(systemName: "wifi.exclamationmark")
                     .font(.system(size: 32))
@@ -137,9 +199,15 @@ struct VipToolsView: View {
             .padding(.vertical, 48)
             .frame(maxWidth: .infinity)
         } else {
-            VStack(spacing: 10) {
-                ForEach(vm.tools) { tool in
-                    ToolRowCard(tool: tool) { activeTool = tool }
+            VStack(spacing: 12) {
+                ForEach(vm.packages) { pkg in
+                    PackageCard(package: pkg) {
+                        if vm.freeKeyBlocked {
+                            showBlockedAlert = true
+                        } else {
+                            activePackage = pkg
+                        }
+                    }
                 }
             }
         }
@@ -236,6 +304,158 @@ struct ToolRowCard: View {
             )
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Package Card
+
+struct PackageCard: View {
+    let package: RemotePackage
+    let action: () -> Void
+
+    private var colors: [Color] {
+        [Color(hex: package.color1) ?? .orange, Color(hex: package.color2) ?? .red]
+    }
+
+    var body: some View {
+        Button { action() } label: {
+            HStack(spacing: 16) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(LinearGradient(
+                            colors: colors.map { $0.opacity(0.25) },
+                            startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 56, height: 56)
+                        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(LinearGradient(
+                                colors: [colors[0].opacity(0.50), colors[1].opacity(0.25)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1))
+                    Image(systemName: package.icon)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(LinearGradient(
+                            colors: colors, startPoint: .top, endPoint: .bottom))
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(package.title)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    Text(package.subtitle)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color(red: 0.50, green: 0.58, blue: 0.75))
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text("\(package.tools.count) tools")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(colors[0].opacity(0.85))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.45, green: 0.52, blue: 0.70))
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color(red: 0.06, green: 0.09, blue: 0.16).opacity(0.92))
+                    .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(LinearGradient(
+                            colors: [colors[0].opacity(0.40), colors[1].opacity(0.15)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Package Tools Sheet
+
+struct PackageToolsSheet: View {
+    let package: RemotePackage
+    @State private var activeTool: RemoteTool? = nil
+
+    private var colors: [Color] {
+        [Color(hex: package.color1) ?? .orange, Color(hex: package.color2) ?? .red]
+    }
+
+    var body: some View {
+        ZStack {
+            Color(red: 0.04, green: 0.06, blue: 0.12).ignoresSafeArea()
+            VStack(spacing: 0) {
+                Capsule()
+                    .fill(Color.white.opacity(0.16))
+                    .frame(width: 36, height: 4)
+                    .padding(.top, 12)
+                    .padding(.bottom, 20)
+
+                // Package header
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 15, style: .continuous)
+                            .fill(LinearGradient(
+                                colors: colors.map { $0.opacity(0.28) },
+                                startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 54, height: 54)
+                        Image(systemName: package.icon)
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(LinearGradient(
+                                colors: colors, startPoint: .top, endPoint: .bottom))
+                    }
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(package.title)
+                            .font(.system(size: 18, weight: .black))
+                            .foregroundStyle(.white)
+                        Text(package.subtitle)
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color(red: 0.50, green: 0.58, blue: 0.75))
+                    }
+                    Spacer()
+                    Text("\(package.tools.count)")
+                        .font(.system(size: 22, weight: .black))
+                        .foregroundStyle(colors[0])
+                    + Text("\ntool")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(colors[0].opacity(0.70))
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 18)
+
+                Divider()
+                    .background(Color.white.opacity(0.08))
+                    .padding(.horizontal, 20)
+
+                ScrollView {
+                    VStack(spacing: 10) {
+                        if package.tools.isEmpty {
+                            VStack(spacing: 10) {
+                                Image(systemName: "tray")
+                                    .font(.system(size: 28))
+                                    .foregroundStyle(Color(red: 0.45, green: 0.52, blue: 0.70))
+                                Text("Chưa có tool nào trong gói này")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color(red: 0.45, green: 0.52, blue: 0.70))
+                            }
+                            .padding(.vertical, 40)
+                            .frame(maxWidth: .infinity)
+                        } else {
+                            ForEach(package.tools) { tool in
+                                ToolRowCard(tool: tool) { activeTool = tool }
+                            }
+                        }
+                        Spacer(minLength: 32)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                }
+            }
+        }
+        .sheet(item: $activeTool) { tool in
+            DynamicToolSheet(tool: tool)
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.hidden)
     }
 }
 
@@ -455,5 +675,90 @@ struct DynamicToolSheet: View {
     @MainActor
     private func set(error: Bool, text: String) {
         isError = error; responseText = text; isRunning = false
+    }
+}
+
+// MARK: - Vip Tools Notice Sheet
+
+struct VipToolsNoticeSheet: View {
+    let text: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            Color(red: 0.04, green: 0.06, blue: 0.12).ignoresSafeArea()
+            VStack(spacing: 0) {
+                Capsule()
+                    .fill(Color.white.opacity(0.16))
+                    .frame(width: 36, height: 4)
+                    .padding(.top, 12)
+                    .padding(.bottom, 22)
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Icon
+                        ZStack {
+                            Circle()
+                                .fill(LinearGradient(
+                                    colors: [AppTheme.neonPurple.opacity(0.22), AppTheme.techGlow.opacity(0.12)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing))
+                                .frame(width: 64, height: 64)
+                            Image(systemName: "megaphone.fill")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundStyle(LinearGradient(
+                                    colors: [AppTheme.techGlow, AppTheme.neonPurple],
+                                    startPoint: .top, endPoint: .bottom))
+                        }
+
+                        VStack(spacing: 8) {
+                            Text("Thông báo")
+                                .font(.system(size: 20, weight: .black))
+                                .foregroundStyle(.white)
+                            Text("Vip Tools")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Color(red: 0.54, green: 0.62, blue: 0.78))
+                        }
+
+                        Text(text)
+                            .font(.system(size: 15))
+                            .foregroundStyle(Color(red: 0.85, green: 0.88, blue: 0.96))
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(4)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 18)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(Color(red: 0.07, green: 0.10, blue: 0.18))
+                                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .strokeBorder(AppTheme.techGlow.opacity(0.20), lineWidth: 1))
+                            )
+                            .padding(.horizontal, 4)
+
+                        Button {
+                            dismiss()
+                        } label: {
+                            Text("Đã hiểu")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 15)
+                                .background(
+                                    LinearGradient(
+                                        colors: [AppTheme.neonPurple, AppTheme.techGlow.opacity(0.85)],
+                                        startPoint: .leading, endPoint: .trailing),
+                                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+
+                        Spacer(minLength: 20)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 32)
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.hidden)
     }
 }
