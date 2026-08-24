@@ -413,10 +413,10 @@ struct PackageToolsSheet: View {
                     Spacer()
                     Text("\(package.tools.count)")
                         .font(.system(size: 22, weight: .black))
-                        .foregroundStyle(colors[0])
+                        .foregroundColor(colors[0])
                     + Text("\ntool")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(colors[0].opacity(0.70))
+                        .foregroundColor(colors[0].opacity(0.70))
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 18)
