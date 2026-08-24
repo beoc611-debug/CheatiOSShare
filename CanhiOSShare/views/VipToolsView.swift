@@ -245,7 +245,7 @@ struct BuffLikeSheet: View {
         let trimmed = uid.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
         isRunning = true; responseText = nil
-        let urlStr = "https://180.93.114.60:3636/like?uid=\(trimmed)&key=quametlon"
+        let urlStr = "http://180.93.114.60:3636/like?uid=\(trimmed)&key=quametlon"
         await callAPI(urlStr)
     }
 
@@ -298,7 +298,7 @@ struct SpamInviteSheet: View {
         let trimmed = uid.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
         isRunning = true; responseText = nil
-        let urlStr = "https://180.93.114.60:1717/sinv?uid=\(trimmed)"
+        let urlStr = "http://180.93.114.60:1717/sinv?uid=\(trimmed)"
         await callAPI(urlStr)
     }
 
@@ -512,7 +512,7 @@ struct TeamDanceSheet: View {
         let uid = uids.trimmingCharacters(in: .whitespaces)
         guard !tc.isEmpty, !uid.isEmpty else { return }
         isRunning = true; responseText = nil
-        let urlStr = "https://180.93.114.60:1717/join?tc=\(tc)&uid=\(uid)"
+        let urlStr = "http://180.93.114.60:1717/join?tc=\(tc)&uid=\(uid)"
         guard let url = URL(string: urlStr) else {
             await set(error: true, text: "URL không hợp lệ"); return
         }
