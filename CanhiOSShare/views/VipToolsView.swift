@@ -154,7 +154,7 @@ struct ToolRowCard: View {
                 // Text
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title)
-                        .font(.system(size: 14, weight: .700))
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(.white)
                         .lineLimit(1)
                     Text(subtitle)
@@ -168,7 +168,7 @@ struct ToolRowCard: View {
                 // Right badge + chevron
                 if isLive {
                     Text("LIVE")
-                        .font(.system(size: 9.5, weight: .800))
+                        .font(.system(size: 9.5, weight: .heavy))
                         .foregroundStyle(iconGradient[0])
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
@@ -179,7 +179,7 @@ struct ToolRowCard: View {
                         .foregroundStyle(Color(red: 0.45, green: 0.52, blue: 0.70))
                 } else {
                     Text("SỚM")
-                        .font(.system(size: 9.5, weight: .700))
+                        .font(.system(size: 9.5, weight: .bold))
                         .foregroundStyle(Color(red: 0.38, green: 0.46, blue: 0.62))
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
