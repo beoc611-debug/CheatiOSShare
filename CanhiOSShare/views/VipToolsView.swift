@@ -96,9 +96,8 @@ struct VipToolsView: View {
             }
         }
     }
-}
 
-private struct NoticeWrapper: Identifiable {
+    private struct NoticeWrapper: Identifiable {
     let id = UUID()
     let text: String
 }
