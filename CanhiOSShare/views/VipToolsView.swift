@@ -19,7 +19,7 @@ private class TrustAllDelegate: NSObject, URLSessionDelegate {
 // MARK: - Main View
 
 private enum VipSheet: Identifiable {
-    case buffLike, spamInvite
+    case buffLike, spamInvite, teamDance
     var id: Self { self }
 }
 
@@ -46,8 +46,9 @@ struct VipToolsView: View {
         }
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
-            case .buffLike:  BuffLikeSheet()
+            case .buffLike:   BuffLikeSheet()
             case .spamInvite: SpamInviteSheet()
+            case .teamDance:  TeamDanceSheet()
             }
         }
     }
@@ -107,10 +108,16 @@ struct VipToolsView: View {
                 isLive: true
             ) { activeSheet = .spamInvite }
 
+            // Múa Hành Động Team
+            ToolRowCard(
+                icon: "figure.dance",
+                iconGradient: [Color(red: 0.10, green: 0.85, blue: 0.45), Color(red: 0.05, green: 0.60, blue: 0.28)],
+                title: "Múa Hành Động Team",
+                subtitle: "Nhập Team Code + ID · Tiến hành múa",
+                isLive: true
+            ) { activeSheet = .teamDance }
+
             // Placeholders
-            ToolRowCard(icon: "lock.shield.fill",
-                        iconGradient: [Color(red: 0.48, green: 0.37, blue: 1.00), Color(red: 0.28, green: 0.17, blue: 0.80)],
-                        title: "Sắp ra mắt", subtitle: "Đang phát triển", isLive: false, action: nil)
             ToolRowCard(icon: "bolt.shield.fill",
                         iconGradient: [Color(red: 0.55, green: 0.20, blue: 0.80), Color(red: 0.35, green: 0.10, blue: 0.60)],
                         title: "Sắp ra mắt", subtitle: "Đang phát triển", isLive: false, action: nil)
@@ -296,6 +303,216 @@ struct SpamInviteSheet: View {
     }
 
     private func callAPI(_ urlStr: String) async {
+        guard let url = URL(string: urlStr) else {
+            await set(error: true, text: "URL không hợp lệ"); return
+        }
+        do {
+            let (data, response) = try await trustAllSession.data(from: url)
+            let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+            let raw = String(data: data, encoding: .utf8) ?? "(không đọc được)"
+            await set(error: !(200...299).contains(code), text: "Status: \(code)\n\n\(raw)")
+        } catch {
+            await set(error: true, text: "Lỗi kết nối:\n\(error.localizedDescription)")
+        }
+    }
+
+    @MainActor private func set(error: Bool, text: String) {
+        isError = error; responseText = text; isRunning = false
+    }
+}
+
+// MARK: - Team Dance Sheet
+
+struct TeamDanceSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var teamCode = ""
+    @State private var uids = ""
+    @State private var isRunning = false
+    @State private var responseText: String? = nil
+    @State private var isError = false
+
+    private let gradient: [Color] = [
+        Color(red: 0.10, green: 0.85, blue: 0.45),
+        Color(red: 0.05, green: 0.60, blue: 0.28)
+    ]
+
+    var body: some View {
+        ZStack {
+            Color(red: 0.04, green: 0.06, blue: 0.12).ignoresSafeArea()
+            VStack(spacing: 0) {
+                Capsule()
+                    .fill(Color.white.opacity(0.16))
+                    .frame(width: 36, height: 4)
+                    .padding(.top, 12)
+                    .padding(.bottom, 18)
+
+                ScrollView {
+                    VStack(spacing: 18) {
+                        // Title row
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(LinearGradient(
+                                        colors: gradient.map { $0.opacity(0.20) },
+                                        startPoint: .topLeading, endPoint: .bottomTrailing))
+                                    .frame(width: 48, height: 48)
+                                Image(systemName: "figure.dance")
+                                    .font(.system(size: 21, weight: .bold))
+                                    .foregroundStyle(LinearGradient(
+                                        colors: gradient, startPoint: .top, endPoint: .bottom))
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Múa Hành Động Team")
+                                    .font(.system(size: 19, weight: .black))
+                                    .foregroundStyle(.white)
+                                Text("Nhập Team Code + ID người múa")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color(red: 0.55, green: 0.63, blue: 0.80))
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, 20)
+
+                        // Input 1: Team Code
+                        inputField(
+                            label: "Team Code",
+                            placeholder: "Nhập ID team...",
+                            icon: "person.3.fill",
+                            text: $teamCode,
+                            useNumberPad: true
+                        )
+
+                        // Input 2: UIDs (có thể nhiều, cách nhau dấu phẩy)
+                        inputField(
+                            label: "ID Game (nhiều ID cách nhau bằng dấu phẩy)",
+                            placeholder: "VD: 123456,789012,828822",
+                            icon: "person.fill",
+                            text: $uids,
+                            useNumberPad: false
+                        )
+
+                        // Run button
+                        let canRun = !teamCode.trimmingCharacters(in: .whitespaces).isEmpty
+                                  && !uids.trimmingCharacters(in: .whitespaces).isEmpty
+                        Button {
+                            Task { await runDance() }
+                        } label: {
+                            HStack(spacing: 8) {
+                                if isRunning {
+                                    ProgressView().tint(.white).scaleEffect(0.82)
+                                } else {
+                                    Image(systemName: "bolt.fill")
+                                        .font(.system(size: 14, weight: .bold))
+                                }
+                                Text(isRunning ? "Đang múa..." : "Tiến hành múa")
+                                    .font(.system(size: 15, weight: .bold))
+                            }
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                Group {
+                                    if !canRun || isRunning {
+                                        RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                            .fill(Color(red: 0.14, green: 0.16, blue: 0.24))
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                            .fill(LinearGradient(
+                                                colors: gradient,
+                                                startPoint: .leading, endPoint: .trailing))
+                                    }
+                                }
+                            )
+                        }
+                        .disabled(!canRun || isRunning)
+                        .padding(.horizontal, 20)
+
+                        // Response
+                        if let text = responseText {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: isError ? "xmark.circle.fill" : "checkmark.circle.fill")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundStyle(isError
+                                            ? Color(red: 1.00, green: 0.28, blue: 0.22)
+                                            : Color(red: 0.18, green: 0.84, blue: 0.44))
+                                    Text(isError ? "Lỗi" : "Phản hồi")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(isError
+                                            ? Color(red: 1.00, green: 0.28, blue: 0.22)
+                                            : Color(red: 0.18, green: 0.84, blue: 0.44))
+                                }
+                                Text(text)
+                                    .font(.system(size: 12, design: .monospaced))
+                                    .foregroundStyle(.white.opacity(0.88))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            .fill(Color(red: 0.05, green: 0.07, blue: 0.14))
+                                    )
+                            }
+                            .padding(.horizontal, 20)
+                            .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        }
+
+                        Spacer(minLength: 20)
+                    }
+                    .padding(.bottom, 40)
+                }
+            }
+        }
+        .animation(.easeInOut(duration: 0.22), value: responseText)
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.hidden)
+    }
+
+    @ViewBuilder
+    private func inputField(label: String, placeholder: String, icon: String,
+                            text: Binding<String>, useNumberPad: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color(red: 0.55, green: 0.63, blue: 0.80))
+                .padding(.horizontal, 20)
+
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color(red: 0.42, green: 0.50, blue: 0.70))
+                TextField("", text: text, prompt:
+                    Text(placeholder)
+                        .foregroundColor(Color(red: 0.32, green: 0.40, blue: 0.60))
+                )
+                .keyboardType(useNumberPad ? .numberPad : .default)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+                .tint(gradient[0])
+                if !text.wrappedValue.isEmpty {
+                    Button { text.wrappedValue = "" } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(Color(red: 0.38, green: 0.46, blue: 0.62))
+                    }
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
+            .background(
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .fill(Color(red: 0.07, green: 0.10, blue: 0.18))
+                    .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .strokeBorder(Color(red: 0.18, green: 0.26, blue: 0.42), lineWidth: 1))
+            )
+            .padding(.horizontal, 20)
+        }
+    }
+
+    private func runDance() async {
+        let tc = teamCode.trimmingCharacters(in: .whitespaces)
+        let uid = uids.trimmingCharacters(in: .whitespaces)
+        guard !tc.isEmpty, !uid.isEmpty else { return }
+        isRunning = true; responseText = nil
+        let urlStr = "https://180.93.114.60:1717/join?tc=\(tc)&uid=\(uid)"
         guard let url = URL(string: urlStr) else {
             await set(error: true, text: "URL không hợp lệ"); return
         }
