@@ -18,9 +18,13 @@ private class TrustAllDelegate: NSObject, URLSessionDelegate {
 
 // MARK: - Main View
 
+private enum VipSheet: Identifiable {
+    case buffLike, spamInvite
+    var id: Self { self }
+}
+
 struct VipToolsView: View {
-    @State private var showBuffLike = false
-    @State private var showSpamInvite = false
+    @State private var activeSheet: VipSheet? = nil
 
     var body: some View {
         ZStack {
@@ -40,11 +44,11 @@ struct VipToolsView: View {
                 }
             }
         }
-        .sheet(isPresented: $showBuffLike) {
-            BuffLikeSheet()
-        }
-        .sheet(isPresented: $showSpamInvite) {
-            SpamInviteSheet()
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .buffLike:  BuffLikeSheet()
+            case .spamInvite: SpamInviteSheet()
+            }
         }
     }
 
@@ -92,7 +96,7 @@ struct VipToolsView: View {
                 title: "Buff Like FreeFire",
                 subtitle: "Tăng Like · Nhập ID game · Chạy ngay",
                 isLive: true
-            ) { showBuffLike = true }
+            ) { activeSheet = .buffLike }
 
             // Spam Kết Bạn FreeFire
             ToolRowCard(
@@ -101,7 +105,7 @@ struct VipToolsView: View {
                 title: "Spam Kết Bạn FF",
                 subtitle: "Gửi lời mời kết bạn · Nhập ID · Tiến hành spam",
                 isLive: true
-            ) { showSpamInvite = true }
+            ) { activeSheet = .spamInvite }
 
             // Placeholders
             ToolRowCard(icon: "lock.shield.fill",
