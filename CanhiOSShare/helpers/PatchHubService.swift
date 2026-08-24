@@ -1,6 +1,35 @@
 import CryptoKit
 import Foundation
 
+struct RemoteTool: Decodable, Identifiable {
+    let id: String
+    let title: String
+    let subtitle: String
+    let icon: String
+    let color1: String
+    let color2: String
+    let apiUrl: String
+    let inputType: String       // "single" | "dual"
+    let input1Label: String
+    let input1Placeholder: String
+    let input2Label: String?
+    let input2Placeholder: String?
+    let runLabel: String
+    let isLive: Bool
+    let order: Int
+
+    func buildURL(input1: String, input2: String = "") -> URL? {
+        var s = apiUrl
+        if inputType == "dual" {
+            s = s.replacingOccurrences(of: "{tc}", with: input1)
+            s = s.replacingOccurrences(of: "{uid}", with: input2)
+        } else {
+            s = s.replacingOccurrences(of: "{uid}", with: input1)
+        }
+        return URL(string: s)
+    }
+}
+
 struct RemotePatchSummary: Decodable, Identifiable, Equatable {
     let id: String
     let name: String
@@ -75,6 +104,7 @@ enum PatchHubService {
     private static let _a:  [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x2A]                                                                                  // cv/sa
     private static let _dv: [UInt8] = [0x28, 0x3D, 0x64, 0x2F, 0x3D]                                                                                  // cv/dv
     private static let _cl: [UInt8] = [0x28, 0x3D, 0x64, 0x28, 0x27]                                                                                  // cv/cl
+    private static let _vt: [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x3F]                                                                                  // cv/st
     private static let _gn: [UInt8] = [0x64, 0x2A, 0x3B, 0x22, 0x64, 0x2C, 0x2A, 0x26, 0x2E, 0x66, 0x25, 0x24, 0x3F, 0x22, 0x28, 0x2E, 0x38]       // api/game-notices
     private static let _r:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x39, 0x2E, 0x2F, 0x2E, 0x2E, 0x26]                   // api/keys/redeem
     private static let _s:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x38, 0x3F, 0x2A, 0x3F, 0x3E, 0x38]                   // api/keys/status
@@ -107,6 +137,7 @@ enum PatchHubService {
     static var pathContainers: String  { d(_c) }
     static var pathNotice: String      { d(_n) }
     static var pathContact: String     { d(_cl) }
+    static var pathTools: String       { d(_vt) }
     static var pathRedeem: String      { d(_r) }
     static var pathStatus: String      { d(_s) }
     static var pathGameNotices: String { d(_gn) }
@@ -220,6 +251,16 @@ enum PatchHubService {
         }
         struct Envelope: Decodable { let patches: [RemotePatchSummary] }
         return try JSONDecoder().decode(Envelope.self, from: data).patches
+    }
+
+    static func fetchTools() async throws -> [RemoteTool] {
+        let url = baseURL.appendingPathComponent(pathTools)
+        let (data, response) = try await URLSession.shared.data(for: get(url))
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PatchHubError.invalidResponse
+        }
+        struct Envelope: Decodable { let tools: [RemoteTool] }
+        return try JSONDecoder().decode(Envelope.self, from: data).tools
     }
 
     static func fetchContainers() async throws -> [RemoteContainerSummary] {
