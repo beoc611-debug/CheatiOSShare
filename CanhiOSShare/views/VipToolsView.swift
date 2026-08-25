@@ -73,9 +73,23 @@ struct VipToolsView: View {
             }
             .refreshable { await vm.load() }
         }
-        .sheet(item: $activePackage) { pkg in
-            PackageToolsSheet(package: pkg)
-        }
+        .background(
+            NavigationLink(
+                isActive: Binding(
+                    get: { activePackage != nil },
+                    set: { if !$0 { activePackage = nil } }
+                ),
+                destination: {
+                    if let pkg = activePackage {
+                        PackageToolsSheet(package: pkg)
+                    } else {
+                        EmptyView()
+                    }
+                },
+                label: { EmptyView() }
+            )
+            .hidden()
+        )
         .sheet(item: Binding(
             get: { noticeText.map { NoticeWrapper(text: $0) } },
             set: { if $0 == nil { noticeText = nil } }
@@ -383,12 +397,6 @@ struct PackageToolsSheet: View {
         ZStack {
             Color(red: 0.04, green: 0.06, blue: 0.12).ignoresSafeArea()
             VStack(spacing: 0) {
-                Capsule()
-                    .fill(Color.white.opacity(0.16))
-                    .frame(width: 36, height: 4)
-                    .padding(.top, 12)
-                    .padding(.bottom, 20)
-
                 // Package header
                 HStack(spacing: 14) {
                     ZStack {
@@ -453,8 +461,8 @@ struct PackageToolsSheet: View {
         .sheet(item: $activeTool) { tool in
             DynamicToolSheet(tool: tool)
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.hidden)
+        .navigationTitle(package.title)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
