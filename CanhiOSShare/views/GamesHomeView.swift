@@ -1,6 +1,40 @@
 import SwiftUI
 import UIKit
 
+// Chỉ vẽ viền top + 2 cạnh bên (không có cạnh đáy)
+private struct TabBarTopBorder: Shape {
+    var radius: CGFloat
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+        p.addLine(to: CGPoint(x: rect.minX, y: rect.minY + radius))
+        p.addArc(center: CGPoint(x: rect.minX + radius, y: rect.minY + radius),
+                 radius: radius, startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
+        p.addLine(to: CGPoint(x: rect.maxX - radius, y: rect.minY))
+        p.addArc(center: CGPoint(x: rect.maxX - radius, y: rect.minY + radius),
+                 radius: radius, startAngle: .degrees(270), endAngle: .degrees(0), clockwise: false)
+        p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        return p
+    }
+}
+
+// Chỉ bo góc trên — thay thế UnevenRoundedRectangle (iOS 17+) để tương thích iOS 16
+private struct TopRoundedShape: Shape {
+    var radius: CGFloat
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+        p.addLine(to: CGPoint(x: rect.minX, y: rect.minY + radius))
+        p.addArc(center: CGPoint(x: rect.minX + radius, y: rect.minY + radius),
+                 radius: radius, startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
+        p.addLine(to: CGPoint(x: rect.maxX - radius, y: rect.minY))
+        p.addArc(center: CGPoint(x: rect.maxX - radius, y: rect.minY + radius),
+                 radius: radius, startAngle: .degrees(270), endAngle: .degrees(0), clockwise: false)
+        p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        p.closeSubpath()
+        return p
+    }
+}
 
 struct GamesHomeView: View {
     @Environment(\.appLanguage) private var language
@@ -13,6 +47,7 @@ struct GamesHomeView: View {
     @State private var showLanguagePicker = false
     @State private var announcement: Announcement?
     @State private var shownAnnouncementIDs: Set<String> = []
+    @State private var selectedTab = 0
     @State private var selectedGame: RemoteGameSummary? = nil
     @State private var contactURL: URL? = URL(string: "https://t.me/crackcyipa")
     @AppStorage("language.hasPicked") private var hasPickedLanguage = false
@@ -42,47 +77,51 @@ struct GamesHomeView: View {
             ZStack {
                 TechBackground()
 
-                ScrollView {
-                    VStack(spacing: 0) {
-                        cyberHeader
-                            .padding(.horizontal, 20)
-                            .padding(.top, 8)
-                            .padding(.bottom, 16)
+                if selectedTab == 0 {
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            cyberHeader
+                                .padding(.horizontal, 20)
+                                .padding(.top, 8)
+                                .padding(.bottom, 16)
 
-                        deviceInfoCard
-                            .padding(.horizontal, 16)
+                            deviceInfoCard
+                                .padding(.horizontal, 16)
 
-                        gameSectionHeader
-                            .padding(.top, 22)
-                            .padding(.bottom, 4)
+                            gameSectionHeader
+                                .padding(.top, 22)
+                                .padding(.bottom, 4)
 
-                        LazyVGrid(columns: columns, spacing: 14) {
-                            ForEach(games) { game in
-                                Button {
-                                    selectedGame = game
-                                } label: {
-                                    GameCardView(
-                                        title: game.name,
-                                        subtitle: game.bundleID.isEmpty ? " " : game.bundleID,
-                                        bannerColor: AppTheme.resolvedBannerColor(game.bannerColor),
-                                        iconURL: game.iconURL,
-                                        systemIconName: "app.fill",
-                                        actionLabel: game.type == "app" ? "MỞ ỨNG DỤNG" : "MỞ GAME"
-                                    )
+                            LazyVGrid(columns: columns, spacing: 14) {
+                                ForEach(games) { game in
+                                    Button {
+                                        selectedGame = game
+                                    } label: {
+                                        GameCardView(
+                                            title: game.name,
+                                            subtitle: game.bundleID.isEmpty ? " " : game.bundleID,
+                                            bannerColor: AppTheme.resolvedBannerColor(game.bannerColor),
+                                            iconURL: game.iconURL,
+                                            systemIconName: "app.fill",
+                                            actionLabel: game.type == "app" ? "MỞ ỨNG DỤNG" : "MỞ GAME"
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 6)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 6)
 
-                        if games.isEmpty && !isLoadingGames {
-                            emptyGamesView
-                                .padding(.top, 24)
-                        }
+                            if games.isEmpty && !isLoadingGames {
+                                emptyGamesView
+                                    .padding(.top, 24)
+                            }
 
-                        Spacer(minLength: 32)
+                            Spacer(minLength: 32)
+                        }
                     }
+                } else {
+                    VipToolsView()
                 }
             }
             .navigationTitle("")
@@ -112,7 +151,10 @@ struct GamesHomeView: View {
                 .hidden()
             )
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                LicenseStatusBar()
+                VStack(spacing: 10) {
+                    LicenseStatusBar()
+                    bottomTabBar
+                }
             }
             .toast($licenseGate.activationToast)
             .sheet(item: $announcement) { item in
@@ -340,6 +382,59 @@ struct GamesHomeView: View {
                 .frame(height: 1)
         }
         .padding(.horizontal, 16)
+    }
+
+    // MARK: - Bottom Tab Bar
+
+    private var bottomTabBar: some View {
+        let shape = TopRoundedShape(radius: 22)
+        return HStack(spacing: 0) {
+            tabItem(icon: "gamecontroller.fill", label: "Game", index: 0)
+            tabItem(icon: "wrench.and.screwdriver.fill", label: "Vip Tools", index: 1)
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.horizontal, 8)
+        .padding(.top, 6)
+        .padding(.bottom, 4)
+        .clipShape(shape)
+        .overlay(
+            TabBarTopBorder(radius: 22)
+                .stroke(
+                    LinearGradient(
+                        colors: [AppTheme.techGlow.opacity(0.40), AppTheme.neonPurple.opacity(0.30)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+        .shadow(color: AppTheme.neonPurple.opacity(0.14), radius: 16, y: -3)
+    }
+
+    private func tabItem(icon: String, label: String, index: Int) -> some View {
+        let active = selectedTab == index
+        return Button {
+            withAnimation(.spring(response: 0.30, dampingFraction: 0.72)) {
+                selectedTab = index
+            }
+        } label: {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: active ? .bold : .medium))
+                    .foregroundStyle(active ? AppTheme.neonPurple : Color(red: 0.42, green: 0.50, blue: 0.68))
+                    .shadow(color: active ? AppTheme.neonPurple.opacity(0.65) : .clear, radius: 8)
+                Text(label)
+                    .font(.system(size: 11, weight: active ? .bold : .medium))
+                    .foregroundStyle(active ? AppTheme.neonPurple : Color(red: 0.42, green: 0.50, blue: 0.68))
+                // Active dot indicator
+                Circle()
+                    .fill(active ? AppTheme.neonPurple : Color.clear)
+                    .frame(width: 4, height: 4)
+                    .shadow(color: active ? AppTheme.neonPurple.opacity(0.85) : .clear, radius: 4)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 9)
+        }
+        .buttonStyle(.plain)
     }
 
     private var emptyGamesView: some View {
