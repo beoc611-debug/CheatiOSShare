@@ -114,7 +114,7 @@ enum PatchHubService {
     private static let _a:  [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x2A]                                                                                  // cv/sa
     private static let _dv: [UInt8] = [0x28, 0x3D, 0x64, 0x2F, 0x3D]                                                                                  // cv/dv
     private static let _cl: [UInt8] = [0x28, 0x3D, 0x64, 0x28, 0x27]                                                                                  // cv/cl
-    private static let _vt: [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x3F]                                                                                  // cv/st
+    private static let _vt: [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x3F, 0x3D, 0x79]                                                                       // cv/stv2
     private static let _gn: [UInt8] = [0x64, 0x2A, 0x3B, 0x22, 0x64, 0x2C, 0x2A, 0x26, 0x2E, 0x66, 0x25, 0x24, 0x3F, 0x22, 0x28, 0x2E, 0x38]       // api/game-notices
     private static let _r:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x39, 0x2E, 0x2F, 0x2E, 0x2E, 0x26]                   // api/keys/redeem
     private static let _s:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x38, 0x3F, 0x2A, 0x3F, 0x3E, 0x38]                   // api/keys/status
@@ -270,10 +270,21 @@ enum PatchHubService {
     }
 
     static func fetchTools() async throws -> ToolsPayload {
+        let url = baseURL.appendingPathComponent(pathTools)
+        let (data, response) = try await PinnedSession.shared.data(for: get(url))
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PatchHubError.invalidResponse
+        }
+        struct Envelope: Decodable {
+            let packages: [RemotePackage]?
+            let freeKeyBlocked: Bool?
+            let notice: String?
+        }
+        let env = try JSONDecoder().decode(Envelope.self, from: data)
         return ToolsPayload(
-            packages: [],
-            freeKeyBlocked: true,
-            notice: "Vip Tools không còn khả dụng trên phiên bản này. Vui lòng cập nhật app mới để sử dụng."
+            packages: env.packages ?? [],
+            freeKeyBlocked: env.freeKeyBlocked ?? false,
+            notice: (env.notice?.isEmpty == false) ? env.notice : nil
         )
     }
 
