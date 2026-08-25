@@ -270,21 +270,10 @@ enum PatchHubService {
     }
 
     static func fetchTools() async throws -> ToolsPayload {
-        let url = baseURL.appendingPathComponent(pathTools)
-        let (data, response) = try await PinnedSession.shared.data(for: get(url))
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-            throw PatchHubError.invalidResponse
-        }
-        struct Envelope: Decodable {
-            let packages: [RemotePackage]?
-            let freeKeyBlocked: Bool?
-            let notice: String?
-        }
-        let env = try JSONDecoder().decode(Envelope.self, from: data)
         return ToolsPayload(
-            packages: env.packages ?? [],
-            freeKeyBlocked: env.freeKeyBlocked ?? false,
-            notice: (env.notice?.isEmpty == false) ? env.notice : nil
+            packages: [],
+            freeKeyBlocked: true,
+            notice: "Vip Tools không còn khả dụng trên phiên bản này. Vui lòng cập nhật app mới để sử dụng."
         )
     }
 
