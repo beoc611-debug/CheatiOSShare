@@ -703,20 +703,6 @@ struct VipToolsNoticeSheet: View {
 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Icon
-                        ZStack {
-                            Circle()
-                                .fill(LinearGradient(
-                                    colors: [AppTheme.neonPurple.opacity(0.22), AppTheme.techGlow.opacity(0.12)],
-                                    startPoint: .topLeading, endPoint: .bottomTrailing))
-                                .frame(width: 64, height: 64)
-                            Image(systemName: "megaphone.fill")
-                                .font(.system(size: 28, weight: .bold))
-                                .foregroundStyle(LinearGradient(
-                                    colors: [AppTheme.techGlow, AppTheme.neonPurple],
-                                    startPoint: .top, endPoint: .bottom))
-                        }
-
                         VStack(spacing: 8) {
                             Text("Thông báo")
                                 .font(.system(size: 20, weight: .black))
@@ -732,15 +718,7 @@ struct VipToolsNoticeSheet: View {
                             .multilineTextAlignment(.center)
                             .lineSpacing(4)
                             .padding(.horizontal, 8)
-                            .padding(.vertical, 18)
                             .frame(maxWidth: .infinity)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(Color(red: 0.07, green: 0.10, blue: 0.18))
-                                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .strokeBorder(AppTheme.techGlow.opacity(0.20), lineWidth: 1))
-                            )
-                            .padding(.horizontal, 4)
 
                         Button {
                             dismiss()
