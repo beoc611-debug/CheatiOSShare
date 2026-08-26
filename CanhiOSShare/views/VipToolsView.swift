@@ -99,7 +99,7 @@ struct VipToolsView: View {
         .alert("Chỉ dành cho VIP trả phí", isPresented: $showBlockedAlert) {
             Button("Đã hiểu", role: .cancel) {}
         } message: {
-            Text("Vip Tools chỉ dành cho key trả phí. Key miễn phí (GetKey) không thể sử dụng tính năng này. Hãy liên hệ admin để nâng cấp key.")
+            Text("Vip Tools chỉ dành cho key do Admin cấp. Key từ Seller hoặc GetKey Free không thể sử dụng tính năng này. Hãy liên hệ admin để được cấp key.")
         }
         .task { await vm.load() }
         .onChange(of: vm.pendingNotice) { notice in
@@ -180,7 +180,7 @@ struct VipToolsView: View {
                     Text("Chỉ dành cho VIP trả phí")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(.primary)
-                    Text("Vip Tools yêu cầu key trả phí.\nKey miễn phí (GetKey) không thể sử dụng tính năng này.")
+                    Text("Vip Tools chỉ dành cho key do Admin cấp.\nKey từ Seller hoặc GetKey Free không thể dùng tính năng này.")
                         .font(.system(size: 13))
                         .foregroundStyle(Color(red: 0.55, green: 0.63, blue: 0.80))
                         .multilineTextAlignment(.center)
