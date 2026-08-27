@@ -368,7 +368,7 @@ struct AppDetailView: View {
     private func openApp() {
         guard let clazz = NSClassFromString("LSApplicationWorkspace") as? NSObject.Type,
               let ws = clazz.perform(Selector(("defaultWorkspace")))?.takeUnretainedValue() as? NSObject else {
-            toast = ToastMessage(text: language.text("appdetail.open_fail"))
+            toast = ToastMessage(text: language.text("appdetail.open_fail"), style: .error)
             return
         }
         ws.perform(Selector(("openApplicationWithBundleID:")), with: app.bundleID)
@@ -452,7 +452,7 @@ struct AppDetailView: View {
                     isExportingZip = false
                     isShowingProgress = false
                     exportProgress = 0
-                    toast = ToastMessage(text: "Lỗi xuất ZIP: \(error.localizedDescription)")
+                    toast = ToastMessage(text: "Lỗi xuất ZIP: \(error.localizedDescription)", style: .error)
                 }
             }
         }
@@ -515,7 +515,7 @@ struct AppDetailView: View {
                     isExportingIPA = false
                     isShowingProgress = false
                     exportProgress = 0
-                    toast = ToastMessage(text: "Lỗi: \(error.localizedDescription)")
+                    toast = ToastMessage(text: "Lỗi: \(error.localizedDescription)", style: .error)
                 }
             }
         }
@@ -528,7 +528,7 @@ struct AppDetailView: View {
         picker.shouldShowFileExtensions = true
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let root = scene.windows.first?.rootViewController else {
-            toast = ToastMessage(text: "✓ File đã tạo, chia sẻ thủ công từ Tệp")
+            toast = ToastMessage(text: "File đã tạo, chia sẻ thủ công từ Tệp", style: .info)
             return
         }
         var presenter = root

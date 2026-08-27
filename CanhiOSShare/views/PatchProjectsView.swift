@@ -398,7 +398,7 @@ struct PatchProjectDetailView: View {
                     togglingRuleID = nil
                     let name = rule.replacementFilename.isEmpty ? rule.bundleID : rule.replacementFilename
                     let key = isOn ? "patch.toggle_on_success" : "patch.toggle_off_success"
-                    toast = ToastMessage(text: language.text(key, name))
+                    toast = ToastMessage(text: language.text(key, name), style: isOn ? .success : .off)
                 }
             } catch let error as PatchPackageError {
                 await MainActor.run {

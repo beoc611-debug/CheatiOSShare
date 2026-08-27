@@ -743,7 +743,7 @@ struct GamePatchesView: View {
                     await MainActor.run {
                         togglingProjectID = nil
                         projectStates[item.id] = false
-                        toast = ToastMessage(text: "Xác thực key thất bại. Vui lòng thử lại.")
+                        toast = ToastMessage(text: "Xác thực key thất bại. Vui lòng thử lại.", style: .error)
                     }
                     return
                 }
@@ -782,7 +782,7 @@ struct GamePatchesView: View {
                     )
                 } else if actualState == isOn {
                     let key = isOn ? "patch.toggle_on_success" : "patch.toggle_off_success"
-                    toast = ToastMessage(text: language.text(key, displayName(for: item)))
+                    toast = ToastMessage(text: language.text(key, displayName(for: item)), style: isOn ? .success : .off)
                 }
             }
         }

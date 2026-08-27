@@ -127,8 +127,38 @@ struct PressScaleButtonStyle: ButtonStyle {
 // MARK: - Toast
 
 struct ToastMessage: Identifiable, Equatable {
+    enum ToastStyle: Equatable {
+        case success, off, error, info
+
+        var icon: String {
+            switch self {
+            case .success: return "bolt.fill"
+            case .off:     return "moon.fill"
+            case .error:   return "exclamationmark.triangle.fill"
+            case .info:    return "checkmark.circle.fill"
+            }
+        }
+        var color: Color {
+            switch self {
+            case .success: return Color(red: 0.10, green: 0.95, blue: 0.65)
+            case .off:     return Color(red: 0.50, green: 0.52, blue: 0.72)
+            case .error:   return Color(red: 1.00, green: 0.30, blue: 0.35)
+            case .info:    return AppTheme.techGlow
+            }
+        }
+        var badge: String {
+            switch self {
+            case .success: return "BẬT"
+            case .off:     return "TẮT"
+            case .error:   return "LỖI"
+            case .info:    return "OK"
+            }
+        }
+    }
+
     let id = UUID()
     var text: String
+    var style: ToastStyle = .info
 }
 
 private struct ToastOverlay: ViewModifier {
@@ -136,31 +166,57 @@ private struct ToastOverlay: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .overlay(alignment: .top) {
+            .overlay(alignment: .bottom) {
                 if let toast {
-                    HStack(alignment: .top, spacing: 10) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.subheadline)
-                            .foregroundStyle(AppTheme.rowColor(4))
-                            .padding(.top, 1)
+                    HStack(spacing: 12) {
+                        // Left icon
+                        ZStack {
+                            Circle()
+                                .fill(toast.style.color.opacity(0.18))
+                                .frame(width: 38, height: 38)
+                            Image(systemName: toast.style.icon)
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(toast.style.color)
+                        }
+                        // Message
                         Text(toast.text)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.primary)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white)
                             .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
+                            .lineLimit(2)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        // Badge
+                        Text(toast.style.badge)
+                            .font(.system(size: 11, weight: .black))
+                            .foregroundStyle(toast.style.color)
+                            .tracking(0.6)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 5)
+                            .background(toast.style.color.opacity(0.15), in: Capsule())
+                            .overlay(Capsule().strokeBorder(toast.style.color.opacity(0.55), lineWidth: 1))
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 13)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(AppTheme.techGlow.opacity(0.4), lineWidth: 1)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(Color(red: 0.04, green: 0.06, blue: 0.12).opacity(0.92))
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                     )
-                    .shadow(color: AppTheme.techGlow.opacity(0.25), radius: 18, y: 6)
-                    .padding(.horizontal, 24)
-                    .padding(.top, 8)
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [toast.style.color.opacity(0.70), toast.style.color.opacity(0.20)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+                    .shadow(color: toast.style.color.opacity(0.30), radius: 20, y: 4)
+                    .shadow(color: Color.black.opacity(0.40), radius: 10, y: 4)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 30)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                     .id(toast.id)
                     .task(id: toast.id) {
                         try? await Task.sleep(nanoseconds: 2_800_000_000)
@@ -168,7 +224,7 @@ private struct ToastOverlay: ViewModifier {
                     }
                 }
             }
-            .animation(.spring(response: 0.4, dampingFraction: 0.78), value: toast)
+            .animation(.spring(response: 0.42, dampingFraction: 0.72), value: toast)
     }
 }
 
