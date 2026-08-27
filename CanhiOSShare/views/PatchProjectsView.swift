@@ -93,13 +93,7 @@ struct PatchProjectsView: View {
         .sheet(item: $store.passwordRequest, onDismiss: store.cancelUnlock) { _ in
             PatchUnlockView(store: store)
         }
-        .alert(item: $store.alert) { alert in
-            Alert(
-                title: Text(language.text(alert.titleKey)),
-                message: Text(alert.message(language: language)),
-                dismissButton: .default(Text(language.text("common.ok")))
-            )
-        }
+        .patchAlert($store.alert, language: language)
     }
 
     @ViewBuilder
@@ -325,13 +319,7 @@ struct PatchProjectDetailView: View {
             Button(language.text("patch.restore"), role: .destructive) { restore() }
             Button(language.text("common.cancel"), role: .cancel) {}
         }
-        .alert(item: $actionAlert) { alert in
-            Alert(
-                title: Text(language.text(alert.titleKey)),
-                message: Text(alert.message(language: language)),
-                dismissButton: .default(Text(language.text("common.ok")))
-            )
-        }
+        .patchAlert($actionAlert, language: language)
         .toast($toast)
     }
 

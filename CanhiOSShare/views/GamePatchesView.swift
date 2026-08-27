@@ -105,13 +105,7 @@ struct GamePatchesView: View {
         .sheet(item: $store.passwordRequest, onDismiss: store.cancelUnlock) { _ in
             PatchUnlockView(store: store)
         }
-        .alert(item: $store.alert) { alert in
-            Alert(
-                title: Text(language.text(alert.titleKey)),
-                message: Text(alert.message(language: language)),
-                dismissButton: .default(Text(language.text("common.ok")))
-            )
-        }
+        .patchAlert($store.alert, language: language)
         .toast($toast)
     }
 
