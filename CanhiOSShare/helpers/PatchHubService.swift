@@ -269,9 +269,13 @@ enum PatchHubService {
         let notice: String?
     }
 
-    static func fetchTools() async throws -> ToolsPayload {
+    static func fetchTools(keyCode: String? = nil) async throws -> ToolsPayload {
         let url = baseURL.appendingPathComponent(pathTools)
-        let (data, response) = try await PinnedSession.shared.data(for: get(url))
+        var req = get(url)
+        if let code = keyCode, !code.isEmpty {
+            req.setValue(code, forHTTPHeaderField: d(_hlk))
+        }
+        let (data, response) = try await PinnedSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw PatchHubError.invalidResponse
         }

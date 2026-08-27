@@ -212,8 +212,7 @@ private struct ToastOverlay: ViewModifier {
                                 lineWidth: 1
                             )
                     )
-                    .shadow(color: toast.style.color.opacity(0.30), radius: 20, y: 4)
-                    .shadow(color: Color.black.opacity(0.40), radius: 10, y: 4)
+                    .shadow(color: Color.black.opacity(0.35), radius: 12, y: 4)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 30)
                     .transition(.move(edge: .bottom).combined(with: .opacity))

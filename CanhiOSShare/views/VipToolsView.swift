@@ -31,12 +31,12 @@ final class VipToolsViewModel: ObservableObject {
     @Published var freeKeyBlocked = false
     @Published var pendingNotice: String? = nil
 
-    func load() async {
+    func load(keyCode: String? = nil) async {
         isLoading = true
         loadError = nil
         freeKeyBlocked = false
         do {
-            let payload = try await PatchHubService.fetchTools()
+            let payload = try await PatchHubService.fetchTools(keyCode: keyCode)
             packages = payload.packages
             freeKeyBlocked = payload.freeKeyBlocked
             if !VipToolsViewModel.noticeShownThisSession, let notice = payload.notice {
@@ -53,6 +53,7 @@ final class VipToolsViewModel: ObservableObject {
 
 struct VipToolsView: View {
     @StateObject private var vm = VipToolsViewModel()
+    @EnvironmentObject private var licenseGate: LicenseGateStore
     @State private var activePackage: RemotePackage? = nil
     @State private var showBlockedAlert = false
     @State private var noticeText: String? = nil
@@ -71,7 +72,7 @@ struct VipToolsView: View {
                     Spacer(minLength: 40)
                 }
             }
-            .refreshable { await vm.load() }
+            .refreshable { await vm.load(keyCode: licenseGate.storedKeyCode) }
         }
         .background(
             NavigationLink(
@@ -101,7 +102,7 @@ struct VipToolsView: View {
         } message: {
             Text("Vip Tools chỉ dành cho key do Admin cấp. Key từ Seller hoặc GetKey Free không thể sử dụng tính năng này. Hãy liên hệ admin để được cấp key.")
         }
-        .task { await vm.load() }
+        .task { await vm.load(keyCode: licenseGate.storedKeyCode) }
         .onChange(of: vm.pendingNotice) { notice in
             if let notice {
                 VipToolsViewModel.noticeShownThisSession = true
@@ -199,7 +200,7 @@ struct VipToolsView: View {
                     .foregroundStyle(Color(red: 0.55, green: 0.63, blue: 0.80))
                     .multilineTextAlignment(.center)
                 Button {
-                    Task { await vm.load() }
+                    Task { await vm.load(keyCode: licenseGate.storedKeyCode) }
                 } label: {
                     Text("Thử lại")
                         .font(.system(size: 13, weight: .semibold))
