@@ -159,6 +159,7 @@ struct ToastMessage: Identifiable, Equatable {
     let id = UUID()
     var text: String
     var style: ToastStyle = .info
+    var duration: Double = 2.8
 }
 
 private struct ToastOverlay: ViewModifier {
@@ -180,10 +181,11 @@ private struct ToastOverlay: ViewModifier {
                         }
                         // Message
                         Text(toast.text)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(.white)
                             .multilineTextAlignment(.leading)
-                            .lineLimit(2)
+                            .lineLimit(3)
+                            .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         // Badge
                         Text(toast.style.badge)
@@ -218,7 +220,8 @@ private struct ToastOverlay: ViewModifier {
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .id(toast.id)
                     .task(id: toast.id) {
-                        try? await Task.sleep(nanoseconds: 2_800_000_000)
+                        let ns = UInt64(toast.duration * 1_000_000_000)
+                        try? await Task.sleep(nanoseconds: ns)
                         if self.toast?.id == toast.id { self.toast = nil }
                     }
                 }
@@ -233,129 +236,37 @@ extension View {
     }
 }
 
-// MARK: - Custom patch alert
+// MARK: - Custom patch alert → routed through toast
 
-private struct PatchAlertOverlay: ViewModifier {
+private struct PatchAlertAsToastModifier: ViewModifier {
     @Binding var alert: PatchStoreAlert?
     let language: AppLanguage
-
-    private enum AlertKind {
-        case failure, success, warning, info
-        var color: Color {
-            switch self {
-            case .failure: return Color(red: 1.00, green: 0.30, blue: 0.35)
-            case .success: return Color(red: 0.10, green: 0.95, blue: 0.65)
-            case .warning: return Color(red: 0.96, green: 0.65, blue: 0.14)
-            case .info:    return Color(red: 0.32, green: 0.86, blue: 0.95)
-            }
-        }
-        var icon: String {
-            switch self {
-            case .failure: return "exclamationmark.triangle.fill"
-            case .success: return "checkmark.circle.fill"
-            case .warning: return "exclamationmark.circle.fill"
-            case .info:    return "info.circle.fill"
-            }
-        }
-    }
-
-    private func kind(for alert: PatchStoreAlert) -> AlertKind {
-        switch alert.titleKey {
-        case "common.failed": return .failure
-        case "common.done":   return .success
-        default:
-            if alert.titleKey.contains("unsupported") { return .warning }
-            return .info
-        }
-    }
+    @State private var toast: ToastMessage?
 
     func body(content: Content) -> some View {
-        content.overlay {
-            if let alert {
-                let k = kind(for: alert)
-                ZStack {
-                    Color.black.opacity(0.55)
-                        .ignoresSafeArea()
-                        .onTapGesture { self.alert = nil }
-                    VStack(spacing: 0) {
-                        // Top stripe
-                        Rectangle()
-                            .fill(k.color)
-                            .frame(height: 3)
-                            .clipShape(
-                                UnevenRoundedRectangle(
-                                    topLeadingRadius: 20, bottomLeadingRadius: 0,
-                                    bottomTrailingRadius: 0, topTrailingRadius: 20
-                                )
-                            )
-                        VStack(spacing: 18) {
-                            // Icon
-                            ZStack {
-                                Circle()
-                                    .fill(k.color.opacity(0.14))
-                                    .frame(width: 60, height: 60)
-                                Image(systemName: k.icon)
-                                    .font(.system(size: 26, weight: .bold))
-                                    .foregroundStyle(k.color)
-                            }
-                            .padding(.top, 24)
-                            // Title
-                            Text(language.text(alert.titleKey))
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(.white)
-                                .multilineTextAlignment(.center)
-                            // Message
-                            Text(alert.message(language: language))
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundStyle(Color(red: 0.68, green: 0.74, blue: 0.88))
-                                .multilineTextAlignment(.center)
-                                .lineSpacing(3)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .padding(.top, -6)
-                            // Divider
-                            Rectangle()
-                                .fill(Color.white.opacity(0.08))
-                                .frame(height: 1)
-                            // OK button
-                            Button {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
-                                    self.alert = nil
-                                }
-                            } label: {
-                                Text(language.text("common.ok"))
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundStyle(k.color)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 4)
-                            }
-                            .buttonStyle(.plain)
-                            .padding(.bottom, 8)
-                        }
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 12)
-                    }
-                    .background(
-                        Color(red: 0.08, green: 0.11, blue: 0.22).opacity(0.97)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .strokeBorder(k.color.opacity(0.25), lineWidth: 1)
-                    )
-                    .shadow(color: k.color.opacity(0.18), radius: 30, y: 8)
-                    .shadow(color: Color.black.opacity(0.50), radius: 16, y: 4)
-                    .padding(.horizontal, 32)
-                    .transition(.scale(scale: 0.88).combined(with: .opacity))
+        content
+            .toast($toast)
+            .onChange(of: alert?.id) { _ in
+                guard let a = alert else { return }
+                let style: ToastMessage.ToastStyle
+                switch a.titleKey {
+                case "common.done":  style = .success
+                case "common.failed": style = .error
+                default: style = a.titleKey.contains("unsupported") ? .info : .error
                 }
-                .animation(.spring(response: 0.38, dampingFraction: 0.75), value: alert.id)
+                toast = ToastMessage(
+                    text: a.message(language: language),
+                    style: style,
+                    duration: style == .error ? 4.5 : 2.8
+                )
+                alert = nil
             }
-        }
     }
 }
 
 extension View {
     func patchAlert(_ alert: Binding<PatchStoreAlert?>, language: AppLanguage) -> some View {
-        modifier(PatchAlertOverlay(alert: alert, language: language))
+        modifier(PatchAlertAsToastModifier(alert: alert, language: language))
     }
 }
 
