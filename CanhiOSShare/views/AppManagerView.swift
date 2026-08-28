@@ -24,30 +24,28 @@ private final class AppManagerModel: ObservableObject {
 
     func load() {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let infoMap = installedAppInfo() as! [String: [String: Any]]
-            let identifiers = MCMFilzaGatherAppIdentifiers()
+            // PRIMARY: installedAppInfo() = allApplications() + MobileInstallation
+            // Has proper localizedName + icon for ALL workspace apps (user + system)
+            let rawInfo = installedAppInfo()  // NSDictionary<NSString*, NSDictionary*>*
 
             var result: [ManagedApp] = []
             var covered = Set<String>()
 
-            for bid in identifiers {
-                var errStr: NSString?
-                let path = MCMFilzaDataContainerPath(bid, &errStr) ?? ""
-                let info = infoMap[bid]
-                let rawName = (info?["name"] as? String)?.trimmingCharacters(in: .whitespaces)
-                let name = rawName?.nonEmpty ?? bid
-                result.append(ManagedApp(id: bid, name: name,
-                                         icon: info?["icon"] as? UIImage,
-                                         containerPath: path))
+            for (bidKey, infoObj) in rawInfo {
+                guard let bid = bidKey as? String,
+                      let info = infoObj as? NSDictionary else { continue }
+                let name = (info["name"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? bid
+                let icon = info["icon"] as? UIImage
+                let container = (info["container"] as? String) ?? ""
+                result.append(ManagedApp(id: bid, name: name, icon: icon, containerPath: container))
                 covered.insert(bid)
             }
 
-            for (bid, info) in infoMap where !covered.contains(bid) {
-                let rawName = (info["name"] as? String)?.trimmingCharacters(in: .whitespaces)
-                let name = rawName?.nonEmpty ?? bid
-                result.append(ManagedApp(id: bid, name: name,
-                                         icon: info["icon"] as? UIImage,
-                                         containerPath: ""))
+            // SUPPLEMENT: MCM daemon/plugin IDs not in workspace (no display name available)
+            for bid in MCMFilzaGatherAppIdentifiers() where !covered.contains(bid) {
+                var errStr: NSString? = nil
+                let path = MCMFilzaDataContainerPath(bid, &errStr) ?? ""
+                result.append(ManagedApp(id: bid, name: bid, icon: nil, containerPath: path))
             }
 
             result.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
@@ -60,11 +58,18 @@ private final class AppManagerModel: ObservableObject {
     }
 
     func fetchSize(for app: ManagedApp) {
-        guard !app.containerPath.isEmpty, sizeCache[app.id] == nil else { return }
+        guard sizeCache[app.id] == nil else { return }
         sizeCache[app.id] = -1
-        let path = app.containerPath
         let bid = app.id
+        let fallbackPath = app.containerPath
         DispatchQueue.global(qos: .background).async { [weak self] in
+            // MCMFilzaDataContainerPath also grants the sandbox extension for the container
+            var errStr: NSString? = nil
+            let path = MCMFilzaDataContainerPath(bid, &errStr) ?? fallbackPath
+            guard !path.isEmpty else {
+                DispatchQueue.main.async { self?.sizeCache[bid] = 0 }
+                return
+            }
             var total: Int64 = 0
             if let e = FileManager.default.enumerator(
                 at: URL(fileURLWithPath: path),
