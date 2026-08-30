@@ -81,7 +81,47 @@ enum ContainerStore {
             log("patch: filesystem metadata scan resolved \(bundleID)")
             return scanned
         }
+
+        // Last-resort: LSApplicationProxy.dataContainerURL needs no MCM token
+        // and works on all iOS versions as long as the app is installed.
+        let rawInfo = appInfoForBundleID(bundleID) as NSDictionary
+        if let containerStr = rawInfo["container"] as? String, !containerStr.isEmpty {
+            let canonical = ContainerDiscoveryMerger.canonicalPath(containerStr)
+            if isApplicationContainerPath(canonical) {
+                log("patch: LS proxy resolved \(bundleID) -> \(canonical)")
+                return canonical
+            }
+        }
+
+        // Mechanism B: apfs_own fallback (iOS 18 — containermanagerd denies token,
+        // sandbox blocks open(), but kernel R/W lets us take ownership first).
+        // Like FilzaJailedDS's apfs_own_tree approach: own the container dir so
+        // open() succeeds without a sandbox extension.
+        if let owned = resolveByApfsOwn(bundleID: bundleID) {
+            log("patch: apfsOwn-B resolved \(bundleID)")
+            return owned
+        }
+
         return nil
+    }
+
+    private static func resolveByApfsOwn(bundleID: String) -> String? {
+        var err: NSString?
+        guard let path = MCMContainerPathForIdentifier(2, bundleID, false, &err) else {
+            let detail = err.map(String.init) ?? "nil"
+            log("patch: apfsOwn-B: no bare path for \(bundleID) detail=\(detail)")
+            return nil
+        }
+        // Take ownership so open() bypasses sandbox DAC check
+        path.withCString { cpath in _ = apfs_own(cpath, 501, 501) }
+        let fd = Darwin.open(path, O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW)
+        guard fd >= 0 else {
+            log("patch: apfsOwn-B: open failed errno=\(errno) for \(bundleID)")
+            return nil
+        }
+        Darwin.close(fd)
+        guard isApplicationContainerPath(path) else { return nil }
+        return path
     }
 
     static func resolveAppContainerPathByMetadataScan(bundleID: String) -> String? {
@@ -89,7 +129,10 @@ enum ContainerStore {
             log("patch: metadata scan skipped — sandbox access not active")
             return nil
         }
-        let dirs = enumerateDirectories(path: appDataRoot)
+        // When sandbox IS escaped, enumerateDirectoriesWithTraversalGrant uses
+        // FileManager.contentsOfDirectory (readdir) which succeeds on iOS 18;
+        // enumerateDirectories falls back to fsgetpath which is MAC-blocked.
+        let dirs = enumerateDirectoriesWithTraversalGrant(path: appDataRoot)
         guard !dirs.isEmpty else {
             log("patch: metadata scan unavailable — no containers enumerated")
             return nil
@@ -108,9 +151,14 @@ enum ContainerStore {
     // MARK: Primary — MobileInstallation / LSApplicationWorkspace
 
     static func installedAppsFromAPI() -> [InstalledApp] {
-        let raw = installedAppInfo() as? [String: [String: Any]] ?? [:]
+        // installedAppInfo() returns NSDictionary* which bridges as [AnyHashable:Any] in Swift.
+        // Casting to [String:[String:Any]] always fails (nested cast can't pierce Any erasure),
+        // so use NSDictionary directly to avoid getting an empty dict.
+        let raw = installedAppInfo() as NSDictionary
         var apps: [InstalledApp] = []
-        for (bundleID, info) in raw {
+        for (key, value) in raw {
+            guard let bundleID = key as? String,
+                  let info = value as? NSDictionary else { continue }
             apps.append(InstalledApp(
                 bundleID: bundleID,
                 name: info["name"] as? String ?? "",
@@ -176,7 +224,7 @@ enum ContainerStore {
             }
             if index < 3 { log("mcm[\(index)]: \(bundleID) -> \(containerPath)") }
 
-            let rawInfo = appInfoForBundleID(bundleID) as? [String: Any] ?? [:]
+            let rawInfo = appInfoForBundleID(bundleID) as NSDictionary
             let metadata = bundleMetadata[bundleID]
             apps.append(InstalledApp(
                 bundleID: bundleID,
@@ -222,7 +270,7 @@ enum ContainerStore {
                 continue
             }
 
-            let rawInfo = appInfoForBundleID(bundleID) as? [String: Any] ?? [:]
+            let rawInfo = appInfoForBundleID(bundleID) as NSDictionary
             let metadata = bundleMetadata[bundleID]
             apps.append(InstalledApp(
                 bundleID: bundleID,
@@ -257,27 +305,41 @@ enum ContainerStore {
         }
 
         let fileManager = FileManager.default
-        guard let rootEntries = try? fileManager.contentsOfDirectory(atPath: rootPath) else {
-            log("browser: app-bundle metadata unavailable root=\(rootPath) grant=\(handle)")
-            return []
-        }
+        let rootEntries = try? fileManager.contentsOfDirectory(atPath: rootPath)
 
+        // If contentsOfDirectory fails (sandbox restriction on iOS < 26),
+        // fall back to inode walk which bypasses directory-listing restrictions.
+        // File reads (Data(contentsOf:)) still work for world-readable paths like /System/Applications.
         let bundlePaths: [String]
-        if nested {
-            bundlePaths = rootEntries.prefix(2_048).flatMap { entry -> [String] in
-                guard UUID(uuidString: entry) != nil else { return [] }
-                let containerPath = (rootPath as NSString).appendingPathComponent(entry)
-                let children = (try? fileManager.contentsOfDirectory(atPath: containerPath)) ?? []
-                return children.prefix(16).compactMap { child in
-                    guard child.hasSuffix(".app") else { return nil }
-                    return (containerPath as NSString).appendingPathComponent(child)
+        if let entries = rootEntries {
+            if nested {
+                bundlePaths = entries.prefix(2_048).flatMap { entry -> [String] in
+                    guard UUID(uuidString: entry) != nil else { return [] }
+                    let containerPath = (rootPath as NSString).appendingPathComponent(entry)
+                    let children = (try? fileManager.contentsOfDirectory(atPath: containerPath)) ?? []
+                    return children.prefix(16).compactMap { child in
+                        guard child.hasSuffix(".app") else { return nil }
+                        return (containerPath as NSString).appendingPathComponent(child)
+                    }
+                }
+            } else {
+                bundlePaths = entries.prefix(2_048).compactMap { entry in
+                    guard entry.hasSuffix(".app") else { return nil }
+                    return (rootPath as NSString).appendingPathComponent(entry)
                 }
             }
         } else {
-            bundlePaths = rootEntries.prefix(2_048).compactMap { entry in
-                guard entry.hasSuffix(".app") else { return nil }
-                return (rootPath as NSString).appendingPathComponent(entry)
+            // Inode walk fallback: enumerateDirectories uses bad_query_list to bypass readdir sandbox.
+            // The walk returns all directories (including .app bundles) underneath rootPath.
+            // Info.plist inside these bundles is world-readable for system paths even without sandbox escape.
+            let allDirs = enumerateDirectories(path: rootPath)
+            guard !allDirs.isEmpty else {
+                log("browser: app-bundle metadata unavailable root=\(rootPath) grant=\(handle)")
+                return []
             }
+            // Filter to only .app directories (the inode walk returns ALL subdirs at all depths)
+            bundlePaths = allDirs.filter { $0.hasSuffix(".app") }.prefix(2_048).map { $0 }
+            log("browser: app-bundle inode-walk fallback root=\(rootPath) found \(bundlePaths.count) bundles")
         }
 
         return bundlePaths.compactMap { bundlePath in
@@ -512,7 +574,7 @@ enum ContainerStore {
                 let bundleID = metadata.bundleID.trimmingCharacters(in: .whitespacesAndNewlines)
                 if ContainerBundleCandidateResolver.isValidBundleIdentifier(bundleID),
                    !bundleID.hasPrefix("systemgroup.") {
-                    let info = appInfoForBundleID(bundleID) as? [String: Any] ?? [:]
+                    let info = appInfoForBundleID(bundleID) as NSDictionary
                     let resolvedName = metadata.displayName.isEmpty
                         ? (info["name"] as? String ?? bundleID)
                         : metadata.displayName
@@ -557,7 +619,7 @@ enum ContainerStore {
                     )
                 }
 
-                let info = appInfoForBundleID(bundleID) as? [String: Any] ?? [:]
+                let info = appInfoForBundleID(bundleID) as NSDictionary
                 guard info["found"] as? Bool == true else { continue }
                 return InstalledApp(
                     bundleID: bundleID,
@@ -654,18 +716,46 @@ enum ContainerStore {
     // MARK: Bundle path lookup
 
     static func bundlePathForBundleID(_ bundleID: String) -> String? {
+        // 1. LSApplicationProxy.bundleURL — fast LS database lookup, no filesystem scan needed.
+        //    appInfoForBundleID now includes "bundleURL" in its result dict.
+        let rawInfo = appInfoForBundleID(bundleID) as NSDictionary
+        if let url = rawInfo["bundleURL"] as? URL, !url.path.isEmpty {
+            log("browser: bundlePath via LS proxy for \(bundleID): \(url.path)")
+            return url.path
+        }
+
+        // 2. SpringBoardServices IPC — SpringBoard knows every installed app's bundle path.
+        if let sbsPath = bundlePathViaSBS(bundleID), !sbsPath.isEmpty {
+            log("browser: bundlePath via SBS IPC for \(bundleID): \(sbsPath)")
+            return sbsPath
+        }
+
+        // 3. Filesystem scan — works for system apps (/System/Applications, /Applications)
+        //    and for user apps when grantContainerAccess succeeds (iOS 26+).
+        //    On iOS 18, contentsOfDirectory fails for /var/containers/Bundle/Application;
+        //    the inode walk fallback below handles that path.
         let fm = FileManager.default
         for root in applicationBundleRoots {
             let handle = grantContainerAccess(root.path)
-            if handle >= 0 { defer { bad_query_release(handle) } }
-            guard let entries = try? fm.contentsOfDirectory(atPath: root.path) else { continue }
-            if root.nested {
-                for entry in entries.prefix(2_048) {
-                    guard UUID(uuidString: entry) != nil else { continue }
-                    let containerPath = (root.path as NSString).appendingPathComponent(entry)
-                    let children = (try? fm.contentsOfDirectory(atPath: containerPath)) ?? []
-                    for child in children where child.hasSuffix(".app") {
-                        let appPath = (containerPath as NSString).appendingPathComponent(child)
+            defer { if handle >= 0 { bad_query_release(handle) } }
+
+            if let entries = try? fm.contentsOfDirectory(atPath: root.path) {
+                if root.nested {
+                    for entry in entries.prefix(2_048) {
+                        guard UUID(uuidString: entry) != nil else { continue }
+                        let containerPath = (root.path as NSString).appendingPathComponent(entry)
+                        let children = (try? fm.contentsOfDirectory(atPath: containerPath)) ?? []
+                        for child in children where child.hasSuffix(".app") {
+                            let appPath = (containerPath as NSString).appendingPathComponent(child)
+                            guard let data = try? Data(contentsOf: URL(fileURLWithPath: (appPath as NSString).appendingPathComponent("Info.plist"))),
+                                  let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+                                  plist["CFBundleIdentifier"] as? String == bundleID else { continue }
+                            return appPath
+                        }
+                    }
+                } else {
+                    for entry in entries.prefix(2_048) where entry.hasSuffix(".app") {
+                        let appPath = (root.path as NSString).appendingPathComponent(entry)
                         guard let data = try? Data(contentsOf: URL(fileURLWithPath: (appPath as NSString).appendingPathComponent("Info.plist"))),
                               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
                               plist["CFBundleIdentifier"] as? String == bundleID else { continue }
@@ -673,8 +763,9 @@ enum ContainerStore {
                     }
                 }
             } else {
-                for entry in entries.prefix(2_048) where entry.hasSuffix(".app") {
-                    let appPath = (root.path as NSString).appendingPathComponent(entry)
+                // Inode walk fallback for paths where contentsOfDirectory is sandbox-blocked.
+                let allDirs = enumerateDirectories(path: root.path)
+                for appPath in allDirs where appPath.hasSuffix(".app") {
                     guard let data = try? Data(contentsOf: URL(fileURLWithPath: (appPath as NSString).appendingPathComponent("Info.plist"))),
                           let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
                           plist["CFBundleIdentifier"] as? String == bundleID else { continue }
@@ -683,6 +774,33 @@ enum ContainerStore {
             }
         }
         return nil
+    }
+
+    // MARK: IPA export
+
+    static func exportIPABundle(
+        at bundlePath: String,
+        to destination: URL,
+        onCopied: (() -> Void)? = nil,
+        fileWritten: (() -> Void)? = nil
+    ) throws {
+        let payloadDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("Payload-\(UUID().uuidString)")
+        let fm = FileManager.default
+        try? fm.removeItem(at: destination)
+        try? fm.removeItem(at: payloadDir)
+        try fm.createDirectory(at: payloadDir, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: payloadDir) }
+        let bundleName = (bundlePath as NSString).lastPathComponent
+        let bundleParent = (bundlePath as NSString).deletingLastPathComponent
+        let handle = grantContainerAccess(bundleParent)
+        defer { if handle >= 0 { bad_query_release(handle) } }
+        try fm.copyItem(
+            at: URL(fileURLWithPath: bundlePath),
+            to: payloadDir.appendingPathComponent(bundleName)
+        )
+        onCopied?()
+        _ = try ZIPArchiveWriter.write(items: [payloadDir], to: destination, fileWritten: fileWritten)
     }
 
     // MARK: File browsing
