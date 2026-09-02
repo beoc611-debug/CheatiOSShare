@@ -14,6 +14,7 @@ struct SplashScreenView: View {
     @State private var tagOpacity:   Double  = 0
     @State private var progressVal:  CGFloat = 0
     @State private var progressOp:   Double  = 0
+    @State private var successOp:    Double  = 0
     @State private var screenOpacity:Double  = 1
     @State private var glowPulse:    Bool    = false
     @State private var particles:    [SplashParticle] = SplashParticle.spawn(60)
@@ -22,6 +23,7 @@ struct SplashScreenView: View {
     private let accent = Color(red: 0.30, green: 0.70, blue: 1.00)
     private let purple = Color(red: 0.65, green: 0.20, blue: 1.00)
     private let cyan   = Color(red: 0.10, green: 0.90, blue: 1.00)
+    private let green  = Color(red: 0.15, green: 0.90, blue: 0.55)
 
     var body: some View {
         GeometryReader { geo in
@@ -79,7 +81,7 @@ struct SplashScreenView: View {
                                     ]),
                                     center: .center
                                 ),
-                                style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                                style: StrokeStyle(lineWidth: 3, lineCap: .butt)
                             )
                             .frame(width: 200, height: 200)
                             .rotationEffect(.degrees(-90))
@@ -114,7 +116,27 @@ struct SplashScreenView: View {
                             .opacity(logoOpacity)
                     }
 
-                    Spacer().frame(height: 40)
+                    Spacer().frame(height: 20)
+
+                    // Success badge
+                    HStack(spacing: 6) {
+                        ZStack {
+                            Circle().fill(green.opacity(0.18)).frame(width: 20, height: 20)
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(green)
+                        }
+                        Text("Truy cập thành công")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundStyle(green)
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 7)
+                    .background(green.opacity(0.10), in: Capsule())
+                    .overlay(Capsule().strokeBorder(green.opacity(0.28), lineWidth: 1))
+                    .shadow(color: green.opacity(0.5), radius: 10)
+                    .opacity(successOp)
+
+                    Spacer().frame(height: 18)
 
                     // Title
                     VStack(spacing: 6) {
@@ -191,7 +213,11 @@ struct SplashScreenView: View {
         withAnimation(.easeIn(duration: 0.3).delay(1.1)) { progressOp = 1.0 }
         withAnimation(.easeInOut(duration: 1.6).delay(1.15)) { progressVal = 1.0 }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) { burstActive = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
+        // Arc ends at ~2.75s — show success badge right after
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) { successOp = 1.0 }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
             withAnimation(.easeInOut(duration: 0.55)) { screenOpacity = 0 }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { onFinished() }
         }
