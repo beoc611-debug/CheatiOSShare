@@ -1,11 +1,25 @@
 import SwiftUI
-import WebKit
+import SafariServices
 
-private struct ProfileWebLoader: UIViewRepresentable {
+private struct SafariInstallView: UIViewControllerRepresentable {
     let url: URL
-    func makeUIView(context: Context) -> WKWebView { WKWebView() }
-    func updateUIView(_ wv: WKWebView, context: Context) {
-        if wv.url != url { wv.load(URLRequest(url: url)) }
+    var onDismiss: () -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(onDismiss: onDismiss) }
+
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        let vc = SFSafariViewController(url: url)
+        vc.delegate = context.coordinator
+        vc.preferredControlTintColor = UIColor(red: 0.20, green: 0.70, blue: 1.00, alpha: 1)
+        return vc
+    }
+
+    func updateUIViewController(_ vc: SFSafariViewController, context: Context) {}
+
+    class Coordinator: NSObject, SFSafariViewControllerDelegate {
+        let onDismiss: () -> Void
+        init(onDismiss: @escaping () -> Void) { self.onDismiss = onDismiss }
+        func safariViewControllerDidFinish(_ controller: SFSafariViewController) { onDismiss() }
     }
 }
 
@@ -31,7 +45,7 @@ struct NextDNSView: View {
     @StateObject private var vm = NextDNSViewModel()
     @State private var downloadingID: String? = nil
     @State private var showInstallTip = false
-    @State private var profileLoadURL: URL? = nil
+    @State private var safariURL: URL? = nil
 
     private let accent  = Color(red: 0.20, green: 0.70, blue: 1.00)
     private let green   = Color(red: 0.10, green: 0.85, blue: 0.55)
@@ -40,12 +54,6 @@ struct NextDNSView: View {
     var body: some View {
         ZStack {
             Color.clear
-            // Hidden WKWebView: iOS intercepts mobileconfig and shows native install prompt in-app
-            if let url = profileLoadURL {
-                ProfileWebLoader(url: url)
-                    .frame(width: 1, height: 1)
-                    .opacity(0.01)
-            }
             ScrollView {
                 VStack(spacing: 0) {
                     header
@@ -60,6 +68,12 @@ struct NextDNSView: View {
             .refreshable { await vm.load() }
         }
         .task { await vm.load() }
+        .sheet(isPresented: Binding(get: { safariURL != nil }, set: { if !$0 { safariURL = nil } })) {
+            if let url = safariURL {
+                SafariInstallView(url: url) { safariURL = nil }
+                    .ignoresSafeArea()
+            }
+        }
         .alert("Cách cài DNS Profile", isPresented: $showInstallTip) {
             Button("Đã hiểu", role: .cancel) {}
         } message: {
@@ -195,12 +209,9 @@ struct NextDNSView: View {
     private func download(_ profile: PatchHubService.DNSProfile) {
         guard let url = URL(string: profile.downloadURL) else { return }
         downloadingID = profile.id
-        profileLoadURL = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            profileLoadURL = url
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                downloadingID = nil
-            }
+        safariURL = url
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            downloadingID = nil
         }
     }
 }
