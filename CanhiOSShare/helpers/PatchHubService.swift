@@ -115,7 +115,8 @@ enum PatchHubService {
     private static let _a:  [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x2A]                                                                       // wmd3/sa
     private static let _dv: [UInt8] = [0x28, 0x3D, 0x64, 0x2F, 0x3D]                                                                                   // cv/dv (kept, graceful 404)
     private static let _cl: [UInt8] = [0x28, 0x3D, 0x64, 0x28, 0x27]                                                                                   // cv/cl (kept, graceful 404)
-    private static let _vt: [UInt8] = [0x28, 0x3D, 0x64, 0x38, 0x3F, 0x3D, 0x79]                                                                       // cv/stv2 (kept, graceful 404)
+    private static let _vt:  [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x3F]                                                                       // wmd3/st
+    private static let _dns: [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x2F, 0x25, 0x38]                                                           // wmd3/sdns
     private static let _gn: [UInt8] = [0x64, 0x2A, 0x3B, 0x22, 0x64, 0x2C, 0x2A, 0x26, 0x2E, 0x66, 0x25, 0x24, 0x3F, 0x22, 0x28, 0x2E, 0x38]       // api/game-notices
     private static let _r:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x39, 0x2E, 0x2F, 0x2E, 0x2E, 0x26]                   // api/keys/redeem
     private static let _s:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x38, 0x3F, 0x2A, 0x3F, 0x3E, 0x38]                   // api/keys/status
@@ -149,6 +150,7 @@ enum PatchHubService {
     static var pathNotice: String      { d(_n) }
     static var pathContact: String     { d(_cl) }
     static var pathTools: String       { d(_vt) }
+    static var pathDNS: String         { d(_dns) }
     static var pathRedeem: String      { d(_r) }
     static var pathStatus: String      { d(_s) }
     static var pathGameNotices: String { d(_gn) }
@@ -277,7 +279,14 @@ enum PatchHubService {
             req.setValue(code, forHTTPHeaderField: d(_hlk))
         }
         let (data, response) = try await PinnedSession.shared.data(for: req)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+        guard let http = response as? HTTPURLResponse else {
+            throw PatchHubError.invalidResponse
+        }
+        // 404 = endpoint not yet live; return empty payload so UI shows empty list, not error
+        if http.statusCode == 404 {
+            return ToolsPayload(packages: [], freeKeyBlocked: false, notice: nil)
+        }
+        guard (200...299).contains(http.statusCode) else {
             throw PatchHubError.invalidResponse
         }
         struct Envelope: Decodable {
@@ -320,6 +329,26 @@ enum PatchHubService {
             .appendingPathExtension("cheatiosvip")
         try FileManager.default.moveItem(at: tempURL, to: destination)
         return destination
+    }
+
+    // MARK: - DNS Profiles
+
+    struct DNSProfile: Decodable, Identifiable {
+        let id: String
+        let name: String
+        let description: String
+        let downloadURL: String
+        let order: Int
+    }
+
+    static func fetchDNSProfiles() async throws -> [DNSProfile] {
+        let url = baseURL.appendingPathComponent(pathDNS)
+        let (data, response) = try await PinnedSession.shared.data(for: get(url))
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw PatchHubError.invalidResponse
+        }
+        struct Envelope: Decodable { let profiles: [DNSProfile] }
+        return (try? JSONDecoder().decode(Envelope.self, from: data))?.profiles ?? []
     }
 
     private static func digest(of url: URL) throws -> String {

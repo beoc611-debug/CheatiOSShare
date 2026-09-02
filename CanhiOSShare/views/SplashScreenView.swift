@@ -121,22 +121,22 @@ struct SplashScreenView: View {
 
                     Spacer()
 
-                    // Progress bar
-                    VStack(spacing: 10) {
-                        GeometryReader { g in
-                            ZStack(alignment: .leading) {
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(.white.opacity(0.08))
-                                    .frame(height: 4)
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(LinearGradient(colors: [accent, purple],
-                                                         startPoint: .leading, endPoint: .trailing))
-                                    .frame(width: progressVal * g.size.width, height: 4)
-                                    .shadow(color: accent.opacity(0.8), radius: 6)
+                    // Segmented progress indicator
+                    VStack(spacing: 14) {
+                        HStack(spacing: 7) {
+                            ForEach(0..<6, id: \.self) { i in
+                                let filled = progressVal >= CGFloat(i + 1) / 6.0
+                                Capsule()
+                                    .fill(filled
+                                        ? AnyShapeStyle(LinearGradient(
+                                            colors: [cyan.opacity(0.9), accent, purple],
+                                            startPoint: .leading, endPoint: .trailing))
+                                        : AnyShapeStyle(Color.white.opacity(0.08)))
+                                    .frame(width: 32, height: 5)
+                                    .shadow(color: filled ? accent.opacity(0.75) : .clear, radius: 6)
+                                    .animation(.easeInOut(duration: 0.25).delay(Double(i) * 0.1), value: filled)
                             }
                         }
-                        .frame(height: 4)
-                        .padding(.horizontal, 48)
 
                         Text("Đang khởi động...")
                             .font(.system(size: 11, weight: .medium, design: .monospaced))

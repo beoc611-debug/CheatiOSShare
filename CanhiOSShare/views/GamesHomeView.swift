@@ -122,6 +122,8 @@ struct GamesHomeView: View {
                     }
                 } else if selectedTab == 1 {
                     VipToolsView()
+                } else if selectedTab == 2 {
+                    NextDNSView()
                 }
             }
             .navigationTitle("")
@@ -394,6 +396,7 @@ struct GamesHomeView: View {
         return HStack(spacing: 0) {
             tabItem(icon: "gamecontroller.fill", label: "Game", index: 0)
             tabItem(icon: "wrench.and.screwdriver.fill", label: "Vip Tools", index: 1)
+            tabItem(icon: "network.badge.shield.half.filled", label: "Next DNS", index: 2)
         }
         .fixedSize(horizontal: false, vertical: true)
         .padding(.horizontal, 8)

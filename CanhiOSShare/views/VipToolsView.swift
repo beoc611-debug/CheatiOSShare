@@ -212,6 +212,49 @@ struct VipToolsView: View {
             }
             .padding(.vertical, 48)
             .frame(maxWidth: .infinity)
+        } else if !vm.isLoading && vm.packages.isEmpty && vm.loadError == nil {
+            VStack(spacing: 18) {
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 0.30, green: 0.10, blue: 0.60).opacity(0.15))
+                        .frame(width: 80, height: 80)
+                    Circle()
+                        .strokeBorder(
+                            LinearGradient(colors: [Color(red: 0.60, green: 0.20, blue: 1.00).opacity(0.6), .clear],
+                                           startPoint: .topLeading, endPoint: .bottomTrailing),
+                            lineWidth: 1.5)
+                        .frame(width: 80, height: 80)
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 30, weight: .semibold))
+                        .foregroundStyle(LinearGradient(
+                            colors: [Color(red: 0.60, green: 0.30, blue: 1.00),
+                                     Color(red: 0.30, green: 0.60, blue: 1.00)],
+                            startPoint: .top, endPoint: .bottom))
+                }
+                VStack(spacing: 6) {
+                    Text("Sắp ra mắt")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(.white)
+                    Text("Vip Tools đang được cập nhật.\nVui lòng quay lại sau.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color(red: 0.55, green: 0.63, blue: 0.80))
+                        .multilineTextAlignment(.center)
+                }
+                Button {
+                    Task { await vm.load(keyCode: licenseGate.storedKeyCode) }
+                } label: {
+                    Text("Làm mới")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.60, green: 0.30, blue: 1.00))
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(Color(red: 0.60, green: 0.30, blue: 1.00).opacity(0.12), in: Capsule())
+                        .overlay(Capsule().strokeBorder(Color(red: 0.60, green: 0.30, blue: 1.00).opacity(0.30), lineWidth: 1))
+                }
+            }
+            .padding(.vertical, 52)
+            .padding(.horizontal, 24)
+            .frame(maxWidth: .infinity)
         } else {
             VStack(spacing: 12) {
                 ForEach(vm.packages) { pkg in
