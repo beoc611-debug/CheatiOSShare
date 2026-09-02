@@ -53,18 +53,39 @@ struct SplashScreenView: View {
 
                     // Logo + rings
                     ZStack {
-                        // Outer ring
+                        // Outer ring - decorative rotating
                         Circle()
                             .strokeBorder(
-                                AngularGradient(colors: [purple.opacity(0.7), cyan.opacity(0.2), purple.opacity(0.7)],
+                                AngularGradient(colors: [purple.opacity(0.4), cyan.opacity(0.12), purple.opacity(0.4)],
                                                 center: .center),
-                                lineWidth: 1.5
+                                lineWidth: 1
                             )
                             .frame(width: 200, height: 200)
                             .scaleEffect(ring2Scale)
                             .opacity(ring2Opacity)
                             .rotationEffect(.degrees(glowPulse ? 360 : 0))
                             .animation(.linear(duration: 8).repeatForever(autoreverses: false), value: glowPulse)
+
+                        // Progress arc on outer ring
+                        Circle()
+                            .trim(from: 0, to: progressVal)
+                            .stroke(
+                                AngularGradient(
+                                    gradient: Gradient(stops: [
+                                        .init(color: cyan.opacity(0.9), location: 0),
+                                        .init(color: accent, location: 0.4),
+                                        .init(color: purple, location: 0.8),
+                                        .init(color: cyan.opacity(0.9), location: 1)
+                                    ]),
+                                    center: .center
+                                ),
+                                style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                            )
+                            .frame(width: 200, height: 200)
+                            .rotationEffect(.degrees(-90))
+                            .scaleEffect(ring2Scale)
+                            .opacity(progressOp)
+                            .shadow(color: accent.opacity(0.85), radius: 7)
 
                         // Inner ring
                         Circle()
@@ -120,30 +141,6 @@ struct SplashScreenView: View {
                         .opacity(tagOpacity)
 
                     Spacer()
-
-                    // Segmented progress indicator
-                    VStack(spacing: 14) {
-                        HStack(spacing: 7) {
-                            ForEach(0..<6, id: \.self) { i in
-                                let filled = progressVal >= CGFloat(i + 1) / 6.0
-                                Capsule()
-                                    .fill(filled
-                                        ? AnyShapeStyle(LinearGradient(
-                                            colors: [cyan.opacity(0.9), accent, purple],
-                                            startPoint: .leading, endPoint: .trailing))
-                                        : AnyShapeStyle(Color.white.opacity(0.08)))
-                                    .frame(width: 32, height: 5)
-                                    .shadow(color: filled ? accent.opacity(0.75) : .clear, radius: 6)
-                                    .animation(.easeInOut(duration: 0.25).delay(Double(i) * 0.1), value: filled)
-                            }
-                        }
-
-                        Text("Đang khởi động...")
-                            .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.35))
-                    }
-                    .opacity(progressOp)
-                    .padding(.bottom, 60)
                 }
             }
         }

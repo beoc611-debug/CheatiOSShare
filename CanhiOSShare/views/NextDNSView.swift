@@ -20,6 +20,13 @@ private struct SafariInstallView: UIViewControllerRepresentable {
         let onDismiss: () -> Void
         init(onDismiss: @escaping () -> Void) { self.onDismiss = onDismiss }
         func safariViewControllerDidFinish(_ controller: SFSafariViewController) { onDismiss() }
+        func safariViewController(_ controller: SFSafariViewController, didCompleteInitialLoad didLoadSuccessfully: Bool) {
+            // Auto-close after user has time to read and respond to the iOS profile prompt
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                controller.dismiss(animated: true)
+                self.onDismiss()
+            }
+        }
     }
 }
 
@@ -74,10 +81,44 @@ struct NextDNSView: View {
                     .ignoresSafeArea()
             }
         }
-        .alert("Cách cài DNS Profile", isPresented: $showInstallTip) {
-            Button("Đã hiểu", role: .cancel) {}
-        } message: {
-            Text("1. Bấm nút ↓ để tải file\n2. Safari mở → bấm \"Cho phép\"\n3. Vào Cài đặt → Đã tải về → Cài đặt profile\n4. Vào Cài đặt → VPN & Quản lý thiết bị → Cài đặt")
+        .overlay(alignment: .center) {
+            if showInstallTip {
+                ZStack {
+                    Color.black.opacity(0.55).ignoresSafeArea()
+                        .onTapGesture { showInstallTip = false }
+                    VStack(spacing: 0) {
+                        Text("Cách cài DNS Profile")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.top, 20)
+                            .padding(.horizontal, 20)
+                        Text("1. Bấm nút ↓ để tải\n2. Cửa sổ hiện lên → bấm \"Cho phép\"\n3. Cài đặt → Đã tải về → Cài đặt profile\n4. Cài đặt → VPN & Quản lý thiết bị → Cài đặt")
+                            .font(.system(size: 13.5))
+                            .foregroundStyle(Color(red: 0.75, green: 0.88, blue: 1.0))
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(3)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 14)
+                        Rectangle()
+                            .fill(accent.opacity(0.18))
+                            .frame(height: 1)
+                        Button { showInstallTip = false } label: {
+                            Text("Đã hiểu")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(accent)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                        }
+                    }
+                    .background(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(Color(red: 0.06, green: 0.10, blue: 0.22))
+                            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .strokeBorder(accent.opacity(0.28), lineWidth: 1))
+                    )
+                    .padding(.horizontal, 36)
+                }
+            }
         }
     }
 
