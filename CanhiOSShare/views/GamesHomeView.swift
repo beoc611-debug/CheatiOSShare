@@ -131,7 +131,10 @@ struct GamesHomeView: View {
                 await checkAnnouncement()
             }
             .task { await loadGames() }
-            .task { await checkAnnouncement() }
+            .task {
+                try? await Task.sleep(nanoseconds: 4_000_000_000)
+                await checkAnnouncement()
+            }
             .task { if let fetched = await PatchHubService.fetchContactURL() { contactURL = fetched } }
             .background(
                 NavigationLink(
