@@ -460,19 +460,31 @@ enum PatchTransaction {
         digest(Data(PatchPathValidator.canonicalFileURL(url).path.utf8))
     }
 
-    // If a target file exists and is root-owned, take ownership (uid/gid 501 = mobile)
-    // via kernel memory write so backup copy and atomic rename can both succeed.
+    // If a target file or its parent directory is root-owned, take ownership
+    // (uid/gid 501 = mobile) via kernel memory write so backup copy, staging
+    // file creation, and atomic rename can all succeed.
     // Non-fatal: if apfs_own fails we still attempt the patch normally.
     private static func takeOwnershipIfNeeded(_ url: URL) {
-        guard let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
-              let ownerID = (attrs[.ownerAccountID] as? NSNumber)?.intValue,
-              ownerID != 501 else { return }
-        url.path.withCString { cpath in
-            _ = apfs_own(cpath, 501, 501)
-            if let perm = (attrs[.posixPermissions] as? NSNumber)?.intValue,
-               perm & 0o444 != 0o444 {
-                _ = apfs_mod(cpath, mode_t((perm & 0o7000) | 0o644))
+        // Own the target file
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+           let ownerID = (attrs[.ownerAccountID] as? NSNumber)?.intValue,
+           ownerID != 501 {
+            url.path.withCString { cpath in
+                _ = apfs_own(cpath, 501, 501)
+                if let perm = (attrs[.posixPermissions] as? NSNumber)?.intValue,
+                   perm & 0o444 != 0o444 {
+                    _ = apfs_mod(cpath, mode_t((perm & 0o7000) | 0o644))
+                }
             }
+        }
+        // Also own the parent directory so the staging temp file can be created there.
+        // On iOS 18 the container root may still be root-owned even after
+        // containermanagerd hands us the path via apfs_own fallback.
+        let parent = url.deletingLastPathComponent()
+        if let parentAttrs = try? FileManager.default.attributesOfItem(atPath: parent.path),
+           let parentOwner = (parentAttrs[.ownerAccountID] as? NSNumber)?.intValue,
+           parentOwner != 501 {
+            parent.path.withCString { cpath in _ = apfs_own(cpath, 501, 501) }
         }
     }
 }

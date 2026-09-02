@@ -6,9 +6,27 @@ struct ContentView: View {
     @State private var isCheckingMaintenance = true
     @State private var maintenanceNotice: MaintenanceNotice?
     @State private var isJailbroken = false
+    @State private var showSplash = true
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
+        ZStack {
+            mainContent
+            if showSplash {
+                SplashScreenView {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showSplash = false
+                    }
+                }
+                .zIndex(999)
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.3), value: showSplash)
+    }
+
+    @ViewBuilder
+    private var mainContent: some View {
         Group {
             if isJailbroken {
                 JailbreakBlockView(onRecheck: { isJailbroken = JailbreakDetector.isJailbroken() })

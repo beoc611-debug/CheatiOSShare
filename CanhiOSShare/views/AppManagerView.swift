@@ -24,32 +24,46 @@ private final class AppManagerModel: ObservableObject {
 
     func load() {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            // PRIMARY: installedAppInfo() = allApplications() + MobileInstallation
-            // Has proper localizedName + icon for ALL workspace apps (user + system)
-            let rawInfo = installedAppInfo()  // NSDictionary<NSString*, NSDictionary*>*
-
             var result: [ManagedApp] = []
-            var covered = Set<String>()
 
-            for (bidKey, infoObj) in rawInfo {
-                guard let bid = bidKey as? String,
-                      let info = infoObj as? NSDictionary else { continue }
-                let name = (info["name"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? bid
-                let icon = info["icon"] as? UIImage
-                let container = (info["container"] as? String) ?? ""
-                result.append(ManagedApp(id: bid, name: name, icon: icon, containerPath: container))
-                covered.insert(bid)
-            }
+            // Bundle Info.plist catalog — display names without needing LSApplicationProxy
+            let bundleMeta = ContainerStore.applicationBundleMetadataCatalog()
 
-            // SUPPLEMENT: MCM daemon/plugin IDs not in workspace (no display name available)
-            for bid in MCMFilzaGatherAppIdentifiers() where !covered.contains(bid) {
-                var errStr: NSString? = nil
-                let path = MCMFilzaDataContainerPath(bid, &errStr) ?? ""
-                result.append(ManagedApp(id: bid, name: bid, icon: nil, containerPath: path))
+            // Primary: LSApplicationWorkspace + MobileInstallation
+            let rawInfo = installedAppInfo() as NSDictionary
+            if rawInfo.count > 0 {
+                for (key, val) in rawInfo {
+                    guard let bid = key as? String,
+                          let info = val as? NSDictionary else { continue }
+                    let wsName = (info["name"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+                    let name = bundleMeta[bid]?.displayName.nonEmpty ?? wsName ?? bid
+                    result.append(ManagedApp(
+                        id: bid,
+                        name: name,
+                        icon: info["icon"] as? UIImage,
+                        containerPath: (info["container"] as? String) ?? ""
+                    ))
+                }
+            } else {
+                // Fallback: MCMFilzaGatherAppIdentifiers + per-app LSApplicationProxy lookup
+                // allApplications() batch fails; applicationProxyForIdentifier: point lookup may succeed
+                let identifiers = MCMFilzaGatherAppIdentifiers()
+                for bid in identifiers {
+                    var errStr: NSString? = nil
+                    guard let path = MCMFilzaDataContainerPath(bid, &errStr), !path.isEmpty else { continue }
+                    let info = appInfoForBundleID(bid) as NSDictionary
+                    let proxyName = (info["name"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+                    let name = bundleMeta[bid]?.displayName.nonEmpty ?? proxyName ?? bid
+                    result.append(ManagedApp(
+                        id: bid,
+                        name: name,
+                        icon: info["icon"] as? UIImage,
+                        containerPath: path
+                    ))
+                }
             }
 
             result.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-
             DispatchQueue.main.async { [weak self] in
                 self?.apps = result
                 self?.isLoading = false

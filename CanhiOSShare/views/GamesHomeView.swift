@@ -122,8 +122,6 @@ struct GamesHomeView: View {
                     }
                 } else if selectedTab == 1 {
                     VipToolsView()
-                } else {
-                    AppManagerView()
                 }
             }
             .navigationTitle("")
@@ -393,7 +391,6 @@ struct GamesHomeView: View {
         return HStack(spacing: 0) {
             tabItem(icon: "gamecontroller.fill", label: "Game", index: 0)
             tabItem(icon: "wrench.and.screwdriver.fill", label: "Vip Tools", index: 1)
-            tabItem(icon: "square.grid.2x2.fill", label: "Ứng dụng", index: 2)
         }
         .fixedSize(horizontal: false, vertical: true)
         .padding(.horizontal, 8)

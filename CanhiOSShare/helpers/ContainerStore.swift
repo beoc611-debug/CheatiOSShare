@@ -92,7 +92,36 @@ enum ContainerStore {
                 return canonical
             }
         }
+
+        // Mechanism B: apfs_own fallback (iOS 18 — containermanagerd denies token,
+        // sandbox blocks open(), but kernel R/W lets us take ownership first).
+        // Like FilzaJailedDS's apfs_own_tree approach: own the container dir so
+        // open() succeeds without a sandbox extension.
+        if let owned = resolveByApfsOwn(bundleID: bundleID) {
+            log("patch: apfsOwn-B resolved \(bundleID)")
+            return owned
+        }
+
         return nil
+    }
+
+    private static func resolveByApfsOwn(bundleID: String) -> String? {
+        var err: NSString?
+        guard let path = MCMContainerPathForIdentifier(2, bundleID, false, &err) else {
+            let detail = err.map(String.init) ?? "nil"
+            log("patch: apfsOwn-B: no bare path for \(bundleID) detail=\(detail)")
+            return nil
+        }
+        // Take ownership so open() bypasses sandbox DAC check
+        path.withCString { cpath in _ = apfs_own(cpath, 501, 501) }
+        let fd = Darwin.open(path, O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW)
+        guard fd >= 0 else {
+            log("patch: apfsOwn-B: open failed errno=\(errno) for \(bundleID)")
+            return nil
+        }
+        Darwin.close(fd)
+        guard isApplicationContainerPath(path) else { return nil }
+        return path
     }
 
     static func resolveAppContainerPathByMetadataScan(bundleID: String) -> String? {

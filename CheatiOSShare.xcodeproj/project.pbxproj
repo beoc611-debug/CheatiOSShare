@@ -13,6 +13,7 @@
 		CA10CAFEDEADBEEF0000B005 /* FileBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F005 /* FileBrowserView.swift */; };
 		CA10CAFEDEADBEEF0000B007 /* VPNBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F007 /* VPNBlockView.swift */; };
 		CA10CAFEDEADBEEF0000B009 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F009 /* SettingsView.swift */; };
+		DEADBEEF00000000000SPLASH /* SplashScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEADBEEF0000000000SPLASH2 /* SplashScreenView.swift */; };
 		CA10CAFEDEADBEEF0000B00A /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F00A /* AppState.swift */; };
 		CA10CAFEDEADBEEF0000B00B /* ContainerStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F00B /* ContainerStore.swift */; };
 		CA10CAFEDEADBEEF0000B00D /* NetworkSecurityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F00D /* NetworkSecurityMonitor.swift */; };
@@ -108,6 +109,7 @@
 		CA10CAFEDEADBEEF0000F005 /* FileBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileBrowserView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F007 /* VPNBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPNBlockView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F009 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		DEADBEEF0000000000SPLASH2 /* SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashScreenView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00B /* ContainerStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerStore.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00D /* NetworkSecurityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkSecurityMonitor.swift; sourceTree = "<group>"; };
@@ -295,6 +297,7 @@
 				F04030 /* AppDataBrowserView.swift */,
 				F04031 /* AppDetailView.swift */,
 				F04032 /* AppManagerView.swift */,
+				DEADBEEF0000000000SPLASH2 /* SplashScreenView.swift */,
 			);
 			path = views;
 			sourceTree = "<group>";
@@ -495,6 +498,7 @@
 					CA10CAFEDEADBEEF0000B005 /* FileBrowserView.swift in Sources */,
 					CA10CAFEDEADBEEF0000B007 /* VPNBlockView.swift in Sources */,
 					CA10CAFEDEADBEEF0000B009 /* SettingsView.swift in Sources */,
+					DEADBEEF00000000000SPLASH /* SplashScreenView.swift in Sources */,
 				CA10CAFEDEADBEEF0000B00A /* AppState.swift in Sources */,
 				CA10CAFEDEADBEEF0000B00B /* ContainerStore.swift in Sources */,
 					CA10CAFEDEADBEEF0000B00D /* NetworkSecurityMonitor.swift in Sources */,
