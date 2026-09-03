@@ -19,6 +19,7 @@ struct SplashScreenView: View {
     @State private var glowPulse:    Bool    = false
     @State private var particles:    [SplashParticle] = SplashParticle.spawn(60)
     @State private var burstActive:  Bool    = false
+    @State private var successPulse: Bool    = false
 
     private let accent = Color(red: 0.30, green: 0.70, blue: 1.00)
     private let purple = Color(red: 0.65, green: 0.20, blue: 1.00)
@@ -55,18 +56,12 @@ struct SplashScreenView: View {
 
                     // Logo + rings
                     ZStack {
-                        // Outer ring - decorative rotating
+                        // Outer ring - faint track (solid, no gradient seam)
                         Circle()
-                            .strokeBorder(
-                                AngularGradient(colors: [purple.opacity(0.4), cyan.opacity(0.12), purple.opacity(0.4)],
-                                                center: .center),
-                                lineWidth: 1
-                            )
+                            .stroke(Color.white.opacity(0.07), lineWidth: 1)
                             .frame(width: 200, height: 200)
                             .scaleEffect(ring2Scale)
                             .opacity(ring2Opacity)
-                            .rotationEffect(.degrees(glowPulse ? 360 : 0))
-                            .animation(.linear(duration: 8).repeatForever(autoreverses: false), value: glowPulse)
 
                         // Progress arc on outer ring
                         Circle()
@@ -118,22 +113,36 @@ struct SplashScreenView: View {
 
                     Spacer().frame(height: 20)
 
-                    // Success badge
-                    HStack(spacing: 6) {
+                    // Success state
+                    VStack(spacing: 8) {
                         ZStack {
-                            Circle().fill(green.opacity(0.18)).frame(width: 20, height: 20)
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 9, weight: .bold))
-                                .foregroundStyle(green)
+                            // Pulsing rings
+                            ForEach([1.0, 1.35, 1.7] as [CGFloat], id: \.self) { scale in
+                                Circle()
+                                    .stroke(green.opacity(0.18 / scale), lineWidth: 1.5)
+                                    .frame(width: 42, height: 42)
+                                    .scaleEffect(successPulse ? scale : 1.0)
+                                    .opacity(successPulse ? 0 : 1)
+                                    .animation(.easeOut(duration: 1.4).repeatForever(autoreverses: false)
+                                        .delay(Double(scale - 1.0) * 0.35), value: successPulse)
+                            }
+                            // Checkmark icon
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 34, weight: .semibold))
+                                .foregroundStyle(LinearGradient(
+                                    colors: [Color(red: 0.3, green: 1.0, blue: 0.65), green],
+                                    startPoint: .top, endPoint: .bottom))
+                                .shadow(color: green.opacity(0.9), radius: 16)
+                                .scaleEffect(successOp == 1 ? 1 : 0.3)
                         }
-                        Text("Truy cập thành công")
-                            .font(.system(size: 12, weight: .semibold, design: .rounded))
-                            .foregroundStyle(green)
+                        Text("TRUY CẬP THÀNH CÔNG")
+                            .font(.system(size: 10.5, weight: .heavy, design: .rounded))
+                            .tracking(2.0)
+                            .foregroundStyle(LinearGradient(
+                                colors: [Color(red: 0.35, green: 1.0, blue: 0.70), green],
+                                startPoint: .leading, endPoint: .trailing))
+                            .shadow(color: green.opacity(0.6), radius: 8)
                     }
-                    .padding(.horizontal, 14).padding(.vertical, 7)
-                    .background(green.opacity(0.10), in: Capsule())
-                    .overlay(Capsule().strokeBorder(green.opacity(0.28), lineWidth: 1))
-                    .shadow(color: green.opacity(0.5), radius: 10)
                     .opacity(successOp)
 
                     Spacer().frame(height: 18)
@@ -215,7 +224,8 @@ struct SplashScreenView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) { burstActive = true }
         // Arc ends at ~2.75s — show success badge right after
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) { successOp = 1.0 }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.55)) { successOp = 1.0 }
+            successPulse = true
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
             withAnimation(.easeInOut(duration: 0.55)) { screenOpacity = 0 }
