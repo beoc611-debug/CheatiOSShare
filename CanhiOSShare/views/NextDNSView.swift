@@ -1,5 +1,6 @@
-import SwiftUI
+import AVKit
 import SafariServices
+import SwiftUI
 
 // MARK: - NextDNS Shield Shape (matches NextDNS brand logo)
 private struct NextDNSShieldShape: Shape {
@@ -83,13 +84,21 @@ private struct SafariInstallView: UIViewControllerRepresentable {
 
 @MainActor
 final class NextDNSViewModel: ObservableObject {
+    static var noticeShownThisSession = false
     @Published var profiles: [PatchHubService.DNSProfile] = []
     @Published var isLoading = false
     @Published var loadError: String? = nil
+    @Published var pendingNotice: String? = nil
 
     func load() async {
         isLoading = true; loadError = nil
-        do { profiles = try await PatchHubService.fetchDNSProfiles() }
+        do {
+            let result = try await PatchHubService.fetchDNSProfiles()
+            profiles = result.profiles
+            if !NextDNSViewModel.noticeShownThisSession, let notice = result.notice, !notice.isEmpty {
+                pendingNotice = notice
+            }
+        }
         catch { loadError = "Không tải được danh sách DNS" }
         isLoading = false
     }
@@ -102,10 +111,16 @@ struct NextDNSView: View {
     @State private var showInstallTip = false
     @State private var toastMsg: String? = nil
     @State private var activatingID: String? = nil
+    @State private var noticeText: String? = nil
+    @State private var videoURL: URL? = nil
 
     private let accent = Color(red: 0.20, green: 0.70, blue: 1.00)
     private let green  = Color(red: 0.10, green: 0.85, blue: 0.55)
     private let purple = Color(red: 0.55, green: 0.20, blue: 1.00)
+
+    private struct NoticeWrapper: Identifiable {
+        let id = UUID(); let text: String
+    }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -133,9 +148,31 @@ struct NextDNSView: View {
             }
         }
         .task { await vm.load(); await dns.load() }
+        // Notice sheet
+        .sheet(item: Binding(
+            get: { noticeText.map { NoticeWrapper(text: $0) } },
+            set: { if $0 == nil { noticeText = nil } }
+        )) { wrapper in
+            DNSNoticeSheet(text: wrapper.text, accent: accent)
+        }
+        // Video player sheet
+        .sheet(isPresented: Binding(get: { videoURL != nil }, set: { if !$0 { videoURL = nil } })) {
+            if let url = videoURL {
+                DNSVideoPlayerView(url: url) { videoURL = nil }
+                    .ignoresSafeArea()
+            }
+        }
+        // Safari download sheet
         .sheet(isPresented: Binding(get: { safariURL != nil }, set: { if !$0 { safariURL = nil } })) {
             if let url = safariURL {
                 SafariInstallView(url: url) { safariURL = nil }.ignoresSafeArea()
+            }
+        }
+        .onChange(of: vm.pendingNotice) { notice in
+            if let notice {
+                NextDNSViewModel.noticeShownThisSession = true
+                vm.pendingNotice = nil
+                noticeText = notice
             }
         }
         .overlay(alignment: .center) {
@@ -147,7 +184,7 @@ struct NextDNSView: View {
                         Text("Cách cài DNS Profile")
                             .font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
                             .padding(.top, 20).padding(.horizontal, 20)
-                        Text("1. Bấm nút ↓ để tải\n2. Cửa sổ hiện lên → bấm \"Cho phép\"\n3. Cài đặt → Đã tải về → Cài đặt profile\n4. Cài đặt → VPN & Quản lý thiết bị → Cài đặt")
+                        Text("1. Bấm nút Tải để tải\n2. Cửa sổ hiện lên → bấm \"Cho phép\"\n3. Cài đặt → Đã tải về → Cài đặt profile\n4. Cài đặt → VPN & Quản lý thiết bị → Cài đặt")
                             .font(.system(size: 13.5)).foregroundStyle(Color(red: 0.75, green: 0.88, blue: 1.0))
                             .multilineTextAlignment(.center).lineSpacing(3)
                             .padding(.horizontal, 20).padding(.vertical, 14)
@@ -266,8 +303,12 @@ struct NextDNSView: View {
                         isActivating: activatingID == profile.id
                     ) {
                         Task { await activate(profile) }
-                    } onDownload: {
-                        if let url = URL(string: profile.downloadURL) { safariURL = url }
+                    } onBottom: {
+                        if let vid = profile.videoURL, let url = URL(string: vid) {
+                            videoURL = url
+                        } else if let url = URL(string: profile.downloadURL) {
+                            safariURL = url
+                        }
                     }
                 }
             }
@@ -316,7 +357,9 @@ private struct DNSProfileCard: View {
     let isActive: Bool
     let isActivating: Bool
     let onActivate: () -> Void
-    let onDownload: () -> Void
+    let onBottom: () -> Void
+
+    private var hasVideo: Bool { profile.videoURL != nil }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -350,7 +393,7 @@ private struct DNSProfileCard: View {
 
                 Spacer(minLength: 0)
 
-                // Activate button
+                // Download button (replaces old "Dùng")
                 Button { onActivate() } label: {
                     ZStack {
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -368,13 +411,13 @@ private struct DNSProfileCard: View {
                             VStack(spacing: 1) {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 14)).foregroundStyle(green)
-                                Text("Bật").font(.system(size: 9, weight: .bold)).foregroundStyle(green)
+                                Text("Đang dùng").font(.system(size: 8, weight: .bold)).foregroundStyle(green)
                             }
                         } else {
                             VStack(spacing: 1) {
-                                Image(systemName: "wifi")
+                                Image(systemName: "arrow.down.to.line")
                                     .font(.system(size: 14)).foregroundStyle(accent)
-                                Text("Dùng").font(.system(size: 9, weight: .bold)).foregroundStyle(accent)
+                                Text("Tải").font(.system(size: 9, weight: .bold)).foregroundStyle(accent)
                             }
                         }
                     }
@@ -384,14 +427,16 @@ private struct DNSProfileCard: View {
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
 
-            // Download row
-            Button { onDownload() } label: {
+            // Bottom row: video guide OR download fallback
+            Button { onBottom() } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "arrow.down.circle").font(.system(size: 12))
-                    Text("Tải file .mobileconfig (cài thủ công)")
+                    Image(systemName: hasVideo ? "play.circle.fill" : "arrow.down.circle")
+                        .font(.system(size: 12))
+                        .foregroundStyle(hasVideo ? Color(red: 0.65, green: 0.45, blue: 1.0) : Color(red: 0.45, green: 0.55, blue: 0.75))
+                    Text(hasVideo ? "Xem hướng dẫn dùng dns ngay" : "Tải file .mobileconfig (cài thủ công)")
                         .font(.system(size: 11))
+                        .foregroundStyle(hasVideo ? Color(red: 0.65, green: 0.45, blue: 1.0) : Color(red: 0.45, green: 0.55, blue: 0.75))
                 }
-                .foregroundStyle(Color(red: 0.45, green: 0.55, blue: 0.75))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
                 .background(Color.white.opacity(0.03))
@@ -410,5 +455,89 @@ private struct DNSProfileCard: View {
                         lineWidth: isActive ? 1.5 : 1))
         )
         .shadow(color: isActive ? green.opacity(0.15) : .clear, radius: 10)
+    }
+}
+
+// MARK: - DNS Notice Sheet
+
+private struct DNSNoticeSheet: View {
+    let text: String
+    let accent: Color
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            Color(red: 0.04, green: 0.06, blue: 0.12).ignoresSafeArea()
+            VStack(spacing: 0) {
+                Capsule()
+                    .fill(Color.white.opacity(0.16))
+                    .frame(width: 36, height: 4)
+                    .padding(.top, 12)
+                    .padding(.bottom, 22)
+                ScrollView {
+                    VStack(spacing: 20) {
+                        VStack(spacing: 8) {
+                            Text("Thông báo")
+                                .font(.system(size: 20, weight: .black))
+                                .foregroundStyle(.white)
+                            Text("Next DNS")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Color(red: 0.54, green: 0.62, blue: 0.78))
+                        }
+                        Text(text)
+                            .font(.system(size: 15))
+                            .foregroundStyle(Color(red: 0.85, green: 0.88, blue: 0.96))
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(4)
+                            .padding(.horizontal, 8)
+                            .frame(maxWidth: .infinity)
+                        Button { dismiss() } label: {
+                            Text("Đã hiểu")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 15)
+                                .background(
+                                    LinearGradient(colors: [accent, Color(red: 0.10, green: 0.85, blue: 0.55).opacity(0.85)],
+                                                   startPoint: .leading, endPoint: .trailing),
+                                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }.buttonStyle(.plain)
+                        Spacer(minLength: 20)
+                    }
+                    .padding(.horizontal, 24)
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+}
+
+// MARK: - DNS Video Player
+
+private struct DNSVideoPlayerView: UIViewControllerRepresentable {
+    let url: URL
+    var onDismiss: () -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(onDismiss: onDismiss) }
+
+    func makeUIViewController(context: Context) -> AVPlayerViewController {
+        let player = AVPlayer(url: url)
+        let vc = AVPlayerViewController()
+        vc.player = player
+        vc.delegate = context.coordinator
+        player.play()
+        return vc
+    }
+
+    func updateUIViewController(_ vc: AVPlayerViewController, context: Context) {}
+
+    class Coordinator: NSObject, AVPlayerViewControllerDelegate {
+        let onDismiss: () -> Void
+        init(onDismiss: @escaping () -> Void) { self.onDismiss = onDismiss }
+        func playerViewControllerDidStopPictureInPicture(_ playerViewController: AVPlayerViewController) {}
+        func playerViewControllerWillBeginDismissalTransition(_ playerViewController: AVPlayerViewController) {
+            playerViewController.player?.pause()
+            onDismiss()
+        }
     }
 }

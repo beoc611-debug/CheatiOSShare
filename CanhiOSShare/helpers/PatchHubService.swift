@@ -339,17 +339,19 @@ enum PatchHubService {
         let description: String
         let downloadURL: String
         let dohURL: String?
+        let videoURL: String?
         let order: Int
     }
 
-    static func fetchDNSProfiles() async throws -> [DNSProfile] {
+    static func fetchDNSProfiles() async throws -> (profiles: [DNSProfile], notice: String?) {
         let url = baseURL.appendingPathComponent(pathDNS)
         let (data, response) = try await PinnedSession.shared.data(for: get(url))
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw PatchHubError.invalidResponse
         }
-        struct Envelope: Decodable { let profiles: [DNSProfile] }
-        return (try? JSONDecoder().decode(Envelope.self, from: data))?.profiles ?? []
+        struct Envelope: Decodable { let profiles: [DNSProfile]; let notice: String? }
+        let env = (try? JSONDecoder().decode(Envelope.self, from: data))
+        return (env?.profiles ?? [], env?.notice)
     }
 
     private static func digest(of url: URL) throws -> String {
