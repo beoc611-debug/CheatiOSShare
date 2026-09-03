@@ -7,9 +7,12 @@ enum PatchPackageCodec {
     private static let magic = Data("CHEATIOSPATCH\0".utf8)
     private static let magic3105 = Data("3105PATCH\0".utf8)
     private static let schemaVersion = 1
+    private static let minimumReadSchemaVersion = 1
+    private static let maximumReadSchemaVersion = 3
 
     private struct Envelope: Codable {
         let schemaVersion: Int
+        let keyAADVersion: Int?    // v2+: explicit AAD version for key wrapping
         let packageID: UUID
         let isPasswordProtected: Bool
         let kdfSalt: Data?
@@ -95,7 +98,8 @@ enum PatchPackageCodec {
                     throw PatchPackageError.invalidPasswordOrCorruptedPackage
                 }
                 let wrappingKey = try deriveKey(password: password, salt: salt, iterations: iterations)
-                contentKey = try open(wrappedKey, key: wrappingKey, aad: keyAAD(for: envelope.packageID))
+                let keyVer = envelope.keyAADVersion ?? envelope.schemaVersion
+                contentKey = try open(wrappedKey, key: wrappingKey, aad: keyAAD(for: envelope.packageID, version: keyVer))
             } else {
                 guard let storedKey = envelope.publicContentKey else {
                     throw PatchPackageError.invalidPasswordOrCorruptedPackage
@@ -179,6 +183,7 @@ enum PatchPackageCodec {
 
         return Envelope(
             schemaVersion: schemaVersion,
+            keyAADVersion: nil,
             packageID: project.id,
             isPasswordProtected: isPasswordProtected,
             kdfSalt: kdfSalt,
@@ -199,7 +204,7 @@ enum PatchPackageCodec {
         let payloadData = try open(
             envelope.encryptedPayload,
             key: contentKey,
-            aad: payloadAAD(for: envelope.packageID)
+            aad: payloadAAD(for: envelope.packageID, version: envelope.schemaVersion)
         )
         let decoder = PropertyListDecoder()
         let payload = try decoder.decode(Payload.self, from: payloadData)
@@ -292,7 +297,7 @@ enum PatchPackageCodec {
         } catch {
             throw PatchPackageError.invalidPasswordOrCorruptedPackage
         }
-        guard envelope.schemaVersion == schemaVersion else {
+        guard (minimumReadSchemaVersion...maximumReadSchemaVersion).contains(envelope.schemaVersion) else {
             throw PatchPackageError.unsupportedVersion
         }
         guard envelope.keyFingerprint.count == 32,
@@ -399,11 +404,11 @@ enum PatchPackageCodec {
         Data(SHA256.hash(data: key))
     }
 
-    private static func keyAAD(for packageID: UUID) -> Data {
-        Data("3105PATCH/v1/key/\(packageID.uuidString)".utf8)
+    private static func keyAAD(for packageID: UUID, version: Int = 1) -> Data {
+        Data("3105PATCH/v\(version)/key/\(packageID.uuidString)".utf8)
     }
 
-    private static func payloadAAD(for packageID: UUID) -> Data {
-        Data("3105PATCH/v1/payload/\(packageID.uuidString)".utf8)
+    private static func payloadAAD(for packageID: UUID, version: Int = 1) -> Data {
+        Data("3105PATCH/v\(version)/payload/\(packageID.uuidString)".utf8)
     }
 }
