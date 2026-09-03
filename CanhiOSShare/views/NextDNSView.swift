@@ -112,13 +112,17 @@ struct NextDNSView: View {
     @State private var toastMsg: String? = nil
     @State private var activatingID: String? = nil
     @State private var noticeText: String? = nil
-    @State private var showNotice = false
     @State private var videoURL: URL? = nil
-    @State private var hasLoaded = false
 
     private let accent = Color(red: 0.20, green: 0.70, blue: 1.00)
     private let green  = Color(red: 0.10, green: 0.85, blue: 0.55)
     private let purple = Color(red: 0.55, green: 0.20, blue: 1.00)
+
+    // Same pattern as VipToolsView
+    private struct NoticeWrapper: Identifiable {
+        let id = UUID()
+        let text: String
+    }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -145,16 +149,13 @@ struct NextDNSView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .task {
-            guard !hasLoaded else { return }
-            hasLoaded = true
-            await vm.load(); await dns.load()
-        }
-        // Notice sheet — use isPresented (not item) to avoid UUID re-create issue
-        .sheet(isPresented: $showNotice) {
-            if let text = noticeText {
-                DNSNoticeSheet(text: text, accent: accent)
-            }
+        .task { await vm.load(); await dns.load() }
+        // Notice — exact same pattern as VipToolsView
+        .sheet(item: Binding(
+            get: { noticeText.map { NoticeWrapper(text: $0) } },
+            set: { if $0 == nil { noticeText = nil } }
+        )) { wrapper in
+            DNSNoticeSheet(text: wrapper.text, accent: accent)
         }
         // Video player sheet
         .sheet(isPresented: Binding(get: { videoURL != nil }, set: { if !$0 { videoURL = nil } })) {
@@ -174,7 +175,6 @@ struct NextDNSView: View {
                 NextDNSViewModel.noticeShownThisSession = true
                 vm.pendingNotice = nil
                 noticeText = notice
-                showNotice = true
             }
         }
         .overlay(alignment: .center) {
