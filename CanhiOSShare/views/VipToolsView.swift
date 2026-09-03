@@ -1,10 +1,11 @@
 import SwiftUI
+import UIKit
 
 // MARK: - ViewModel
 
 @MainActor
 final class BotLinkViewModel: ObservableObject {
-    enum LinkState { case loading, unlinked, linking(botUrl: String), linked(username: String) }
+    enum LinkState { case loading, unlinked, linking(token: String, botUrl: String), linked(username: String) }
 
     @Published var state: LinkState = .loading
     @Published var linkError: String? = nil
@@ -32,7 +33,7 @@ final class BotLinkViewModel: ObservableObject {
             linkError = "Không lấy được link liên kết. Thử lại sau."
             return
         }
-        state = .linking(botUrl: result.botUrl)
+        state = .linking(token: result.token, botUrl: result.botUrl)
         startPolling()
     }
 
@@ -139,8 +140,8 @@ struct VipToolsView: View {
         case .unlinked:
             unlinkCard
 
-        case .linking(let botUrl):
-            linkingCard(botUrl: botUrl)
+        case .linking(let token, let botUrl):
+            linkingCard(token: token, botUrl: botUrl)
 
         case .linked(let username):
             linkedCard(username: username)
@@ -211,7 +212,7 @@ struct VipToolsView: View {
         )
     }
 
-    private func linkingCard(botUrl: String) -> some View {
+    private func linkingCard(token: String, botUrl: String) -> some View {
         VStack(spacing: 20) {
             ZStack {
                 Circle()
@@ -226,32 +227,32 @@ struct VipToolsView: View {
                 Text("Đang chờ liên kết...")
                     .font(.system(size: 18, weight: .black))
                     .foregroundStyle(.white)
-                Text("Mở Telegram bot và nhấn /start\nhoặc bấm nút bên dưới để mở bot.")
+                Text("Bấm nút bên dưới để mở Telegram bot\nvà hoàn tất liên kết.")
                     .font(.system(size: 13))
                     .foregroundStyle(Color(red: 0.55, green: 0.63, blue: 0.80))
                     .multilineTextAlignment(.center)
             }
 
-            if let url = URL(string: botUrl) {
-                Link(destination: url) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "paperplane.fill")
-                            .font(.system(size: 14, weight: .bold))
-                        Text("Mở bot Telegram")
-                            .font(.system(size: 15, weight: .bold))
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(
-                        LinearGradient(
-                            colors: [Color(red: 0.15, green: 0.55, blue: 1.00),
-                                     Color(red: 0.40, green: 0.30, blue: 0.95)],
-                            startPoint: .leading, endPoint: .trailing),
-                        in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+            Button {
+                openTelegram(token: token, fallbackUrl: botUrl)
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "paperplane.fill")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("Mở bot Telegram")
+                        .font(.system(size: 15, weight: .bold))
                 }
-                .buttonStyle(.plain)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    LinearGradient(
+                        colors: [Color(red: 0.15, green: 0.55, blue: 1.00),
+                                 Color(red: 0.40, green: 0.30, blue: 0.95)],
+                        startPoint: .leading, endPoint: .trailing),
+                    in: RoundedRectangle(cornerRadius: 13, style: .continuous))
             }
+            .buttonStyle(.plain)
 
             Button {
                 vm.stopPolling()
@@ -306,26 +307,26 @@ struct VipToolsView: View {
                     .multilineTextAlignment(.center)
             }
 
-            if let botURL = URL(string: "https://t.me/cheatstorevn_bot") {
-                Link(destination: botURL) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "paperplane.fill")
-                            .font(.system(size: 14, weight: .bold))
-                        Text("Mở bot")
-                            .font(.system(size: 15, weight: .bold))
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(
-                        LinearGradient(
-                            colors: [Color(red: 0.15, green: 0.55, blue: 1.00),
-                                     Color(red: 0.40, green: 0.30, blue: 0.95)],
-                            startPoint: .leading, endPoint: .trailing),
-                        in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+            Button {
+                openTelegram(token: nil, fallbackUrl: "https://t.me/cheatstorevn_bot")
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "paperplane.fill")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("Mở bot")
+                        .font(.system(size: 15, weight: .bold))
                 }
-                .buttonStyle(.plain)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    LinearGradient(
+                        colors: [Color(red: 0.15, green: 0.55, blue: 1.00),
+                                 Color(red: 0.40, green: 0.30, blue: 0.95)],
+                        startPoint: .leading, endPoint: .trailing),
+                    in: RoundedRectangle(cornerRadius: 13, style: .continuous))
             }
+            .buttonStyle(.plain)
 
             Button {
                 Task { await vm.checkStatus() }
@@ -348,6 +349,25 @@ struct VipToolsView: View {
                             startPoint: .topLeading, endPoint: .bottomTrailing),
                         lineWidth: 1))
         )
+    }
+
+    private func openTelegram(token: String?, fallbackUrl: String) {
+        let botName = "cheatstorevn_bot"
+        let tgUrl: URL?
+        if let token, !token.isEmpty {
+            tgUrl = URL(string: "tg://resolve?domain=\(botName)&start=\(token)")
+        } else {
+            tgUrl = URL(string: "tg://resolve?domain=\(botName)")
+        }
+        if let url = tgUrl {
+            UIApplication.shared.open(url, options: [:]) { success in
+                if !success, let fallback = URL(string: fallbackUrl) {
+                    UIApplication.shared.open(fallback)
+                }
+            }
+        } else if let fallback = URL(string: fallbackUrl) {
+            UIApplication.shared.open(fallback)
+        }
     }
 
     private var telegramIcon: some View {
