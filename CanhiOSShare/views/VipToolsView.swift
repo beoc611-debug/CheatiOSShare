@@ -1,24 +1,5 @@
 import SwiftUI
 
-// MARK: - SSL bypass for tool API servers
-
-private class TrustAllDelegate: NSObject, URLSessionDelegate {
-    func urlSession(
-        _ session: URLSession,
-        didReceive challenge: URLAuthenticationChallenge,
-        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
-    ) {
-        guard let trust = challenge.protectionSpace.serverTrust else {
-            completionHandler(.cancelAuthenticationChallenge, nil); return
-        }
-        completionHandler(.useCredential, URLCredential(trust: trust))
-    }
-}
-
-private let trustAllSession: URLSession = {
-    URLSession(configuration: .default, delegate: TrustAllDelegate(), delegateQueue: nil)
-}()
-
 // MARK: - ViewModel
 
 @MainActor
@@ -710,14 +691,14 @@ struct DynamicToolSheet: View {
         let v2 = input2.trimmingCharacters(in: .whitespaces)
         guard !v1.isEmpty, (!isDual || !v2.isEmpty) else { return }
         isRunning = true; responseText = nil
-        guard let url = tool.buildURL(input1: v1, input2: v2) else {
-            await set(error: true, text: "URL không hợp lệ"); return
-        }
         do {
-            let (data, response) = try await trustAllSession.data(from: url)
-            let code = (response as? HTTPURLResponse)?.statusCode ?? 0
-            let raw = String(data: data, encoding: .utf8) ?? "(không đọc được)"
-            await set(error: !(200...299).contains(code), text: "Status: \(code)\n\n\(raw)")
+            let result = try await PatchHubService.runTool(
+                toolId: tool.id,
+                inputType: tool.inputType,
+                input1: v1,
+                input2: isDual ? v2 : ""
+            )
+            await set(error: !(200...299).contains(result.statusCode), text: "Status: \(result.statusCode)\n\n\(result.body)")
         } catch {
             await set(error: true, text: "Lỗi kết nối:\n\(error.localizedDescription)")
         }

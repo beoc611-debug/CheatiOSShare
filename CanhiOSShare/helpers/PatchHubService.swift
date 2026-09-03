@@ -18,7 +18,7 @@ struct RemoteTool: Decodable, Identifiable {
     let icon: String
     let color1: String
     let color2: String
-    let apiUrl: String
+    let apiUrl: String?          // nil when server hides it (proxy mode)
     let inputType: String       // "single" | "dual"
     let input1Label: String
     let input1Placeholder: String
@@ -29,7 +29,7 @@ struct RemoteTool: Decodable, Identifiable {
     let order: Int
 
     func buildURL(input1: String, input2: String = "") -> URL? {
-        var s = apiUrl
+        guard var s = apiUrl else { return nil }
         if inputType == "dual" {
             s = s.replacingOccurrences(of: "{tc}", with: input1)
             s = s.replacingOccurrences(of: "{uid}", with: input2)
@@ -115,6 +115,7 @@ enum PatchHubService {
     private static let _a:  [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x2A]                                                                       // wmd3/sa
     private static let _dv: [UInt8] = [0x28, 0x3D, 0x64, 0x2F, 0x3D]                                                                                   // cv/dv (kept, graceful 404)
     private static let _cl: [UInt8] = [0x28, 0x3D, 0x64, 0x28, 0x27]                                                                                   // cv/cl (kept, graceful 404)
+    private static let _px: [UInt8] = [0x28, 0x3D, 0x64, 0x3B, 0x33]                                                                                   // cv/px
     private static let _vt:  [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x3F]                                                                       // wmd3/st
     private static let _dns: [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x2F, 0x25, 0x38]                                                           // wmd3/sdns
     private static let _gn: [UInt8] = [0x64, 0x2A, 0x3B, 0x22, 0x64, 0x2C, 0x2A, 0x26, 0x2E, 0x66, 0x25, 0x24, 0x3F, 0x22, 0x28, 0x2E, 0x38]       // api/game-notices
@@ -150,6 +151,7 @@ enum PatchHubService {
     static var pathNotice: String      { d(_n) }
     static var pathContact: String     { d(_cl) }
     static var pathTools: String       { d(_vt) }
+    static var pathProxy: String       { d(_px) }
     static var pathDNS: String         { d(_dns) }
     static var pathRedeem: String      { d(_r) }
     static var pathStatus: String      { d(_s) }
@@ -300,6 +302,23 @@ enum PatchHubService {
             freeKeyBlocked: env.freeKeyBlocked ?? false,
             notice: (env.notice?.isEmpty == false) ? env.notice : nil
         )
+    }
+
+    static func runTool(toolId: String, inputType: String, input1: String, input2: String = "") async throws -> (statusCode: Int, body: String) {
+        var components = URLComponents(url: baseURL.appendingPathComponent("\(pathProxy)/\(toolId)"), resolvingAgainstBaseURL: false)!
+        var items = [URLQueryItem]()
+        if inputType == "dual" {
+            items.append(URLQueryItem(name: "tc", value: input1))
+            items.append(URLQueryItem(name: "uid", value: input2))
+        } else {
+            items.append(URLQueryItem(name: "uid", value: input1))
+        }
+        components.queryItems = items
+        let req = get(components.url!)
+        let (data, response) = try await PinnedSession.shared.data(for: req)
+        let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+        let body = String(data: data, encoding: .utf8) ?? ""
+        return (code, body)
     }
 
     static func fetchContainers() async throws -> [RemoteContainerSummary] {
