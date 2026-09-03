@@ -1,6 +1,58 @@
 import SwiftUI
 import SafariServices
 
+// MARK: - NextDNS Shield Shape (matches NextDNS brand logo)
+private struct NextDNSShieldShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width, h = rect.height
+        var p = Path()
+        // Top-left ear
+        p.move(to: CGPoint(x: w * 0.50, y: h * 0.07))
+        p.addCurve(to: CGPoint(x: w * 0.02, y: h * 0.22),
+                   control1: CGPoint(x: w * 0.22, y: h * 0.00),
+                   control2: CGPoint(x: w * 0.02, y: h * 0.10))
+        // Left side down
+        p.addCurve(to: CGPoint(x: w * 0.12, y: h * 0.76),
+                   control1: CGPoint(x: w * 0.02, y: h * 0.52),
+                   control2: CGPoint(x: w * 0.04, y: h * 0.65))
+        // Bottom point
+        p.addCurve(to: CGPoint(x: w * 0.50, y: h * 0.98),
+                   control1: CGPoint(x: w * 0.22, y: h * 0.89),
+                   control2: CGPoint(x: w * 0.38, y: h * 0.98))
+        // Right bottom
+        p.addCurve(to: CGPoint(x: w * 0.88, y: h * 0.76),
+                   control1: CGPoint(x: w * 0.62, y: h * 0.98),
+                   control2: CGPoint(x: w * 0.78, y: h * 0.89))
+        // Right side up
+        p.addCurve(to: CGPoint(x: w * 0.98, y: h * 0.22),
+                   control1: CGPoint(x: w * 0.96, y: h * 0.65),
+                   control2: CGPoint(x: w * 0.98, y: h * 0.52))
+        // Top-right ear back to center
+        p.addCurve(to: CGPoint(x: w * 0.50, y: h * 0.07),
+                   control1: CGPoint(x: w * 0.98, y: h * 0.10),
+                   control2: CGPoint(x: w * 0.78, y: h * 0.00))
+        p.closeSubpath()
+        return p
+    }
+}
+
+private struct NextDNSShieldIcon: View {
+    var size: CGFloat = 24
+    var isActive: Bool = false
+    var active: Color = Color(red: 0.10, green: 0.85, blue: 0.55)
+    var c1: Color = Color(red: 0.20, green: 0.55, blue: 1.00)
+    var c2: Color = Color(red: 0.10, green: 0.78, blue: 1.00)
+
+    var body: some View {
+        NextDNSShieldShape()
+            .fill(LinearGradient(
+                colors: isActive ? [active, Color(red: 0.2, green: 1.0, blue: 0.65)] : [c1, c2],
+                startPoint: .top, endPoint: .bottom))
+            .frame(width: size, height: size)
+            .shadow(color: (isActive ? active : c1).opacity(0.55), radius: size * 0.3)
+    }
+}
+
 private struct SafariInstallView: UIViewControllerRepresentable {
     let url: URL
     var onDismiss: () -> Void
@@ -21,7 +73,6 @@ private struct SafariInstallView: UIViewControllerRepresentable {
         init(onDismiss: @escaping () -> Void) { self.onDismiss = onDismiss }
         func safariViewControllerDidFinish(_ controller: SFSafariViewController) { onDismiss() }
         func safariViewController(_ controller: SFSafariViewController, didCompleteInitialLoad didLoadSuccessfully: Bool) {
-            // Auto-close after user has time to read and respond to the iOS profile prompt
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
                 controller.dismiss(animated: true)
                 self.onDismiss()
@@ -37,48 +88,54 @@ final class NextDNSViewModel: ObservableObject {
     @Published var loadError: String? = nil
 
     func load() async {
-        isLoading = true
-        loadError = nil
-        do {
-            profiles = try await PatchHubService.fetchDNSProfiles()
-        } catch {
-            loadError = "Không tải được danh sách DNS"
-        }
+        isLoading = true; loadError = nil
+        do { profiles = try await PatchHubService.fetchDNSProfiles() }
+        catch { loadError = "Không tải được danh sách DNS" }
         isLoading = false
     }
 }
 
 struct NextDNSView: View {
-    @StateObject private var vm = NextDNSViewModel()
-    @State private var downloadingID: String? = nil
-    @State private var showInstallTip = false
+    @StateObject private var vm  = NextDNSViewModel()
+    @StateObject private var dns = NEDNSManager.shared
     @State private var safariURL: URL? = nil
+    @State private var showInstallTip = false
+    @State private var toastMsg: String? = nil
+    @State private var activatingID: String? = nil
 
-    private let accent  = Color(red: 0.20, green: 0.70, blue: 1.00)
-    private let green   = Color(red: 0.10, green: 0.85, blue: 0.55)
-    private let purple  = Color(red: 0.55, green: 0.20, blue: 1.00)
+    private let accent = Color(red: 0.20, green: 0.70, blue: 1.00)
+    private let green  = Color(red: 0.10, green: 0.85, blue: 0.55)
+    private let purple = Color(red: 0.55, green: 0.20, blue: 1.00)
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             Color.clear
             ScrollView {
                 VStack(spacing: 0) {
                     header
-                        .padding(.horizontal, 20)
-                        .padding(.top, 16)
-                        .padding(.bottom, 20)
-                    content
-                        .padding(.horizontal, 14)
+                        .padding(.horizontal, 20).padding(.top, 16).padding(.bottom, 20)
+                    content.padding(.horizontal, 14)
                     Spacer(minLength: 40)
                 }
             }
-            .refreshable { await vm.load() }
+            .refreshable { await vm.load(); await dns.load() }
+
+            // Toast
+            if let msg = toastMsg {
+                Text(msg)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 18).padding(.vertical, 10)
+                    .background(Color(red: 0.08, green: 0.12, blue: 0.24), in: Capsule())
+                    .overlay(Capsule().strokeBorder(accent.opacity(0.3), lineWidth: 1))
+                    .padding(.bottom, 24)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
-        .task { await vm.load() }
+        .task { await vm.load(); await dns.load() }
         .sheet(isPresented: Binding(get: { safariURL != nil }, set: { if !$0 { safariURL = nil } })) {
             if let url = safariURL {
-                SafariInstallView(url: url) { safariURL = nil }
-                    .ignoresSafeArea()
+                SafariInstallView(url: url) { safariURL = nil }.ignoresSafeArea()
             }
         }
         .overlay(alignment: .center) {
@@ -88,34 +145,23 @@ struct NextDNSView: View {
                         .onTapGesture { showInstallTip = false }
                     VStack(spacing: 0) {
                         Text("Cách cài DNS Profile")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(.white)
-                            .padding(.top, 20)
-                            .padding(.horizontal, 20)
+                            .font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
+                            .padding(.top, 20).padding(.horizontal, 20)
                         Text("1. Bấm nút ↓ để tải\n2. Cửa sổ hiện lên → bấm \"Cho phép\"\n3. Cài đặt → Đã tải về → Cài đặt profile\n4. Cài đặt → VPN & Quản lý thiết bị → Cài đặt")
-                            .font(.system(size: 13.5))
-                            .foregroundStyle(Color(red: 0.75, green: 0.88, blue: 1.0))
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(3)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 14)
-                        Rectangle()
-                            .fill(accent.opacity(0.18))
-                            .frame(height: 1)
+                            .font(.system(size: 13.5)).foregroundStyle(Color(red: 0.75, green: 0.88, blue: 1.0))
+                            .multilineTextAlignment(.center).lineSpacing(3)
+                            .padding(.horizontal, 20).padding(.vertical, 14)
+                        Rectangle().fill(accent.opacity(0.18)).frame(height: 1)
                         Button { showInstallTip = false } label: {
                             Text("Đã hiểu")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(accent)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
+                                .font(.system(size: 16, weight: .semibold)).foregroundStyle(accent)
+                                .frame(maxWidth: .infinity).padding(.vertical, 14)
                         }
                     }
-                    .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color(red: 0.06, green: 0.10, blue: 0.22))
-                            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .strokeBorder(accent.opacity(0.28), lineWidth: 1))
-                    )
+                    .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(Color(red: 0.06, green: 0.10, blue: 0.22))
+                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .strokeBorder(accent.opacity(0.28), lineWidth: 1)))
                     .padding(.horizontal, 36)
                 }
             }
@@ -128,35 +174,26 @@ struct NextDNSView: View {
         HStack(alignment: .center, spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(LinearGradient(
-                        colors: [accent.opacity(0.25), green.opacity(0.12)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(LinearGradient(colors: [accent.opacity(0.25), green.opacity(0.12)],
+                                        startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 48, height: 48)
                     .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .strokeBorder(accent.opacity(0.35), lineWidth: 1))
-                Image(systemName: "network.badge.shield.half.filled")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(LinearGradient(
-                        colors: [accent, green], startPoint: .top, endPoint: .bottom))
+                NextDNSShieldIcon(size: 26)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text("Next DNS")
                     .font(.system(size: 24, weight: .black))
-                    .foregroundStyle(LinearGradient(
-                        colors: [accent, green], startPoint: .leading, endPoint: .trailing))
+                    .foregroundStyle(LinearGradient(colors: [accent, green], startPoint: .leading, endPoint: .trailing))
                 Text("DNS Profile · Chống ban · Bảo mật")
                     .font(.system(size: 11.5, weight: .regular))
                     .foregroundStyle(Color(red: 0.54, green: 0.62, blue: 0.78))
             }
             Spacer()
-            Button {
-                showInstallTip = true
-            } label: {
+            Button { showInstallTip = true } label: {
                 Image(systemName: "questionmark.circle")
-                    .font(.system(size: 18))
-                    .foregroundStyle(accent.opacity(0.7))
-            }
-            .buttonStyle(.plain)
+                    .font(.system(size: 18)).foregroundStyle(accent.opacity(0.7))
+            }.buttonStyle(.plain)
         }
     }
 
@@ -169,90 +206,104 @@ struct NextDNSView: View {
                 ForEach(0..<3, id: \.self) { _ in
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(Color(red: 0.08, green: 0.12, blue: 0.20).opacity(0.60))
-                        .frame(height: 76)
-                        .redacted(reason: .placeholder)
-                        .overlay(
-                            LinearGradient(
-                                stops: [.init(color: .clear, location: 0),
-                                        .init(color: .white.opacity(0.05), location: 0.5),
-                                        .init(color: .clear, location: 1.0)],
-                                startPoint: .leading, endPoint: .trailing)
-                        )
+                        .frame(height: 90).redacted(reason: .placeholder)
                 }
             }
         } else if let err = vm.loadError {
             VStack(spacing: 14) {
-                Image(systemName: "wifi.exclamationmark")
-                    .font(.system(size: 32))
-                    .foregroundStyle(accent.opacity(0.7))
-                Text(err)
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color(red: 0.55, green: 0.63, blue: 0.80))
-                    .multilineTextAlignment(.center)
-                Button { Task { await vm.load() } } label: {
-                    Text("Thử lại")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(accent)
-                        .padding(.horizontal, 18).padding(.vertical, 8)
-                        .background(accent.opacity(0.12), in: Capsule())
+                Image(systemName: "wifi.exclamationmark").font(.system(size: 32)).foregroundStyle(accent.opacity(0.7))
+                Text(err).font(.system(size: 13)).foregroundStyle(Color(red: 0.55, green: 0.63, blue: 0.80)).multilineTextAlignment(.center)
+                Button { Task { await vm.load(); await dns.load() } } label: {
+                    Text("Thử lại").font(.system(size: 13, weight: .semibold)).foregroundStyle(accent)
+                        .padding(.horizontal, 18).padding(.vertical, 8).background(accent.opacity(0.12), in: Capsule())
                 }
-            }
-            .padding(.vertical, 48).frame(maxWidth: .infinity)
+            }.padding(.vertical, 48).frame(maxWidth: .infinity)
         } else if vm.profiles.isEmpty {
             VStack(spacing: 14) {
                 ZStack {
-                    Circle()
-                        .fill(accent.opacity(0.10))
-                        .frame(width: 72, height: 72)
-                    Image(systemName: "network.badge.shield.half.filled")
-                        .font(.system(size: 28, weight: .medium))
-                        .foregroundStyle(accent.opacity(0.6))
+                    Circle().fill(accent.opacity(0.10)).frame(width: 72, height: 72)
+                    NextDNSShieldIcon(size: 34)
                 }
-                Text("Chưa có DNS Profile")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.white)
+                Text("Chưa có DNS Profile").font(.system(size: 15, weight: .semibold)).foregroundStyle(.white)
                 Text("Admin chưa thêm profile nào.\nVui lòng quay lại sau.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color(red: 0.55, green: 0.63, blue: 0.80))
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.vertical, 52).frame(maxWidth: .infinity)
+                    .font(.system(size: 13)).foregroundStyle(Color(red: 0.55, green: 0.63, blue: 0.80)).multilineTextAlignment(.center)
+            }.padding(.vertical, 52).frame(maxWidth: .infinity)
         } else {
             VStack(spacing: 10) {
-                infoBar
-                    .padding(.bottom, 6)
+                // Status bar
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(dns.isEnabled ? green : Color.white.opacity(0.3))
+                        .frame(width: 6, height: 6)
+                    Text(dns.isEnabled ? "DNS đang hoạt động" : "Đang dùng DNS mặc định")
+                        .font(.system(size: 11.5, weight: .medium))
+                        .foregroundStyle(dns.isEnabled ? green.opacity(0.9) : Color(red: 0.50, green: 0.62, blue: 0.80))
+                    Spacer()
+                    if dns.isEnabled {
+                        Button { Task { await deactivate() } } label: {
+                            Text("Tắt DNS")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(Color(red: 1.0, green: 0.45, blue: 0.40))
+                                .padding(.horizontal, 10).padding(.vertical, 4)
+                                .background(Color(red: 1.0, green: 0.3, blue: 0.25).opacity(0.15), in: Capsule())
+                                .overlay(Capsule().strokeBorder(Color(red: 1.0, green: 0.3, blue: 0.25).opacity(0.3), lineWidth: 1))
+                        }.buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .background(
+                    (dns.isEnabled ? green.opacity(0.06) : accent.opacity(0.05)),
+                    in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder((dns.isEnabled ? green : accent).opacity(0.18), lineWidth: 1))
+                .padding(.bottom, 4)
+
                 ForEach(vm.profiles) { profile in
-                    DNSProfileCard(profile: profile, accent: accent, green: green, purple: purple,
-                                   isDownloading: downloadingID == profile.id) {
-                        download(profile)
+                    DNSProfileCard(
+                        profile: profile,
+                        accent: accent, green: green, purple: purple,
+                        isActive: dns.activeProfileID == profile.id && dns.isEnabled,
+                        isActivating: activatingID == profile.id
+                    ) {
+                        Task { await activate(profile) }
+                    } onDownload: {
+                        if let url = URL(string: profile.downloadURL) { safariURL = url }
                     }
                 }
             }
         }
     }
 
-    private var infoBar: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "info.circle.fill")
-                .font(.system(size: 12))
-                .foregroundStyle(accent.opacity(0.8))
-            Text("Bấm ↓ để tải · Sau đó vào Cài đặt để cài profile")
-                .font(.system(size: 11.5, weight: .medium))
-                .foregroundStyle(Color(red: 0.50, green: 0.62, blue: 0.80))
-            Spacer()
+    // MARK: - Actions
+
+    private func activate(_ profile: PatchHubService.DNSProfile) async {
+        guard activatingID == nil else { return }
+        activatingID = profile.id
+        defer { activatingID = nil }
+
+        if let doh = profile.dohURL {
+            let ok = await dns.activate(profileID: profile.id, dohURL: doh)
+            if ok {
+                showToast("✓ Đã bật DNS: \(profile.name)")
+            } else {
+                // Fallback: download .mobileconfig via Safari
+                if let url = URL(string: profile.downloadURL) { safariURL = url }
+                showToast("Cần cài profile để kích hoạt DNS")
+            }
+        } else {
+            if let url = URL(string: profile.downloadURL) { safariURL = url }
         }
-        .padding(.horizontal, 12).padding(.vertical, 8)
-        .background(accent.opacity(0.07), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
-            .strokeBorder(accent.opacity(0.18), lineWidth: 1))
     }
 
-    private func download(_ profile: PatchHubService.DNSProfile) {
-        guard let url = URL(string: profile.downloadURL) else { return }
-        downloadingID = profile.id
-        safariURL = url
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            downloadingID = nil
+    private func deactivate() async {
+        let ok = await dns.deactivate()
+        showToast(ok ? "DNS đã tắt, dùng DNS mặc định" : "Không thể tắt DNS")
+    }
+
+    private func showToast(_ msg: String) {
+        withAnimation(.spring(response: 0.3)) { toastMsg = msg }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            withAnimation(.easeOut) { toastMsg = nil }
         }
     }
 }
@@ -261,83 +312,103 @@ struct NextDNSView: View {
 
 private struct DNSProfileCard: View {
     let profile: PatchHubService.DNSProfile
-    let accent: Color
-    let green: Color
-    let purple: Color
-    let isDownloading: Bool
+    let accent: Color; let green: Color; let purple: Color
+    let isActive: Bool
+    let isActivating: Bool
+    let onActivate: () -> Void
     let onDownload: () -> Void
 
     var body: some View {
-        HStack(spacing: 14) {
-            // Icon
-            ZStack {
-                RoundedRectangle(cornerRadius: 13, style: .continuous)
-                    .fill(LinearGradient(
-                        colors: [accent.opacity(0.18), green.opacity(0.10)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 50, height: 50)
-                    .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .strokeBorder(accent.opacity(0.30), lineWidth: 1))
-                Image(systemName: "network.badge.shield.half.filled")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(LinearGradient(
-                        colors: [accent, green], startPoint: .top, endPoint: .bottom))
-            }
-
-            // Info
-            VStack(alignment: .leading, spacing: 4) {
-                Text(profile.name)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                if !profile.description.isEmpty {
-                    Text(profile.description)
-                        .font(.system(size: 11, weight: .regular))
-                        .foregroundStyle(Color(red: 0.50, green: 0.58, blue: 0.75))
-                        .lineLimit(2)
-                }
-                HStack(spacing: 4) {
-                    Circle().fill(green).frame(width: 5, height: 5)
-                    Text("DNS-over-HTTPS · Sẵn sàng")
-                        .font(.system(size: 10.5, weight: .medium))
-                        .foregroundStyle(green.opacity(0.85))
-                }
-            }
-
-            Spacer(minLength: 0)
-
-            // Download button
-            Button { onDownload() } label: {
+        VStack(spacing: 0) {
+            HStack(spacing: 14) {
+                // Icon
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(LinearGradient(
-                            colors: [accent.opacity(0.22), green.opacity(0.14)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .frame(width: 40, height: 40)
-                        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .strokeBorder(accent.opacity(0.35), lineWidth: 1))
-                    if isDownloading {
-                        ProgressView().tint(accent).scaleEffect(0.75)
-                    } else {
-                        Image(systemName: "arrow.down.circle.fill")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundStyle(LinearGradient(
-                                colors: [accent, green], startPoint: .top, endPoint: .bottom))
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .fill(LinearGradient(colors: [accent.opacity(0.18), green.opacity(0.10)],
+                                            startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 50, height: 50)
+                        .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .strokeBorder((isActive ? green : accent).opacity(0.30), lineWidth: 1))
+                    NextDNSShieldIcon(size: 26, isActive: isActive)
+                }
+
+                // Info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(profile.name)
+                        .font(.system(size: 14, weight: .bold)).foregroundStyle(.white).lineLimit(1)
+                    if !profile.description.isEmpty {
+                        Text(profile.description)
+                            .font(.system(size: 11)).foregroundStyle(Color(red: 0.50, green: 0.58, blue: 0.75)).lineLimit(2)
+                    }
+                    HStack(spacing: 4) {
+                        Circle().fill(isActive ? green : Color.white.opacity(0.25)).frame(width: 5, height: 5)
+                        Text(isActive ? "Đang dùng · DNS-over-HTTPS" : "DNS-over-HTTPS · Sẵn sàng")
+                            .font(.system(size: 10.5, weight: .medium))
+                            .foregroundStyle(isActive ? green.opacity(0.9) : Color(red: 0.50, green: 0.58, blue: 0.75))
                     }
                 }
+
+                Spacer(minLength: 0)
+
+                // Activate button
+                Button { onActivate() } label: {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(isActive
+                                ? LinearGradient(colors: [green.opacity(0.22), green.opacity(0.10)],
+                                                 startPoint: .topLeading, endPoint: .bottomTrailing)
+                                : LinearGradient(colors: [accent.opacity(0.22), green.opacity(0.14)],
+                                                 startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 56, height: 40)
+                            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .strokeBorder((isActive ? green : accent).opacity(0.35), lineWidth: 1))
+                        if isActivating {
+                            ProgressView().tint(accent).scaleEffect(0.75)
+                        } else if isActive {
+                            VStack(spacing: 1) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 14)).foregroundStyle(green)
+                                Text("Bật").font(.system(size: 9, weight: .bold)).foregroundStyle(green)
+                            }
+                        } else {
+                            VStack(spacing: 1) {
+                                Image(systemName: "wifi")
+                                    .font(.system(size: 14)).foregroundStyle(accent)
+                                Text("Dùng").font(.system(size: 9, weight: .bold)).foregroundStyle(accent)
+                            }
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .disabled(isActivating || isActive)
             }
-            .buttonStyle(.plain)
-            .disabled(isDownloading)
+            .padding(.horizontal, 14).padding(.vertical, 12)
+
+            // Download row
+            Button { onDownload() } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.down.circle").font(.system(size: 12))
+                    Text("Tải file .mobileconfig (cài thủ công)")
+                        .font(.system(size: 11))
+                }
+                .foregroundStyle(Color(red: 0.45, green: 0.55, blue: 0.75))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.03))
+                .overlay(Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1), alignment: .top)
+            }.buttonStyle(.plain)
         }
-        .padding(.horizontal, 14).padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(red: 0.06, green: 0.09, blue: 0.16).opacity(0.92))
                 .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .strokeBorder(
-                        LinearGradient(colors: [accent.opacity(0.30), green.opacity(0.12)],
+                        LinearGradient(colors: isActive
+                            ? [green.opacity(0.45), green.opacity(0.15)]
+                            : [accent.opacity(0.30), green.opacity(0.12)],
                                        startPoint: .topLeading, endPoint: .bottomTrailing),
-                        lineWidth: 1))
+                        lineWidth: isActive ? 1.5 : 1))
         )
+        .shadow(color: isActive ? green.opacity(0.15) : .clear, radius: 10)
     }
 }

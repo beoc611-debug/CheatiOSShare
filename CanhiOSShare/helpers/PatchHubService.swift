@@ -338,6 +338,7 @@ enum PatchHubService {
         let name: String
         let description: String
         let downloadURL: String
+        let dohURL: String?
         let order: Int
     }
 

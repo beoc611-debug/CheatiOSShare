@@ -29,6 +29,7 @@
 		CA10CAFEDEADBEEF0000B024 /* LicenseKeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F034 /* LicenseKeyService.swift */; };
 		CA10CAFEDEADBEEF0000B025 /* LicenseGateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F035 /* LicenseGateStore.swift */; };
 		CA10CAFEDEADBEEF0000B026 /* AnnouncementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F036 /* AnnouncementService.swift */; };
+		CA10CAFEDEADBEEF0000B02F /* NEDNSManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03F /* NEDNSManager.swift */; };
 		CA10CAFEDEADBEEF0000B027 /* JailbreakDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F037 /* JailbreakDetector.swift */; };
 		CA10CAFEDEADBEEF0000B028 /* WelcomeFaceIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F038 /* WelcomeFaceIcon.swift */; };
 		CA10CAFEDEADBEEF0000B029 /* JailbreakBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F039 /* JailbreakBlockView.swift */; };
@@ -150,6 +151,7 @@
 		CA10CAFEDEADBEEF0000F034 /* LicenseKeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseKeyService.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F035 /* LicenseGateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseGateStore.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F036 /* AnnouncementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnouncementService.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F03F /* NEDNSManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NEDNSManager.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F037 /* JailbreakDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JailbreakDetector.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F038 /* WelcomeFaceIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeFaceIcon.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F039 /* JailbreakBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JailbreakBlockView.swift; sourceTree = "<group>"; };
@@ -317,6 +319,7 @@
 				CA10CAFEDEADBEEF0000F034 /* LicenseKeyService.swift */,
 				CA10CAFEDEADBEEF0000F035 /* LicenseGateStore.swift */,
 				CA10CAFEDEADBEEF0000F036 /* AnnouncementService.swift */,
+				CA10CAFEDEADBEEF0000F03F /* NEDNSManager.swift */,
 				CA10CAFEDEADBEEF0000F037 /* JailbreakDetector.swift */,
 				F04001 /* AppTabNavigationState.swift */,
 				F04002 /* CleanerCatalog.swift */,
@@ -512,6 +515,7 @@
 				CA10CAFEDEADBEEF0000B024 /* LicenseKeyService.swift in Sources */,
 				CA10CAFEDEADBEEF0000B025 /* LicenseGateStore.swift in Sources */,
 				CA10CAFEDEADBEEF0000B026 /* AnnouncementService.swift in Sources */,
+				CA10CAFEDEADBEEF0000B02F /* NEDNSManager.swift in Sources */,
 				CA10CAFEDEADBEEF0000B027 /* JailbreakDetector.swift in Sources */,
 				CA10CAFEDEADBEEF0000B028 /* WelcomeFaceIcon.swift in Sources */,
 				CA10CAFEDEADBEEF0000B029 /* JailbreakBlockView.swift in Sources */,
@@ -714,6 +718,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CanhiOSShare/CheatiOSShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -743,6 +748,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = CanhiOSShare/CheatiOSShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
