@@ -27,7 +27,6 @@ final class NEDNSManager: ObservableObject {
         }
     }
 
-    /// Returns true on success, false if the dns-settings entitlement is missing.
     func activate(profileID: String, dohURL: String) async -> Bool {
         guard let url = URL(string: dohURL) else { return false }
         do {
@@ -35,9 +34,8 @@ final class NEDNSManager: ObservableObject {
             let settings = NEDNSOverHTTPSSettings(servers: [url.absoluteString])
             let wifi = NEOnDemandRuleConnect(); wifi.interfaceTypeMatch = .wiFi
             let cell = NEOnDemandRuleConnect(); cell.interfaceTypeMatch = .cellular
-            mgr.dnsSettings  = settings
+            mgr.dnsSettings   = settings
             mgr.onDemandRules = [wifi, cell]
-            mgr.isEnabled    = true
             try await savePrefs()
             UserDefaults.standard.set(profileID, forKey: idKey)
             activeProfileID = profileID
@@ -52,7 +50,8 @@ final class NEDNSManager: ObservableObject {
     func deactivate() async -> Bool {
         do {
             try await loadPrefs()
-            mgr.isEnabled = false
+            mgr.dnsSettings   = nil
+            mgr.onDemandRules = []
             try await savePrefs()
             UserDefaults.standard.removeObject(forKey: idKey)
             activeProfileID = nil
