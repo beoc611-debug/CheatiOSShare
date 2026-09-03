@@ -113,6 +113,7 @@ struct NextDNSView: View {
     @State private var activatingID: String? = nil
     @State private var noticeText: String? = nil
     @State private var videoURL: URL? = nil
+    @State private var hasLoaded = false
 
     private let accent = Color(red: 0.20, green: 0.70, blue: 1.00)
     private let green  = Color(red: 0.10, green: 0.85, blue: 0.55)
@@ -147,7 +148,11 @@ struct NextDNSView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .task { await vm.load(); await dns.load() }
+        .task {
+            guard !hasLoaded else { return }
+            hasLoaded = true
+            await vm.load(); await dns.load()
+        }
         // Notice sheet
         .sheet(item: Binding(
             get: { noticeText.map { NoticeWrapper(text: $0) } },
@@ -305,7 +310,11 @@ struct NextDNSView: View {
                         Task { await activate(profile) }
                     } onBottom: {
                         if let vid = profile.videoURL, let url = URL(string: vid) {
-                            videoURL = url
+                            if isDirectVideoURL(vid) {
+                                videoURL = url
+                            } else {
+                                safariURL = url
+                            }
                         } else if let url = URL(string: profile.downloadURL) {
                             safariURL = url
                         }
@@ -316,6 +325,14 @@ struct NextDNSView: View {
     }
 
     // MARK: - Actions
+
+    private func isDirectVideoURL(_ urlString: String) -> Bool {
+        let lower = urlString.lowercased()
+        let webHosts = ["youtube.com", "youtu.be", "vimeo.com", "tiktok.com", "fb.watch", "facebook.com", "instagram.com"]
+        if webHosts.contains(where: { lower.contains($0) }) { return false }
+        let videoExts = [".mp4", ".mov", ".m3u8", ".avi", ".mkv", ".webm"]
+        return videoExts.contains(where: { lower.hasSuffix($0) })
+    }
 
     private func activate(_ profile: PatchHubService.DNSProfile) async {
         guard activatingID == nil else { return }
@@ -498,8 +515,9 @@ private struct DNSNoticeSheet: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 15)
                                 .background(
-                                    LinearGradient(colors: [accent, Color(red: 0.10, green: 0.85, blue: 0.55).opacity(0.85)],
-                                                   startPoint: .leading, endPoint: .trailing),
+                                    LinearGradient(
+                                        colors: [AppTheme.neonPurple, AppTheme.techGlow.opacity(0.85)],
+                                        startPoint: .leading, endPoint: .trailing),
                                     in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                         }.buttonStyle(.plain)
                         Spacer(minLength: 20)
