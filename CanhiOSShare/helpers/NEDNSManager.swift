@@ -10,7 +10,7 @@ final class NEDNSManager: ObservableObject {
     @Published var isEnabled: Bool = false
 
     private let idKey = "ne_dns_active_profile_id"
-    private let mgr   = NEDNSSettingsManager.shared
+    private var mgr: NEDNSSettingsManager { NEDNSSettingsManager.shared() }
 
     func load() async {
         await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
