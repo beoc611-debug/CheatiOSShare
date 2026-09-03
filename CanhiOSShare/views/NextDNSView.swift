@@ -518,26 +518,18 @@ private struct DNSVideoPlayerView: UIViewControllerRepresentable {
     let url: URL
     var onDismiss: () -> Void
 
-    func makeCoordinator() -> Coordinator { Coordinator(onDismiss: onDismiss) }
-
     func makeUIViewController(context: Context) -> AVPlayerViewController {
         let player = AVPlayer(url: url)
         let vc = AVPlayerViewController()
         vc.player = player
-        vc.delegate = context.coordinator
         player.play()
         return vc
     }
 
-    func updateUIViewController(_ vc: AVPlayerViewController, context: Context) {}
-
-    class Coordinator: NSObject, AVPlayerViewControllerDelegate {
-        let onDismiss: () -> Void
-        init(onDismiss: @escaping () -> Void) { self.onDismiss = onDismiss }
-        func playerViewControllerDidStopPictureInPicture(_ playerViewController: AVPlayerViewController) {}
-        func playerViewControllerWillBeginDismissalTransition(_ playerViewController: AVPlayerViewController) {
-            playerViewController.player?.pause()
-            onDismiss()
+    func updateUIViewController(_ vc: AVPlayerViewController, context: Context) {
+        // SwiftUI sheet binding handles dismissal; pause when sheet goes away
+        if url != (vc.player?.currentItem?.asset as? AVURLAsset)?.url {
+            vc.player?.pause()
         }
     }
 }
