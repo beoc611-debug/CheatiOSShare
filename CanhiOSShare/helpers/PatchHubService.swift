@@ -116,6 +116,8 @@ enum PatchHubService {
     private static let _dv: [UInt8] = [0x28, 0x3D, 0x64, 0x2F, 0x3D]                                                                                   // cv/dv (kept, graceful 404)
     private static let _cl: [UInt8] = [0x28, 0x3D, 0x64, 0x28, 0x27]                                                                                   // cv/cl (kept, graceful 404)
     private static let _px: [UInt8] = [0x28, 0x3D, 0x64, 0x3B, 0x33]                                                                                   // cv/px
+    private static let _bl: [UInt8] = [0x28, 0x3D, 0x64, 0x29, 0x27]                                                                                   // cv/bl
+    private static let _bls: [UInt8] = [0x28, 0x3D, 0x64, 0x29, 0x27, 0x38]                                                                            // cv/bls
     private static let _vt:  [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x3F]                                                                       // wmd3/st
     private static let _dns: [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x2F, 0x25, 0x38]                                                           // wmd3/sdns
     private static let _gn: [UInt8] = [0x64, 0x2A, 0x3B, 0x22, 0x64, 0x2C, 0x2A, 0x26, 0x2E, 0x66, 0x25, 0x24, 0x3F, 0x22, 0x28, 0x2E, 0x38]       // api/game-notices
@@ -152,6 +154,8 @@ enum PatchHubService {
     static var pathContact: String     { d(_cl) }
     static var pathTools: String       { d(_vt) }
     static var pathProxy: String       { d(_px) }
+    static var pathBotLink: String     { d(_bl) }
+    static var pathBotLinkStatus: String { d(_bls) }
     static var pathDNS: String         { d(_dns) }
     static var pathRedeem: String      { d(_r) }
     static var pathStatus: String      { d(_s) }
@@ -319,6 +323,35 @@ enum PatchHubService {
         let code = (response as? HTTPURLResponse)?.statusCode ?? 0
         let body = String(data: data, encoding: .utf8) ?? ""
         return (code, body)
+    }
+
+    struct BotLinkToken {
+        let token: String
+        let botUrl: String
+    }
+
+    static func requestBotLinkToken() async -> BotLinkToken? {
+        let url = baseURL.appendingPathComponent(pathBotLink)
+        guard let (data, response) = try? await PinnedSession.shared.data(for: get(url)),
+              let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return nil }
+        struct Resp: Decodable { let ok: Bool; let token: String?; let botUrl: String? }
+        guard let r = try? JSONDecoder().decode(Resp.self, from: data), r.ok,
+              let token = r.token, let botUrl = r.botUrl else { return nil }
+        return BotLinkToken(token: token, botUrl: botUrl)
+    }
+
+    struct BotLinkStatus {
+        let linked: Bool
+        let telegramUsername: String
+    }
+
+    static func checkBotLinkStatus() async -> BotLinkStatus? {
+        let url = baseURL.appendingPathComponent(pathBotLinkStatus)
+        guard let (data, response) = try? await PinnedSession.shared.data(for: get(url)),
+              let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return nil }
+        struct Resp: Decodable { let ok: Bool; let linked: Bool?; let telegramUsername: String? }
+        guard let r = try? JSONDecoder().decode(Resp.self, from: data), r.ok else { return nil }
+        return BotLinkStatus(linked: r.linked ?? false, telegramUsername: r.telegramUsername ?? "")
     }
 
     static func fetchContainers() async throws -> [RemoteContainerSummary] {
