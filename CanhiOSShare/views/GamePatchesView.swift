@@ -493,7 +493,7 @@ struct GamePatchesView: View {
                     binding.wrappedValue.toggle()
                 } label: {
                     Image(systemName: isOn ? "checkmark.seal.fill" : "xmark.seal.fill")
-                        .font(.system(size: 30))
+                        .font(.system(size: 24))
                         .foregroundStyle(isOn ? Color(red: 0.18, green: 0.84, blue: 0.42) : Color(red: 1.0, green: 0.27, blue: 0.27))
                         .animation(.easeInOut(duration: 0.15), value: isOn)
                 }
