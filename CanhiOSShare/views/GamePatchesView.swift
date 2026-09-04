@@ -492,10 +492,16 @@ struct GamePatchesView: View {
                 Button {
                     binding.wrappedValue.toggle()
                 } label: {
-                    Image(systemName: isOn ? "checkmark.seal.fill" : "xmark.seal.fill")
-                        .font(.system(size: 24))
-                        .foregroundStyle(isOn ? Color(red: 0.18, green: 0.84, blue: 0.42) : Color(red: 1.0, green: 0.27, blue: 0.27))
-                        .animation(.easeInOut(duration: 0.15), value: isOn)
+                    let bgColor = isOn ? Color(red: 0.10, green: 0.58, blue: 0.24) : Color(red: 0.72, green: 0.12, blue: 0.12)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(bgColor)
+                            .frame(width: 38, height: 38)
+                        Image(systemName: isOn ? "checkmark.seal.fill" : "xmark.seal.fill")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .animation(.easeInOut(duration: 0.15), value: isOn)
                 }
                 .disabled(toggleableCount == 0)
             }
