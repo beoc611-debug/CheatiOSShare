@@ -486,6 +486,23 @@
 		};
 /* End PBXNativeTarget section */
 
+/* Begin PBXContainerItemProxy section */
+		CA10CAFEDEADBEEF0000F050 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CA10CAFEDEADBEEF00000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CA10CAFEDEADBEEF0000F045;
+			remoteInfo = DSWKeyboard;
+		};
+/* End PBXContainerItemProxy section */
+/* Begin PBXTargetDependency section */
+		CA10CAFEDEADBEEF0000F051 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CA10CAFEDEADBEEF0000F045 /* DSWKeyboard */;
+			targetProxy = CA10CAFEDEADBEEF0000F050 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXProject section */
 		CA10CAFEDEADBEEF00000001 /* Project object */ = {
 			isa = PBXProject;
@@ -515,6 +532,7 @@
 			projectRoot = "";
 			targets = (
 				CA10CAFEDEADBEEF00000002 /* CheatiOSShare */,
+				CA10CAFEDEADBEEF0000F045 /* DSWKeyboard */,
 			);
 		};
 /* End PBXProject section */
