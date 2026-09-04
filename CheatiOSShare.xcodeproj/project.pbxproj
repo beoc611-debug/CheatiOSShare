@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CA10CAFEDEADBEEF0000F04C /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F041 /* KeyboardViewController.swift */; };
+		CA10CAFEDEADBEEF0000F04D /* DSWToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F042 /* DSWToolsView.swift */; };
+		CA10CAFEDEADBEEF0000F04F /* DSWKeyboard.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F044 /* DSWKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+
 		CA10CAFEDEADBEEF0000B001 /* CanhiOSShareApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F001 /* CanhiOSShareApp.swift */; };
 		CA10CAFEDEADBEEF0000B002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F002 /* ContentView.swift */; };
 		CA10CAFEDEADBEEF0000B003 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F003 /* DesignSystem.swift */; };
@@ -105,6 +109,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		CA10CAFEDEADBEEF0000F041 /* KeyboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewController.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F042 /* DSWToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSWToolsView.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F043 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F044 /* DSWKeyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DSWKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+
 		CA10CAFEDEADBEEF0000F001 /* CanhiOSShareApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanhiOSShareApp.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F003 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
@@ -236,13 +245,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CA10CAFEDEADBEEF0000F040 /* DSWKeyboard */ = {
+			isa = PBXGroup;
+			children = (
+				CA10CAFEDEADBEEF0000F041 /* KeyboardViewController.swift */,
+				CA10CAFEDEADBEEF0000F042 /* DSWToolsView.swift */,
+				CA10CAFEDEADBEEF0000F043 /* Info.plist */,
+			);
+			path = DSWKeyboard;
+			sourceTree = "<group>";
+		};
+
 		CA10CAFEDEADBEEF0000000C /* MainGroup */ = {
 			isa = PBXGroup;
 			children = (
 				CA10CAFEDEADBEEF0000000D /* CanhiOSShare */,
 				CA10CAFEDEADBEEF0000000I /* Products */,
 				CA10CAFEDEADBEEF0000000K /* Frameworks */,
-			);
+				CA10CAFEDEADBEEF0000F040 /* DSWKeyboard */,);
 			sourceTree = "<group>";
 		};
 		CA10CAFEDEADBEEF0000000K /* Frameworks */ = {
@@ -429,6 +449,24 @@
 /* End PBXVariantGroup section */
 
 /* Begin PBXNativeTarget section */
+		CA10CAFEDEADBEEF0000F045 /* DSWKeyboard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CA10CAFEDEADBEEF0000F04B /* Build configuration list for PBXNativeTarget "DSWKeyboard" */;
+			buildPhases = (
+				CA10CAFEDEADBEEF0000F046 /* Sources */,
+				CA10CAFEDEADBEEF0000F048 /* Frameworks */,
+				CA10CAFEDEADBEEF0000F047 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DSWKeyboard;
+			productName = DSWKeyboard;
+			productReference = CA10CAFEDEADBEEF0000F044 /* DSWKeyboard.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+
 		CA10CAFEDEADBEEF00000002 /* CheatiOSShare */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = CA10CAFEDEADBEEF00000008 /* Build configuration list for PBXNativeTarget "CheatiOSShare" */;
@@ -436,11 +474,11 @@
 				CA10CAFEDEADBEEF00000009 /* Sources */,
 				CA10CAFEDEADBEEF0000000B /* Frameworks */,
 				CA10CAFEDEADBEEF0000000A /* Resources */,
-			);
+				CA10CAFEDEADBEEF0000F04E /* Embed App Extensions */,);
 			buildRules = (
 			);
 			dependencies = (
-			);
+				CA10CAFEDEADBEEF0000F051 /* PBXTargetDependency */,);
 			name = CheatiOSShare;
 			productName = CheatiOSShare;
 			productReference = CA10CAFEDEADBEEF0000000J /* CheatiOSShare.app */;
@@ -494,6 +532,41 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		CA10CAFEDEADBEEF0000F046 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CA10CAFEDEADBEEF0000F04C /* KeyboardViewController.swift in Sources */,
+				CA10CAFEDEADBEEF0000F04D /* DSWToolsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CA10CAFEDEADBEEF0000F047 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CA10CAFEDEADBEEF0000F048 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CA10CAFEDEADBEEF0000F04E /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				CA10CAFEDEADBEEF0000F04F /* DSWKeyboard.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+
 		CA10CAFEDEADBEEF00000009 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -596,6 +669,51 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		CA10CAFEDEADBEEF0000F049 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DSWKeyboard/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.apple.mobile.MobileHouseArrest.DSWKeyboard";
+				PRODUCT_NAME = DSWKeyboard;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CA10CAFEDEADBEEF0000F04A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DSWKeyboard/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.apple.mobile.MobileHouseArrest.DSWKeyboard";
+				PRODUCT_NAME = DSWKeyboard;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+
 		CA10CAFEDEADBEEF00000003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -776,6 +894,16 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		CA10CAFEDEADBEEF0000F04B /* Build configuration list for PBXNativeTarget "DSWKeyboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CA10CAFEDEADBEEF0000F049 /* Debug */,
+				CA10CAFEDEADBEEF0000F04A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+
 		CA10CAFEDEADBEEF00000007 /* Build configuration list for PBXProject "CanhiOSShare" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
