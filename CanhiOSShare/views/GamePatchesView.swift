@@ -455,6 +455,8 @@ struct GamePatchesView: View {
         let rules = item.project?.rules ?? []
         let toggleableCount = rules.filter(\.hasReplacement).count
         let rowColor = AppTheme.rowColor(colorIndex)
+        let binding = projectToggleBinding(for: item)
+        let isOn = binding.wrappedValue
 
         return HStack(spacing: 14) {
             // Glass icon container with colored border + glow
@@ -485,12 +487,31 @@ struct GamePatchesView: View {
 
             if togglingProjectID == item.id {
                 ProgressView()
-                    .tint(AppTheme.techGlow)
+                    .tint(Color(red: 0.18, green: 0.84, blue: 0.42))
             } else {
-                Toggle("", isOn: projectToggleBinding(for: item))
-                    .labelsHidden()
-                    .tint(AppTheme.techGlow)
-                    .disabled(toggleableCount == 0)
+                Button {
+                    binding.wrappedValue.toggle()
+                } label: {
+                    ZStack {
+                        Circle()
+                            .strokeBorder(
+                                isOn ? Color(red: 0.18, green: 0.84, blue: 0.42) : Color.white.opacity(0.25),
+                                lineWidth: 2
+                            )
+                            .background(
+                                Circle()
+                                    .fill(isOn ? Color(red: 0.18, green: 0.84, blue: 0.42) : Color.clear)
+                            )
+                        if isOn {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                    .frame(width: 32, height: 32)
+                    .animation(.easeInOut(duration: 0.15), value: isOn)
+                }
+                .disabled(toggleableCount == 0)
             }
         }
         .padding(.horizontal, 18)
