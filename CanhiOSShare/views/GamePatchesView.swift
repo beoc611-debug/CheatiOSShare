@@ -842,6 +842,7 @@ private struct VideoWebSheet: View {
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button("Đóng") { dismiss() }
+                            .foregroundStyle(AppTheme.neonPurple)
                     }
                 }
         }
