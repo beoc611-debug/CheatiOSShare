@@ -120,6 +120,7 @@
 "patch.menu_title" = "补丁菜单";
 "patch.menu_auto_badge" = "自动";
 "patch.open_game_now" = "立即打开游戏";
+"patch.watch_tutorial" = "观看教程视频";
 "patch.toggle_on_success" = "已开启 %@";
 "patch.toggle_off_success" = "已关闭 %@";
 "patch.locked_project" = "已锁定的补丁";

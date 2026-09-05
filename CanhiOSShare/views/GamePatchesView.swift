@@ -1,4 +1,5 @@
 import SwiftUI
+import WebKit
 
 struct GamePatchesView: View {
     @Environment(\.appLanguage) private var language
@@ -16,6 +17,12 @@ struct GamePatchesView: View {
     @State private var selectedContainerID: String?
     @State private var containersLoaded = false
     @State private var gameNotice: GameNotice?
+    @State private var showVideoSheet = false
+
+    private var currentContainerVideoUrl: String? {
+        guard let id = selectedContainerID else { return nil }
+        return containers.first(where: { $0.id == id })?.videoUrl
+    }
     @AppStorage("patch.importedOnlineIDs") private var importedOnlineIDsRaw = ""
     @AppStorage("patch.gameAssignments") private var gameAssignmentsRaw = "{}"
     @AppStorage("patch.remoteToLocalMap") private var remoteToLocalMapRaw = "{}"
@@ -75,6 +82,9 @@ struct GamePatchesView: View {
                         if !game.bundleID.isEmpty {
                             openGameButton
                         }
+                        if currentContainerVideoUrl != nil {
+                            videoTutorialButton
+                        }
                     }
                     .padding(.horizontal, 22)
                     .padding(.bottom, 32)
@@ -104,6 +114,11 @@ struct GamePatchesView: View {
         }
         .sheet(item: $store.passwordRequest, onDismiss: store.cancelUnlock) { _ in
             PatchUnlockView(store: store)
+        }
+        .sheet(isPresented: $showVideoSheet) {
+            if let urlStr = currentContainerVideoUrl, let url = URL(string: urlStr) {
+                VideoWebSheet(url: url)
+            }
         }
         .patchAlert($store.alert, language: language)
         .toast($toast)
@@ -532,6 +547,29 @@ struct GamePatchesView: View {
         .buttonStyle(PressScaleButtonStyle())
     }
 
+    private var videoTutorialButton: some View {
+        Button {
+            showVideoSheet = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "play.rectangle.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                Text(language.text("patch.watch_tutorial"))
+                    .font(.system(size: 16, weight: .semibold))
+            }
+            .foregroundStyle(AppTheme.techGlow)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 15)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(AppTheme.techGlow.opacity(0.55), lineWidth: 1)
+            )
+            .shadow(color: AppTheme.techGlow.opacity(0.18), radius: 10, x: 0, y: 4)
+        }
+        .buttonStyle(PressScaleButtonStyle())
+    }
+
     // MARK: - Helper Views
 
     private var loadingPlaceholder: some View {
@@ -788,4 +826,39 @@ struct GamePatchesView: View {
             }
         }
     }
+}
+
+// MARK: - Video Tutorial Sheet
+
+private struct VideoWebSheet: View {
+    let url: URL
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationView {
+            WebView(url: url)
+                .ignoresSafeArea(edges: .bottom)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Đóng") { dismiss() }
+                    }
+                }
+        }
+    }
+}
+
+private struct WebView: UIViewRepresentable {
+    let url: URL
+
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        config.allowsInlineMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []
+        let wv = WKWebView(frame: .zero, configuration: config)
+        wv.load(URLRequest(url: url))
+        return wv
+    }
+
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
 }

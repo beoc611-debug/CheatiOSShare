@@ -120,6 +120,7 @@
 "patch.menu_title" = "Menu Patch";
 "patch.menu_auto_badge" = "AUTO";
 "patch.open_game_now" = "Mở game ngay";
+"patch.watch_tutorial" = "Xem video hướng dẫn";
 "patch.toggle_on_success" = "Đã bật %@";
 "patch.toggle_off_success" = "Đã tắt %@";
 "patch.locked_project" = "Patch đang khóa";

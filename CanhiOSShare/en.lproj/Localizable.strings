@@ -120,6 +120,7 @@
 "patch.menu_title" = "Patch Menu";
 "patch.menu_auto_badge" = "AUTO";
 "patch.open_game_now" = "Open Game Now";
+"patch.watch_tutorial" = "Watch Tutorial Video";
 "patch.toggle_on_success" = "Enabled %@";
 "patch.toggle_off_success" = "Disabled %@";
 "patch.locked_project" = "Locked Patch";
