@@ -12,11 +12,12 @@ final class BotLinkViewModel: ObservableObject {
     @Published var pendingNotice: String? = nil
     static var noticeShownThisSession = false
 
+    var currentKeyCode: String? = nil
     private var pollTask: Task<Void, Never>? = nil
 
     func checkStatus() async {
         state = .loading
-        if let status = await PatchHubService.checkBotLinkStatus() {
+        if let status = await PatchHubService.checkBotLinkStatus(keyCode: currentKeyCode) {
             if status.linked {
                 state = .linked(username: status.telegramUsername)
             } else {
@@ -29,7 +30,7 @@ final class BotLinkViewModel: ObservableObject {
 
     func requestLink() async {
         linkError = nil
-        guard let result = await PatchHubService.requestBotLinkToken() else {
+        guard let result = await PatchHubService.requestBotLinkToken(keyCode: currentKeyCode) else {
             linkError = "Không lấy được link liên kết. Thử lại sau."
             return
         }
@@ -44,7 +45,7 @@ final class BotLinkViewModel: ObservableObject {
             while !Task.isCancelled, Date() < deadline {
                 try? await Task.sleep(nanoseconds: 3_000_000_000)
                 guard !Task.isCancelled else { break }
-                if let status = await PatchHubService.checkBotLinkStatus(), status.linked {
+                if let status = await PatchHubService.checkBotLinkStatus(keyCode: currentKeyCode), status.linked {
                     state = .linked(username: status.telegramUsername)
                     break
                 }
@@ -80,7 +81,10 @@ struct VipToolsView: View {
         )) { wrapper in
             VipToolsNoticeSheet(text: wrapper.text)
         }
-        .task { await vm.checkStatus() }
+        .task {
+            vm.currentKeyCode = licenseGate.storedKeyCode
+            await vm.checkStatus()
+        }
         .onDisappear { vm.stopPolling() }
         .onChange(of: vm.pendingNotice) { notice in
             if let notice {

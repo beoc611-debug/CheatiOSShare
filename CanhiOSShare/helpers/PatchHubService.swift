@@ -330,9 +330,11 @@ enum PatchHubService {
         let botUrl: String
     }
 
-    static func requestBotLinkToken() async -> BotLinkToken? {
+    static func requestBotLinkToken(keyCode: String? = nil) async -> BotLinkToken? {
         let url = baseURL.appendingPathComponent(pathBotLink)
-        guard let (data, response) = try? await PinnedSession.shared.data(for: get(url)),
+        var req = get(url)
+        if let code = keyCode, !code.isEmpty { req.setValue(code, forHTTPHeaderField: d(_hlk)) }
+        guard let (data, response) = try? await PinnedSession.shared.data(for: req),
               let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return nil }
         struct Resp: Decodable { let ok: Bool; let token: String?; let botUrl: String? }
         guard let r = try? JSONDecoder().decode(Resp.self, from: data), r.ok,
@@ -345,9 +347,11 @@ enum PatchHubService {
         let telegramUsername: String
     }
 
-    static func checkBotLinkStatus() async -> BotLinkStatus? {
+    static func checkBotLinkStatus(keyCode: String? = nil) async -> BotLinkStatus? {
         let url = baseURL.appendingPathComponent(pathBotLinkStatus)
-        guard let (data, response) = try? await PinnedSession.shared.data(for: get(url)),
+        var req = get(url)
+        if let code = keyCode, !code.isEmpty { req.setValue(code, forHTTPHeaderField: d(_hlk)) }
+        guard let (data, response) = try? await PinnedSession.shared.data(for: req),
               let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return nil }
         struct Resp: Decodable { let ok: Bool; let linked: Bool?; let telegramUsername: String? }
         guard let r = try? JSONDecoder().decode(Resp.self, from: data), r.ok else { return nil }
