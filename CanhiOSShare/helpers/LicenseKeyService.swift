@@ -10,6 +10,7 @@ struct LicenseRedeemResult {
     let durationDays: Int
     let expiresAt: Date
     let devices: [LicenseDeviceEntry]
+    let keySource: String  // "admin" | "seller" | "getkey"
 }
 
 enum LicenseKeyError: Error {
@@ -47,6 +48,7 @@ enum LicenseKeyService {
         let durationDays: Int?
         let expiresAt: String?
         let devices: [KeyDeviceEntry]?
+        let keySource: String?
     }
 
     private static let dateFormatterWithFraction: ISO8601DateFormatter = {
@@ -82,7 +84,8 @@ enum LicenseKeyService {
         let devices = (response.devices ?? []).map {
             LicenseDeviceEntry(deviceModel: $0.deviceModel, redeemedAt: parseDate($0.redeemedAt))
         }
-        return LicenseRedeemResult(redeemedAt: redeemedAt, durationDays: durationDays, expiresAt: expiresAt, devices: devices)
+        let keySource = response.keySource ?? "admin"
+        return LicenseRedeemResult(redeemedAt: redeemedAt, durationDays: durationDays, expiresAt: expiresAt, devices: devices, keySource: keySource)
     }
 
     private static func formBody(_ params: [String: String]) -> Data {

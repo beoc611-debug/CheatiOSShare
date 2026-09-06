@@ -82,6 +82,7 @@ struct VipToolsView: View {
             VipToolsNoticeSheet(text: wrapper.text)
         }
         .task {
+            guard licenseGate.isAdminKey else { return }
             vm.currentKeyCode = licenseGate.storedKeyCode
             await vm.checkStatus()
         }
@@ -137,19 +138,62 @@ struct VipToolsView: View {
 
     @ViewBuilder
     private var linkSection: some View {
-        switch vm.state {
-        case .loading:
-            loadingCard
+        if !licenseGate.isAdminKey {
+            notSupportedCard
+        } else {
+            switch vm.state {
+            case .loading:
+                loadingCard
 
-        case .unlinked:
-            unlinkCard
+            case .unlinked:
+                unlinkCard
 
-        case .linking(let token, let botUrl):
-            linkingCard(token: token, botUrl: botUrl)
+            case .linking(let token, let botUrl):
+                linkingCard(token: token, botUrl: botUrl)
 
-        case .linked(let username):
-            linkedCard(username: username)
+            case .linked(let username):
+                linkedCard(username: username)
+            }
         }
+    }
+
+    private var notSupportedCard: some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(Color(red: 1.00, green: 0.38, blue: 0.32).opacity(0.12))
+                    .frame(width: 72, height: 72)
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 34, weight: .semibold))
+                    .foregroundStyle(LinearGradient(
+                        colors: [Color(red: 1.00, green: 0.55, blue: 0.20),
+                                 Color(red: 1.00, green: 0.30, blue: 0.25)],
+                        startPoint: .top, endPoint: .bottom))
+            }
+
+            VStack(spacing: 8) {
+                Text("Không hỗ trợ")
+                    .font(.system(size: 18, weight: .black))
+                    .foregroundStyle(.white)
+                Text("Vip Tools chỉ dành cho key được tạo bởi Admin.\nKey của bạn không có quyền sử dụng tính năng này.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color(red: 0.55, green: 0.63, blue: 0.80))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+            }
+        }
+        .padding(24)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(red: 0.06, green: 0.09, blue: 0.18).opacity(0.95))
+                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [Color(red: 1.00, green: 0.38, blue: 0.32).opacity(0.35),
+                                     Color(red: 1.00, green: 0.55, blue: 0.20).opacity(0.15)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing),
+                        lineWidth: 1))
+        )
     }
 
     private var loadingCard: some View {
