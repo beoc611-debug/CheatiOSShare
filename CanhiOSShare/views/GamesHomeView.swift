@@ -53,7 +53,6 @@ struct GamesHomeView: View {
     @AppStorage("language.hasPicked") private var hasPickedLanguage = false
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
 
-    private let columns = [GridItem(.adaptive(minimum: 150), spacing: 14)]
 
     var body: some View {
         ZStack {
@@ -92,7 +91,7 @@ struct GamesHomeView: View {
                                 .padding(.top, 22)
                                 .padding(.bottom, 4)
 
-                            LazyVGrid(columns: columns, spacing: 14) {
+                            LazyVStack(spacing: 12) {
                                 ForEach(games) { game in
                                     Button {
                                         selectedGame = game
@@ -573,80 +572,87 @@ struct GameCardView: View {
     let systemIconName: String
     var actionLabel: String = "MỞ GAME"
 
-    var body: some View {
-        VStack(spacing: 0) {
-            // Banner with icon
-            ZStack {
-                LinearGradient(
-                    colors: [
-                        bannerColor.opacity(0.60),
-                        Color(red: 0.04, green: 0.05, blue: 0.13)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-
-                // Glow behind icon
-                Circle()
-                    .fill(bannerColor.opacity(0.28))
-                    .blur(radius: 20)
-                    .frame(width: 80, height: 80)
-
-                iconView
-                    .frame(width: 62, height: 62)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.20), lineWidth: 1)
-                    )
-                    .shadow(color: bannerColor.opacity(0.50), radius: 16, y: 6)
-            }
-            .frame(height: 100)
-
-            // Info + action
-            VStack(alignment: .leading, spacing: 8) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                    Text(subtitle)
-                        .font(.system(size: 10, weight: .medium, design: .monospaced))
-                        .foregroundStyle(AppTheme.techGlow.opacity(0.85))
-                        .lineLimit(1)
-                }
-
-                // Action button (visual — card NavigationLink handles tap)
-                HStack(spacing: 4) {
-                    Spacer()
-                    Text(actionLabel)
-                        .font(.system(size: 11, weight: .heavy))
-                        .kerning(0.8)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 9, weight: .bold))
-                    Spacer()
-                }
-                .padding(.vertical, 7)
-                .foregroundStyle(.white)
-                .background(
-                    LinearGradient(
-                        colors: [AppTheme.neonPurple.opacity(0.90), AppTheme.techGlow.opacity(0.95)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    in: RoundedRectangle(cornerRadius: 9, style: .continuous)
-                )
-                .shadow(color: AppTheme.neonPurple.opacity(0.45), radius: 8, y: 2)
-            }
-            .padding(12)
-            .background(Color(red: 0.045, green: 0.062, blue: 0.122))
+    private var category: (label: String, color: Color) {
+        let n = title.lowercased()
+        if n.contains("free fire") || n.contains("pubg") || n.contains("cod") {
+            return ("BATTLE ROYALE", Color(red: 1.0, green: 0.55, blue: 0.10))
         }
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(AppTheme.techCardStroke, lineWidth: 1)
+        if n.contains("liên quân") || n.contains("lien quan") || n.contains("arena") {
+            return ("MOBA", Color(red: 0.20, green: 0.55, blue: 1.00))
+        }
+        if n.contains("shooter") || n.contains("sniper") {
+            return ("SHOOTER", Color(red: 0.85, green: 0.20, blue: 0.20))
+        }
+        if actionLabel == "MỞ ỨNG DỤNG" {
+            return ("TIỆN ÍCH", Color(red: 0.18, green: 0.80, blue: 0.44))
+        }
+        return ("GAME", bannerColor)
+    }
+
+    var body: some View {
+        HStack(spacing: 14) {
+            iconView
+                .frame(width: 58, height: 58)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(.white.opacity(0.15), lineWidth: 1)
+                )
+                .shadow(color: bannerColor.opacity(0.55), radius: 10)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(category.label)
+                    .font(.system(size: 8, weight: .black))
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(category.color, in: Capsule())
+
+                Text(title)
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(Color(red: 0.18, green: 0.85, blue: 0.44))
+                        .frame(width: 6, height: 6)
+                    Text("Đã sẵn sàng")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.18, green: 0.85, blue: 0.44))
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "arrow.right")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(bannerColor)
+                .padding(9)
+                .background(bannerColor.opacity(0.15), in: Circle())
+                .overlay(Circle().strokeBorder(bannerColor.opacity(0.55), lineWidth: 1.5))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 14)
+        .background(
+            LinearGradient(
+                colors: [Color(red: 0.07, green: 0.04, blue: 0.16), Color(red: 0.04, green: 0.03, blue: 0.10)],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            )
         )
-        .shadow(color: AppTheme.neonPurple.opacity(0.16), radius: 14, y: 5)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [bannerColor.opacity(0.85), bannerColor.opacity(0.25), bannerColor.opacity(0.60)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1.5
+                )
+        )
+        .shadow(color: bannerColor.opacity(0.30), radius: 12, x: 0, y: 6)
+        .shadow(color: .black.opacity(0.4), radius: 4, x: 0, y: 2)
     }
 
     @ViewBuilder
@@ -661,11 +667,14 @@ struct GameCardView: View {
     }
 
     private var placeholderIcon: some View {
-        Image(systemName: systemIconName)
-            .resizable()
-            .scaledToFit()
-            .padding(14)
-            .foregroundStyle(.white)
+        ZStack {
+            bannerColor.opacity(0.25)
+            Image(systemName: systemIconName)
+                .resizable()
+                .scaledToFit()
+                .padding(14)
+                .foregroundStyle(.white)
+        }
     }
 }
 
