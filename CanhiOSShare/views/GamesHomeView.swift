@@ -574,85 +574,139 @@ struct GameCardView: View {
 
     private var category: (label: String, color: Color) {
         let n = title.lowercased()
-        if n.contains("free fire") || n.contains("pubg") || n.contains("cod") {
-            return ("BATTLE ROYALE", Color(red: 1.0, green: 0.55, blue: 0.10))
+        if n.contains("free fire") || n.contains("pubg") || n.contains("cod") || n.contains("battle") {
+            return ("BATTLE ROYALE", Color(red: 1.0, green: 0.45, blue: 0.05))
         }
-        if n.contains("liên quân") || n.contains("lien quan") || n.contains("arena") {
-            return ("MOBA", Color(red: 0.20, green: 0.55, blue: 1.00))
+        if n.contains("liên quân") || n.contains("lien quan") || n.contains("arena") || n.contains("moba") {
+            return ("MOBA", Color(red: 0.15, green: 0.50, blue: 1.00))
         }
-        if n.contains("shooter") || n.contains("sniper") {
-            return ("SHOOTER", Color(red: 0.85, green: 0.20, blue: 0.20))
+        if n.contains("shooter") || n.contains("sniper") || n.contains("fps") {
+            return ("SHOOTER", Color(red: 0.90, green: 0.15, blue: 0.15))
+        }
+        if n.contains("mlbb") || n.contains("mobile legend") {
+            return ("MOBA", Color(red: 0.15, green: 0.50, blue: 1.00))
         }
         if actionLabel == "MỞ ỨNG DỤNG" {
-            return ("TIỆN ÍCH", Color(red: 0.18, green: 0.80, blue: 0.44))
+            return ("TIỆN ÍCH", Color(red: 0.10, green: 0.82, blue: 0.46))
         }
         return ("GAME", bannerColor)
     }
 
     var body: some View {
-        HStack(spacing: 14) {
-            iconView
-                .frame(width: 58, height: 58)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(.white.opacity(0.15), lineWidth: 1)
-                )
-                .shadow(color: bannerColor.opacity(0.55), radius: 10)
+        HStack(spacing: 0) {
+            // Left accent bar
+            bannerColor
+                .frame(width: 3)
+                .clipShape(RoundedRectangle(cornerRadius: 2))
+                .padding(.vertical, 12)
+                .padding(.leading, 12)
 
-            VStack(alignment: .leading, spacing: 5) {
-                Text(category.label)
-                    .font(.system(size: 8, weight: .black))
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3)
-                    .background(category.color, in: Capsule())
+            // Icon
+            ZStack {
+                // Glow behind icon
+                bannerColor
+                    .opacity(0.35)
+                    .blur(radius: 18)
+                    .frame(width: 70, height: 70)
+
+                iconView
+                    .frame(width: 56, height: 56)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(bannerColor.opacity(0.6), lineWidth: 1.5)
+                    )
+                    .shadow(color: bannerColor.opacity(0.8), radius: 8, x: 0, y: 0)
+                    .shadow(color: bannerColor.opacity(0.4), radius: 18, x: 0, y: 4)
+            }
+            .padding(.horizontal, 14)
+
+            // Info
+            VStack(alignment: .leading, spacing: 6) {
+                // Category badge
+                HStack(spacing: 0) {
+                    Text(category.label)
+                        .font(.system(size: 9, weight: .black))
+                        .kerning(0.5)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            LinearGradient(
+                                colors: [category.color, category.color.opacity(0.75)],
+                                startPoint: .leading, endPoint: .trailing
+                            ),
+                            in: Capsule()
+                        )
+                        .shadow(color: category.color.opacity(0.6), radius: 6, x: 0, y: 2)
+                }
 
                 Text(title)
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                     .lineLimit(1)
 
-                HStack(spacing: 4) {
+                HStack(spacing: 5) {
                     Circle()
-                        .fill(Color(red: 0.18, green: 0.85, blue: 0.44))
+                        .fill(Color(red: 0.18, green: 0.92, blue: 0.48))
                         .frame(width: 6, height: 6)
+                        .shadow(color: Color(red: 0.18, green: 0.92, blue: 0.48).opacity(0.8), radius: 4)
                     Text("Đã sẵn sàng")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(Color(red: 0.18, green: 0.85, blue: 0.44))
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.18, green: 0.92, blue: 0.48))
                 }
             }
 
             Spacer()
 
-            Image(systemName: "arrow.right")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(bannerColor)
-                .padding(9)
-                .background(bannerColor.opacity(0.15), in: Circle())
-                .overlay(Circle().strokeBorder(bannerColor.opacity(0.55), lineWidth: 1.5))
+            // Arrow button
+            ZStack {
+                Circle()
+                    .fill(bannerColor.opacity(0.18))
+                    .frame(width: 38, height: 38)
+                Circle()
+                    .strokeBorder(bannerColor.opacity(0.7), lineWidth: 1.5)
+                    .frame(width: 38, height: 38)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(bannerColor)
+            }
+            .shadow(color: bannerColor.opacity(0.5), radius: 8)
+            .padding(.trailing, 14)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 14)
+        .frame(minHeight: 82)
         .background(
-            LinearGradient(
-                colors: [Color(red: 0.07, green: 0.04, blue: 0.16), Color(red: 0.04, green: 0.03, blue: 0.10)],
-                startPoint: .topLeading, endPoint: .bottomTrailing
-            )
+            ZStack {
+                // Base dark
+                LinearGradient(
+                    colors: [Color(red: 0.08, green: 0.05, blue: 0.18), Color(red: 0.04, green: 0.03, blue: 0.11)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing
+                )
+                // Accent color bleed from left
+                LinearGradient(
+                    colors: [bannerColor.opacity(0.18), bannerColor.opacity(0.04), .clear],
+                    startPoint: .leading, endPoint: .center
+                )
+            }
         )
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .strokeBorder(
                     LinearGradient(
-                        colors: [bannerColor.opacity(0.85), bannerColor.opacity(0.25), bannerColor.opacity(0.60)],
+                        colors: [
+                            bannerColor.opacity(0.9),
+                            bannerColor.opacity(0.3),
+                            bannerColor.opacity(0.5),
+                            bannerColor.opacity(0.15)
+                        ],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     ),
                     lineWidth: 1.5
                 )
         )
-        .shadow(color: bannerColor.opacity(0.30), radius: 12, x: 0, y: 6)
-        .shadow(color: .black.opacity(0.4), radius: 4, x: 0, y: 2)
+        .shadow(color: bannerColor.opacity(0.35), radius: 16, x: 0, y: 6)
+        .shadow(color: .black.opacity(0.5), radius: 6, x: 0, y: 3)
     }
 
     @ViewBuilder
