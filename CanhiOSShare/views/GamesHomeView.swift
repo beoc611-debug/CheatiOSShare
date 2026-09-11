@@ -634,15 +634,10 @@ struct GameCardView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
-                        .background(
-                            ZStack {
-                                category.color
-                                LinearGradient(
-                                    colors: [.white.opacity(0.18), .clear],
-                                    startPoint: .top, endPoint: .bottom
-                                )
-                            },
-                            in: RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .background(category.color, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+                        .overlay(
+                            LinearGradient(colors: [.white.opacity(0.18), .clear], startPoint: .top, endPoint: .bottom)
+                                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
                         )
                         .shadow(color: category.color.opacity(0.75), radius: 7, x: 0, y: 2)
 
