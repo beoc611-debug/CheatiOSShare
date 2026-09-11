@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 import UIKit
 
 // Chỉ vẽ viền top + 2 cạnh bên (không có cạnh đáy)
@@ -575,138 +575,174 @@ struct GameCardView: View {
     private var category: (label: String, color: Color) {
         let n = title.lowercased()
         if n.contains("free fire") || n.contains("pubg") || n.contains("cod") || n.contains("battle") {
-            return ("BATTLE ROYALE", Color(red: 1.0, green: 0.45, blue: 0.05))
+            return ("BATTLE ROYALE", Color(red: 1.0, green: 0.42, blue: 0.04))
         }
-        if n.contains("liên quân") || n.contains("lien quan") || n.contains("arena") || n.contains("moba") {
-            return ("MOBA", Color(red: 0.15, green: 0.50, blue: 1.00))
+        if n.contains("liên quân") || n.contains("lien quan") || n.contains("arena") || n.contains("moba") || n.contains("mlbb") || n.contains("mobile legend") {
+            return ("MOBA", Color(red: 0.12, green: 0.48, blue: 1.00))
         }
         if n.contains("shooter") || n.contains("sniper") || n.contains("fps") {
-            return ("SHOOTER", Color(red: 0.90, green: 0.15, blue: 0.15))
-        }
-        if n.contains("mlbb") || n.contains("mobile legend") {
-            return ("MOBA", Color(red: 0.15, green: 0.50, blue: 1.00))
+            return ("SHOOTER", Color(red: 0.92, green: 0.14, blue: 0.14))
         }
         if actionLabel == "MỞ ỨNG DỤNG" {
-            return ("TIỆN ÍCH", Color(red: 0.10, green: 0.82, blue: 0.46))
+            return ("TIỆN ÍCH", Color(red: 0.08, green: 0.80, blue: 0.44))
         }
         return ("GAME", bannerColor)
     }
 
+    private var cornerBadge: String? {
+        let n = title.lowercased()
+        if n.contains("free fire") || n.contains("pubg") || n.contains("cod") { return "HOT" }
+        if actionLabel == "MỞ ỨNG DỤNG" { return "PRO" }
+        return nil
+    }
+
     var body: some View {
-        HStack(spacing: 0) {
-            // Left accent bar
-            bannerColor
-                .frame(width: 3)
-                .clipShape(RoundedRectangle(cornerRadius: 2))
-                .padding(.vertical, 12)
-                .padding(.leading, 12)
-
-            // Icon
-            ZStack {
-                // Glow behind icon
-                bannerColor
-                    .opacity(0.35)
-                    .blur(radius: 18)
-                    .frame(width: 70, height: 70)
-
-                iconView
-                    .frame(width: 56, height: 56)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(bannerColor.opacity(0.6), lineWidth: 1.5)
+        ZStack(alignment: .topTrailing) {
+            HStack(spacing: 0) {
+                // Icon zone with game-color atmosphere
+                ZStack {
+                    RadialGradient(
+                        colors: [bannerColor.opacity(0.55), bannerColor.opacity(0.18), .clear],
+                        center: .center, startRadius: 0, endRadius: 46
                     )
-                    .shadow(color: bannerColor.opacity(0.8), radius: 8, x: 0, y: 0)
-                    .shadow(color: bannerColor.opacity(0.4), radius: 18, x: 0, y: 4)
-            }
-            .padding(.horizontal, 14)
+                    .frame(width: 92, height: 92)
 
-            // Info
-            VStack(alignment: .leading, spacing: 6) {
-                // Category badge
-                HStack(spacing: 0) {
-                    Text(category.label)
-                        .font(.system(size: 9, weight: .black))
-                        .kerning(0.5)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            LinearGradient(
-                                colors: [category.color, category.color.opacity(0.75)],
-                                startPoint: .leading, endPoint: .trailing
-                            ),
-                            in: Capsule()
+                    iconView
+                        .frame(width: 60, height: 60)
+                        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 15, style: .continuous)
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [bannerColor.opacity(0.95), bannerColor.opacity(0.45)],
+                                        startPoint: .topLeading, endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1.5
+                                )
                         )
-                        .shadow(color: category.color.opacity(0.6), radius: 6, x: 0, y: 2)
+                        .shadow(color: bannerColor.opacity(1.0), radius: 7)
+                        .shadow(color: bannerColor.opacity(0.6), radius: 22, y: 8)
+                }
+                .padding(.leading, 12)
+                .padding(.trailing, 8)
+
+                // Info column
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(category.label)
+                        .font(.system(size: 8.5, weight: .black))
+                        .kerning(0.7)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(
+                            ZStack {
+                                category.color
+                                LinearGradient(
+                                    colors: [.white.opacity(0.18), .clear],
+                                    startPoint: .top, endPoint: .bottom
+                                )
+                            },
+                            in: RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        )
+                        .shadow(color: category.color.opacity(0.75), radius: 7, x: 0, y: 2)
+
+                    Text(title)
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(Color(red: 0.18, green: 0.92, blue: 0.48))
+                            .frame(width: 5, height: 5)
+                            .shadow(color: Color(red: 0.18, green: 0.92, blue: 0.48), radius: 5)
+                        Text("Đã sẵn sàng")
+                            .font(.system(size: 10.5, weight: .semibold))
+                            .foregroundStyle(Color(red: 0.18, green: 0.92, blue: 0.48))
+                    }
                 }
 
-                Text(title)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
+                Spacer()
 
-                HStack(spacing: 5) {
+                // Arrow button — neon ring
+                ZStack {
                     Circle()
-                        .fill(Color(red: 0.18, green: 0.92, blue: 0.48))
-                        .frame(width: 6, height: 6)
-                        .shadow(color: Color(red: 0.18, green: 0.92, blue: 0.48).opacity(0.8), radius: 4)
-                    Text("Đã sẵn sàng")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color(red: 0.18, green: 0.92, blue: 0.48))
+                        .fill(bannerColor.opacity(0.10))
+                        .frame(width: 44, height: 44)
+                        .shadow(color: bannerColor.opacity(0.65), radius: 12)
+                    Circle()
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [bannerColor.opacity(0.9), bannerColor.opacity(0.35)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                        .frame(width: 36, height: 36)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(bannerColor)
                 }
+                .padding(.trailing, 14)
             }
-
-            Spacer()
-
-            // Arrow button
-            ZStack {
-                Circle()
-                    .fill(bannerColor.opacity(0.18))
-                    .frame(width: 38, height: 38)
-                Circle()
-                    .strokeBorder(bannerColor.opacity(0.7), lineWidth: 1.5)
-                    .frame(width: 38, height: 38)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(bannerColor)
-            }
-            .shadow(color: bannerColor.opacity(0.5), radius: 8)
-            .padding(.trailing, 14)
-        }
-        .frame(minHeight: 82)
-        .background(
-            ZStack {
-                // Base dark
-                LinearGradient(
-                    colors: [Color(red: 0.08, green: 0.05, blue: 0.18), Color(red: 0.04, green: 0.03, blue: 0.11)],
-                    startPoint: .topLeading, endPoint: .bottomTrailing
-                )
-                // Accent color bleed from left
-                LinearGradient(
-                    colors: [bannerColor.opacity(0.18), bannerColor.opacity(0.04), .clear],
-                    startPoint: .leading, endPoint: .center
-                )
-            }
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(
+            .frame(height: 90)
+            .background(
+                ZStack {
                     LinearGradient(
-                        colors: [
-                            bannerColor.opacity(0.9),
-                            bannerColor.opacity(0.3),
-                            bannerColor.opacity(0.5),
-                            bannerColor.opacity(0.15)
-                        ],
+                        colors: [Color(red: 0.07, green: 0.04, blue: 0.17), Color(red: 0.04, green: 0.02, blue: 0.12)],
                         startPoint: .topLeading, endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1.5
-                )
-        )
-        .shadow(color: bannerColor.opacity(0.35), radius: 16, x: 0, y: 6)
-        .shadow(color: .black.opacity(0.5), radius: 6, x: 0, y: 3)
+                    )
+                    LinearGradient(
+                        colors: [bannerColor.opacity(0.30), bannerColor.opacity(0.10), .clear],
+                        startPoint: .leading, endPoint: UnitPoint(x: 0.52, y: 0.5)
+                    )
+                    LinearGradient(
+                        colors: [.white.opacity(0.04), .clear, .clear],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    )
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                bannerColor.opacity(0.95),
+                                bannerColor.opacity(0.25),
+                                bannerColor.opacity(0.55),
+                                bannerColor.opacity(0.12)
+                            ],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1.5
+                    )
+            )
+            .shadow(color: bannerColor.opacity(0.42), radius: 20, x: 0, y: 8)
+            .shadow(color: .black.opacity(0.55), radius: 8, x: 0, y: 4)
+
+            // HOT / PRO corner badge
+            if let badge = cornerBadge {
+                Text(badge)
+                    .font(.system(size: 8, weight: .black))
+                    .kerning(0.8)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(
+                        badge == "HOT"
+                            ? Color(red: 0.88, green: 0.15, blue: 0.15)
+                            : Color(red: 0.32, green: 0.18, blue: 0.90),
+                        in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    )
+                    .shadow(
+                        color: (badge == "HOT" ? Color.red : Color(red: 0.32, green: 0.18, blue: 0.90)).opacity(0.65),
+                        radius: 8
+                    )
+                    .padding(.top, 10)
+                    .padding(.trailing, 60)
+            }
+        }
     }
 
     @ViewBuilder
@@ -731,7 +767,6 @@ struct GameCardView: View {
         }
     }
 }
-
 // MARK: - CachedAsyncImage
 
 struct CachedAsyncImage<Placeholder: View>: View {
