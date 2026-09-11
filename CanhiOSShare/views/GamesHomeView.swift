@@ -138,10 +138,39 @@ struct GamesHomeView: View {
                 .hidden()
             )
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                VStack(spacing: 10) {
+                VStack(spacing: 0) {
                     LicenseStatusBar()
+                        .padding(.bottom, 6)
+                    Rectangle()
+                        .fill(LinearGradient(
+                            colors: [AppTheme.neonPurple.opacity(0.30), AppTheme.techGlow.opacity(0.15), AppTheme.neonPurple.opacity(0.30)],
+                            startPoint: .leading, endPoint: .trailing
+                        ))
+                        .frame(height: 0.8)
+                        .padding(.horizontal, 16)
                     bottomTabBar
                 }
+                .background(
+                    ZStack {
+                        Color(red: 0.05, green: 0.04, blue: 0.18).opacity(0.97)
+                        LinearGradient(
+                            colors: [AppTheme.neonPurple.opacity(0.09), .clear],
+                            startPoint: .top, endPoint: .bottom
+                        )
+                    }
+                    .clipShape(TopRoundedShape(radius: 26))
+                    .overlay(
+                        TopRoundedShape(radius: 26)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [AppTheme.neonPurple.opacity(0.55), AppTheme.techGlow.opacity(0.25), AppTheme.neonPurple.opacity(0.55)],
+                                    startPoint: .leading, endPoint: .trailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+                    .shadow(color: AppTheme.neonPurple.opacity(0.22), radius: 16, y: -5)
+                )
             }
             .toast($licenseGate.activationToast)
             .sheet(item: $announcement) { item in
@@ -430,35 +459,8 @@ struct GamesHomeView: View {
             tabItem(icon: "wrench.and.screwdriver.fill", label: "Vip Tools", index: 1)
             tabItem(icon: "network.badge.shield.half.filled", label: "Next DNS", index: 2)
         }
-        .padding(.top, 12)
+        .padding(.top, 10)
         .padding(.bottom, 6)
-        .background(
-            ZStack {
-                // Deep purple-navy matching app background
-                Color(red: 0.05, green: 0.04, blue: 0.18).opacity(0.97)
-                // Subtle purple gradient from top
-                LinearGradient(
-                    colors: [AppTheme.neonPurple.opacity(0.10), .clear],
-                    startPoint: .top, endPoint: .bottom
-                )
-            }
-            .clipShape(TopRoundedShape(radius: 26))
-            .overlay(
-                TopRoundedShape(radius: 26)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                AppTheme.neonPurple.opacity(0.55),
-                                AppTheme.techGlow.opacity(0.28),
-                                AppTheme.neonPurple.opacity(0.55)
-                            ],
-                            startPoint: .leading, endPoint: .trailing
-                        ),
-                        lineWidth: 1
-                    )
-            )
-            .shadow(color: AppTheme.neonPurple.opacity(0.22), radius: 18, y: -5)
-        )
     }
 
     private func tabItem(icon: String, label: String, index: Int) -> some View {
