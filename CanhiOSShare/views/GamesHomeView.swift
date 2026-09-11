@@ -430,18 +430,35 @@ struct GamesHomeView: View {
             tabItem(icon: "wrench.and.screwdriver.fill", label: "Vip Tools", index: 1)
             tabItem(icon: "network.badge.shield.half.filled", label: "Next DNS", index: 2)
         }
-        .padding(.top, 8)
-        .padding(.bottom, 4)
-        .background(.ultraThinMaterial)
-        .background(Color(red: 0.04, green: 0.06, blue: 0.18).opacity(0.88))
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(LinearGradient(
-                    colors: [AppTheme.neonPurple.opacity(0.35), AppTheme.techGlow.opacity(0.20)],
-                    startPoint: .leading, endPoint: .trailing
-                ))
-                .frame(height: 0.8)
-        }
+        .padding(.top, 12)
+        .padding(.bottom, 6)
+        .background(
+            ZStack {
+                // Deep purple-navy matching app background
+                Color(red: 0.05, green: 0.04, blue: 0.18).opacity(0.97)
+                // Subtle purple gradient from top
+                LinearGradient(
+                    colors: [AppTheme.neonPurple.opacity(0.10), .clear],
+                    startPoint: .top, endPoint: .bottom
+                )
+            }
+            .clipShape(TopRoundedShape(radius: 26))
+            .overlay(
+                TopRoundedShape(radius: 26)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                AppTheme.neonPurple.opacity(0.55),
+                                AppTheme.techGlow.opacity(0.28),
+                                AppTheme.neonPurple.opacity(0.55)
+                            ],
+                            startPoint: .leading, endPoint: .trailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(color: AppTheme.neonPurple.opacity(0.22), radius: 18, y: -5)
+        )
     }
 
     private func tabItem(icon: String, label: String, index: Int) -> some View {
