@@ -1,7 +1,7 @@
 ﻿import SwiftUI
 import UIKit
 
-// Chỉ vẽ viền top + 2 cạnh bên (không có cạnh đáy)
+// Chi ve vien top + 2 canh ben (khong co canh day)
 private struct TabBarTopBorder: Shape {
     var radius: CGFloat
     func path(in rect: CGRect) -> Path {
@@ -18,7 +18,7 @@ private struct TabBarTopBorder: Shape {
     }
 }
 
-// Chỉ bo góc trên — thay thế UnevenRoundedRectangle (iOS 17+) để tương thích iOS 16
+// Chi bo goc tren — thay the UnevenRoundedRectangle (iOS 17+) de tuong thich iOS 16
 private struct TopRoundedShape: Shape {
     var radius: CGFloat
     func path(in rect: CGRect) -> Path {
@@ -89,11 +89,10 @@ struct GamesHomeView: View {
 
                             gameSectionHeader
                                 .padding(.top, 22)
-                                .padding(.bottom, 4)
+                                .padding(.bottom, 12)
 
                             gameGrid
                                 .padding(.horizontal, 16)
-                                .padding(.top, 6)
 
                             if games.isEmpty && !isLoadingGames {
                                 emptyGamesView
@@ -204,14 +203,14 @@ struct GamesHomeView: View {
                     .padding(.bottom, 2)
                 }
 
-                Text("Trợ thủ game · An toàn · Ổn định")
+                Text("Tr\u{1EE3} th\u{1EE7} game \u{00B7} An to\u{00E0}n \u{00B7} \u{1ED4}n \u{0111}\u{1ECB}nh")
                     .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(Color(red: 0.54, green: 0.62, blue: 0.78))
             }
 
             Spacer()
 
-            // Gear button — square rounded
+            // Gear button
             NavigationLink {
                 SettingsView()
             } label: {
@@ -328,26 +327,50 @@ struct GamesHomeView: View {
         return v.hasSuffix(".0") ? String(v.dropLast(2)) : v
     }
 
-        // MARK: - Game section
+    // MARK: - Game section header
 
     private var gameSectionHeader: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "gamecontroller.fill")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(
-                    LinearGradient(colors: [AppTheme.techGlow, AppTheme.neonPurple],
-                                   startPoint: .topLeading, endPoint: .bottomTrailing)
-                )
-                .shadow(color: AppTheme.techGlow.opacity(0.6), radius: 6)
-            Text("Danh sách game")
-                .font(.system(size: 17, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-            Spacer()
-            Text("Xem tất cả (\(games.count))")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(AppTheme.neonPurple.opacity(0.85))
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: "gamecontroller.fill")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [AppTheme.techGlow, AppTheme.neonPurple],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: AppTheme.techGlow.opacity(0.6), radius: 6)
+                Text("DANH S\u{00C1}CH GAME")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(.white)
+                    .kerning(0.4)
+                Spacer()
+                HStack(spacing: 3) {
+                    Text("Xem t\u{1EA5}t c\u{1EA3} (\(games.count))")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(AppTheme.neonPurple.opacity(0.90))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(AppTheme.neonPurple.opacity(0.90))
+                }
+            }
+            .padding(.horizontal, 20)
+
+            // Decorative neon accent line
+            LinearGradient(
+                colors: [
+                    AppTheme.neonPurple,
+                    AppTheme.techGlow,
+                    AppTheme.techGlow.opacity(0.08),
+                    .clear
+                ],
+                startPoint: .leading, endPoint: .trailing
+            )
+            .frame(height: 2)
+            .clipShape(Capsule())
+            .padding(.horizontal, 20)
         }
-        .padding(.horizontal, 20)
     }
 
     private var gameGrid: some View {
@@ -367,7 +390,7 @@ struct GamesHomeView: View {
                                 bannerColor: AppTheme.resolvedBannerColor(game.bannerColor),
                                 iconURL: game.iconURL,
                                 systemIconName: "app.fill",
-                                actionLabel: game.type == "app" ? "MỞ ỨNG DỤNG" : "MỞ GAME",
+                                actionLabel: game.type == "app" ? "M\u{1EDE} \u{1EE8}NG D\u{1EE4}NG" : "M\u{1EDE} GAME",
                                 isFeatured: true
                             )
                         }
@@ -387,7 +410,7 @@ struct GamesHomeView: View {
                                 bannerColor: AppTheme.resolvedBannerColor(game.bannerColor),
                                 iconURL: game.iconURL,
                                 systemIconName: "app.fill",
-                                actionLabel: game.type == "app" ? "MỞ ỨNG DỤNG" : "MỞ GAME",
+                                actionLabel: game.type == "app" ? "M\u{1EDE} \u{1EE8}NG D\u{1EE4}NG" : "M\u{1EDE} GAME",
                                 isFeatured: false
                             )
                         }
@@ -398,16 +421,17 @@ struct GamesHomeView: View {
             }
         }
     }
+
     // MARK: - Bottom Tab Bar
 
     private var bottomTabBar: some View {
         ZStack(alignment: .top) {
             // Floating capsule
             HStack(spacing: 0) {
-                navItem(icon: "house.fill", label: "Trang chủ", index: 0)
+                navItem(icon: "house.fill", label: "Trang ch\u{1EE7}", index: 0)
                 navItem(icon: "gamecontroller.fill", label: "Game", index: 0)
                 Spacer().frame(width: 72)
-                navItem(icon: "wrench.and.screwdriver.fill", label: "Công cụ", index: 1)
+                navItem(icon: "wrench.and.screwdriver.fill", label: "C\u{00F4}ng c\u{1EE5}", index: 1)
                 navItem(icon: "network.badge.shield.half.filled", label: "Next DNS", index: 2)
             }
             .padding(.horizontal, 8)
@@ -475,13 +499,14 @@ struct GamesHomeView: View {
         }
         .buttonStyle(.plain)
     }
-private var emptyGamesView: some View {
+
+    private var emptyGamesView: some View {
         VStack(spacing: 14) {
             Image(systemName: "wifi.exclamationmark")
                 .font(.system(size: 28, weight: .light))
                 .foregroundStyle(AppTheme.techGlow.opacity(0.6))
 
-            Text("App đang tiến hành nâng cấp mới, truy cập ngay Telegram để nhận thông báo mới")
+            Text("App \u{0111}ang ti\u{1EBF}n h\u{00E0}nh n\u{00E2}ng c\u{1EA5}p m\u{1EDB}i, truy c\u{1EAD}p ngay Telegram \u{0111}\u{1EC3} nh\u{1EAD}n th\u{00F4}ng b\u{00E1}o m\u{1EDB}i")
                 .font(.subheadline)
                 .foregroundStyle(Color(red: 0.45, green: 0.58, blue: 0.80))
                 .multilineTextAlignment(.center)
@@ -495,7 +520,7 @@ private var emptyGamesView: some View {
                 HStack(spacing: 6) {
                     Image(systemName: "paperplane.fill")
                         .font(.system(size: 12, weight: .semibold))
-                    Text("Vào ngay")
+                    Text("V\u{00E0}o ngay")
                         .font(.subheadline.weight(.bold))
                 }
                 .foregroundStyle(.white)
@@ -538,14 +563,14 @@ private var emptyGamesView: some View {
                         )
                 }
 
-                Text("Chọn ngôn ngữ / Choose Language")
+                Text("Ch\u{1ECD}n ng\u{00F4}n ng\u{1EEF} / Choose Language")
                     .font(.headline.weight(.bold))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.white)
 
                 VStack(spacing: 10) {
-                    languageOptionButton(title: "Tiếng Việt 🇻🇳", code: .vietnamese)
-                    languageOptionButton(title: "English 🇺🇸", code: .english)
+                    languageOptionButton(title: "Ti\u{1EBF}ng Vi\u{1EC7}t \u{1F1FB}\u{1F1F3}", code: .vietnamese)
+                    languageOptionButton(title: "English \u{1F1FA}\u{1F1F8}", code: .english)
                 }
             }
             .padding(26)
@@ -603,39 +628,22 @@ struct GameCardView: View {
     let bannerColor: Color
     let iconURL: URL?
     let systemIconName: String
-    var actionLabel: String = "MỞ GAME"
+    var actionLabel: String = "M\u{1EDE} GAME"
     var isFeatured: Bool = false
-
-    private var category: (label: String, color: Color) {
-        let n = title.lowercased()
-        if n.contains("free fire") || n.contains("pubg") || n.contains("cod") || n.contains("battle") {
-            return ("BATTLE ROYALE", Color(red: 1.0, green: 0.42, blue: 0.04))
-        }
-        if n.contains("liên quân") || n.contains("lien quan") || n.contains("arena") || n.contains("moba") || n.contains("mlbb") || n.contains("mobile legend") {
-            return ("MOBA", Color(red: 0.12, green: 0.48, blue: 1.00))
-        }
-        if n.contains("shooter") || n.contains("sniper") || n.contains("fps") {
-            return ("SHOOTER", Color(red: 0.92, green: 0.14, blue: 0.14))
-        }
-        if actionLabel == "MỞ ỨNG DỤNG" {
-            return ("TIỆN ÍCH", Color(red: 0.08, green: 0.80, blue: 0.44))
-        }
-        return ("GAME", bannerColor)
-    }
 
     private var cornerBadge: (text: String, color: Color)? {
         let n = title.lowercased()
-        if n.contains("free fire") || n.contains("pubg") || n.contains("cod") {
-            return ("HOT", Color(red: 0.88, green: 0.15, blue: 0.15))
+        if n.contains("free fire") || n.contains("pubg") || n.contains("cod") || n.contains("battle") {
+            return ("HOT", Color(red: 0.90, green: 0.12, blue: 0.20))
         }
-        if actionLabel == "MỞ ỨNG DỤNG" {
+        if actionLabel == "M\u{1EDE} \u{1EE8}NG D\u{1EE4}NG" {
             return ("PRO", Color(red: 0.32, green: 0.18, blue: 0.90))
         }
         return nil
     }
 
     private var iconSize: CGFloat { isFeatured ? 82 : 68 }
-    private var cardHeight: CGFloat { isFeatured ? 168 : 132 }
+    private var cardHeight: CGFloat { isFeatured ? 172 : 138 }
     private var cornerRadius: CGFloat { 18 }
 
     var body: some View {
@@ -650,12 +658,18 @@ struct GameCardView: View {
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
 
-            // Atmospheric glow
+            // Inner top highlight
+            LinearGradient(
+                colors: [.white.opacity(0.06), .clear],
+                startPoint: .top, endPoint: .center
+            )
+
+            // Atmospheric glow behind icon
             RadialGradient(
-                colors: [bannerColor.opacity(0.45), bannerColor.opacity(0.12), .clear],
+                colors: [bannerColor.opacity(0.40), bannerColor.opacity(0.10), .clear],
                 center: .center, startRadius: 0, endRadius: 80
             )
-            .padding(.bottom, cardHeight * 0.28)
+            .padding(.bottom, cardHeight * 0.30)
             .padding(.top, 8)
 
             // Game icon — centered upper area
@@ -672,49 +686,70 @@ struct GameCardView: View {
                             lineWidth: 1.5
                         )
                 )
-                .shadow(color: bannerColor.opacity(0.95), radius: isFeatured ? 10 : 8)
-                .shadow(color: bannerColor.opacity(0.5), radius: isFeatured ? 24 : 18, y: 6)
+                .shadow(color: bannerColor.opacity(0.95), radius: isFeatured ? 12 : 9)
+                .shadow(color: bannerColor.opacity(0.50), radius: isFeatured ? 26 : 20, y: 6)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                .padding(.bottom, cardHeight * 0.32)
+                .padding(.bottom, cardHeight * 0.33)
 
-            // Bottom info gradient
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(.system(size: isFeatured ? 13.5 : 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(Color(red: 0.18, green: 0.92, blue: 0.48))
-                        .frame(width: 5, height: 5)
-                        .shadow(color: Color(red: 0.18, green: 0.92, blue: 0.48), radius: 4)
-                    Text("Đã sẵn sàng")
-                        .font(.system(size: 9.5, weight: .semibold))
-                        .foregroundStyle(Color(red: 0.18, green: 0.92, blue: 0.48))
+            // Bottom info strip with divider + arrow
+            VStack(spacing: 0) {
+                Divider()
+                    .overlay(bannerColor.opacity(0.28))
+
+                HStack(spacing: 6) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(title)
+                            .font(.system(size: isFeatured ? 13.5 : 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(Color(red: 0.18, green: 0.92, blue: 0.48))
+                                .frame(width: 5, height: 5)
+                                .shadow(color: Color(red: 0.18, green: 0.92, blue: 0.48), radius: 4)
+                            Text("\u{0110}\u{00E3} s\u{1EB5}n s\u{00E0}ng")
+                                .font(.system(size: 9.5, weight: .semibold))
+                                .foregroundStyle(Color(red: 0.18, green: 0.92, blue: 0.48))
+                        }
+                    }
+                    Spacer()
+                    // Arrow button
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: isFeatured ? 11 : 10, weight: .bold))
+                        .foregroundStyle(bannerColor)
+                        .padding(6)
+                        .background(bannerColor.opacity(0.18), in: Circle())
+                        .overlay(Circle().strokeBorder(bannerColor.opacity(0.55), lineWidth: 1))
                 }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 9)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 10)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity)
             .background(
                 LinearGradient(
-                    colors: [.clear, Color.black.opacity(0.86)],
+                    colors: [.clear, Color.black.opacity(0.88)],
                     startPoint: .top, endPoint: .bottom
                 )
             )
 
-            // HOT / PRO badge — top right
+            // HOT / PRO badge — top right (pill shape)
             if let badge = cornerBadge {
                 Text(badge.text)
-                    .font(.system(size: 8, weight: .black))
+                    .font(.system(size: 8.5, weight: .black))
                     .kerning(0.8)
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 4)
-                    .background(badge.color, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-                    .shadow(color: badge.color.opacity(0.7), radius: 8)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .background(
+                        LinearGradient(
+                            colors: [badge.color, badge.color.opacity(0.80)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        ),
+                        in: Capsule()
+                    )
+                    .shadow(color: badge.color.opacity(0.70), radius: 8)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                    .padding(9)
+                    .padding(10)
             }
         }
         .frame(maxWidth: .infinity)
@@ -761,6 +796,7 @@ struct GameCardView: View {
         }
     }
 }
+
 // MARK: - CachedAsyncImage
 
 struct CachedAsyncImage<Placeholder: View>: View {
@@ -789,4 +825,3 @@ struct CachedAsyncImage<Placeholder: View>: View {
         }
     }
 }
-
