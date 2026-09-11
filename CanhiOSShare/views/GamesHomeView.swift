@@ -425,77 +425,43 @@ struct GamesHomeView: View {
     // MARK: - Bottom Tab Bar
 
     private var bottomTabBar: some View {
-        ZStack(alignment: .top) {
-            // Floating capsule
-            HStack(spacing: 0) {
-                navItem(icon: "house.fill", label: "Trang ch\u{1EE7}", index: 0)
-                navItem(icon: "gamecontroller.fill", label: "Game", index: 0)
-                Spacer().frame(width: 72)
-                navItem(icon: "wrench.and.screwdriver.fill", label: "C\u{00F4}ng c\u{1EE5}", index: 1)
-                navItem(icon: "network.badge.shield.half.filled", label: "Next DNS", index: 2)
-            }
-            .padding(.horizontal, 8)
-            .padding(.top, 10)
-            .padding(.bottom, 6)
-            .background(
-                Capsule()
-                    .fill(Color(red: 0.04, green: 0.06, blue: 0.18).opacity(0.92))
-                    .overlay(
-                        Capsule().strokeBorder(
-                            LinearGradient(
-                                colors: [AppTheme.neonPurple.opacity(0.45), AppTheme.techGlow.opacity(0.25)],
-                                startPoint: .topLeading, endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                    )
-                    .shadow(color: AppTheme.neonPurple.opacity(0.18), radius: 20, y: -4)
-            )
-            .padding(.horizontal, 12)
-
-            // Elevated center VIP button
-            Button { } label: {
-                ZStack {
-                    Circle()
-                        .fill(LinearGradient(
-                            colors: [Color(red: 0.54, green: 0.23, blue: 0.95), Color(red: 0.38, green: 0.13, blue: 0.72)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        ))
-                        .frame(width: 58, height: 58)
-                        .shadow(color: AppTheme.neonPurple.opacity(0.75), radius: 16)
-                        .shadow(color: AppTheme.neonPurple.opacity(0.35), radius: 30)
-                        .overlay(
-                            Circle().strokeBorder(Color(red: 0.78, green: 0.60, blue: 1.00).opacity(0.65), lineWidth: 2)
-                        )
-                    Image(systemName: "shield.fill")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(.white)
-                        .shadow(color: .white.opacity(0.4), radius: 6)
-                }
-            }
-            .buttonStyle(.plain)
-            .offset(y: -22)
+        HStack(spacing: 0) {
+            tabItem(icon: "gamecontroller.fill", label: "Game", index: 0)
+            tabItem(icon: "wrench.and.screwdriver.fill", label: "Vip Tools", index: 1)
+            tabItem(icon: "network.badge.shield.half.filled", label: "Next DNS", index: 2)
+        }
+        .padding(.top, 8)
+        .padding(.bottom, 4)
+        .background(.ultraThinMaterial)
+        .background(Color(red: 0.04, green: 0.06, blue: 0.18).opacity(0.88))
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(LinearGradient(
+                    colors: [AppTheme.neonPurple.opacity(0.35), AppTheme.techGlow.opacity(0.20)],
+                    startPoint: .leading, endPoint: .trailing
+                ))
+                .frame(height: 0.8)
         }
     }
 
-    private func navItem(icon: String, label: String, index: Int) -> some View {
+    private func tabItem(icon: String, label: String, index: Int) -> some View {
         let active = selectedTab == index
         return Button {
             withAnimation(.spring(response: 0.28, dampingFraction: 0.72)) {
                 selectedTab = index
             }
         } label: {
-            VStack(spacing: 4) {
+            VStack(spacing: 5) {
                 Image(systemName: icon)
-                    .font(.system(size: 19, weight: active ? .bold : .regular))
+                    .font(.system(size: 20, weight: active ? .bold : .regular))
                     .foregroundStyle(active ? AppTheme.neonPurple : Color(red: 0.40, green: 0.48, blue: 0.68))
-                    .shadow(color: active ? AppTheme.neonPurple.opacity(0.7) : .clear, radius: 8)
+                    .shadow(color: active ? AppTheme.neonPurple.opacity(0.65) : .clear, radius: 8)
                 Text(label)
-                    .font(.system(size: 9.5, weight: active ? .bold : .medium))
+                    .font(.system(size: 10, weight: active ? .bold : .medium))
                     .foregroundStyle(active ? AppTheme.neonPurple : Color(red: 0.40, green: 0.48, blue: 0.68))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 4)
+            .padding(.vertical, 6)
         }
         .buttonStyle(.plain)
     }
