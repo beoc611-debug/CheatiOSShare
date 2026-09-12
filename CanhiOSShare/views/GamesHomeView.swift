@@ -607,6 +607,8 @@ struct GameCardView: View {
     var actionLabel: String = "M\u{1EDE} GAME"
     var isFeatured: Bool = false
 
+    @State private var borderRotation: Double = 0
+
     private var cornerBadge: (text: String, color: Color)? {
         let n = title.lowercased()
         if n.contains("free fire") || n.contains("pubg") || n.contains("cod") || n.contains("battle") {
@@ -746,8 +748,33 @@ struct GameCardView: View {
                     lineWidth: 1.5
                 )
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .stroke(
+                    AngularGradient(
+                        colors: [
+                            .clear,
+                            AppTheme.techGlow.opacity(0.0),
+                            AppTheme.techGlow.opacity(0.85),
+                            AppTheme.neonPurple.opacity(0.90),
+                            AppTheme.techGlow.opacity(0.85),
+                            AppTheme.techGlow.opacity(0.0),
+                            .clear
+                        ],
+                        center: .center,
+                        startAngle: .degrees(borderRotation),
+                        endAngle: .degrees(borderRotation + 360)
+                    ),
+                    lineWidth: 1.5
+                )
+        )
         .shadow(color: bannerColor.opacity(0.45), radius: isFeatured ? 20 : 16, x: 0, y: isFeatured ? 8 : 6)
         .shadow(color: .black.opacity(0.55), radius: 6, x: 0, y: 4)
+        .onAppear {
+            withAnimation(.linear(duration: 3).repeatForever(autoreverses: false)) {
+                borderRotation = 360
+            }
+        }
     }
 
     @ViewBuilder
