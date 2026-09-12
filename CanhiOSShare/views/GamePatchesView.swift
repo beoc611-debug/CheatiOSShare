@@ -566,9 +566,9 @@ struct GamePatchesView: View {
             infoRow(label: "Bundle ID", value: game.bundleID.isEmpty ? "—" : game.bundleID)
             Divider().overlay(AppTheme.techGlow.opacity(0.15)).padding(.horizontal, 16)
             infoRow(label: "S\u{1ED1} t\u{00ED}nh n\u{0103}ng", value: "\(displayedItems.count)")
-            if !game.type.isEmpty {
+            if let gameType = game.type, !gameType.isEmpty {
                 Divider().overlay(AppTheme.techGlow.opacity(0.15)).padding(.horizontal, 16)
-                infoRow(label: "Lo\u{1EA1}i", value: game.type.uppercased())
+                infoRow(label: "Lo\u{1EA1}i", value: gameType.uppercased())
             }
         }
         .background(Color(red: 0.05, green: 0.07, blue: 0.16).opacity(0.90))
