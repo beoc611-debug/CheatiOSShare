@@ -85,7 +85,9 @@ struct GamePatchesView: View {
                         if !game.bundleID.isEmpty {
                             openGameButton
                         }
-                        videoTutorialButton
+                        if currentContainerVideoUrl != nil {
+                            videoTutorialButton
+                        }
                     }
                     .padding(.horizontal, 18)
                     .padding(.bottom, 32)
@@ -654,9 +656,8 @@ struct GamePatchesView: View {
     }
 
     private var videoTutorialButton: some View {
-        let hasUrl = currentContainerVideoUrl != nil
-        return Button {
-            if hasUrl { showVideoSheet = true }
+        Button {
+            showVideoSheet = true
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "play.rectangle.fill")
@@ -664,21 +665,17 @@ struct GamePatchesView: View {
                 Text(language.text("patch.watch_tutorial"))
                     .font(.system(size: 16, weight: .semibold))
             }
-            .foregroundStyle(hasUrl ? AppTheme.techGlow : Color(red: 0.35, green: 0.40, blue: 0.55))
+            .foregroundStyle(AppTheme.techGlow)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 15)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(
-                        hasUrl ? AppTheme.techGlow.opacity(0.55) : Color(red: 0.25, green: 0.30, blue: 0.45).opacity(0.40),
-                        lineWidth: 1
-                    )
+                    .strokeBorder(AppTheme.techGlow.opacity(0.55), lineWidth: 1)
             )
-            .shadow(color: hasUrl ? AppTheme.techGlow.opacity(0.18) : .clear, radius: 10, x: 0, y: 4)
+            .shadow(color: AppTheme.techGlow.opacity(0.18), radius: 10, x: 0, y: 4)
         }
         .buttonStyle(PressScaleButtonStyle())
-        .disabled(!hasUrl)
     }
 
     // MARK: - Helper Views
