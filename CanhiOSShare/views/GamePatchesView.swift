@@ -19,6 +19,7 @@ struct GamePatchesView: View {
     @State private var gameNotice: GameNotice?
     @State private var showVideoSheet = false
     @State private var selectedFeatureTab = 0   // 0 = Tính năng nhanh, 1 = Thông tin
+    @State private var borderRotation: Double = 0
 
     private var currentContainerVideoUrl: String? {
         guard let id = selectedContainerID else { return nil }
@@ -84,9 +85,7 @@ struct GamePatchesView: View {
                         if !game.bundleID.isEmpty {
                             openGameButton
                         }
-                        if currentContainerVideoUrl != nil {
-                            videoTutorialButton
-                        }
+                        videoTutorialButton
                     }
                     .padding(.horizontal, 18)
                     .padding(.bottom, 32)
@@ -448,6 +447,11 @@ struct GamePatchesView: View {
                         featureCard(item, colorIndex: index)
                     }
                 }
+                .onAppear {
+                    withAnimation(.linear(duration: 3).repeatForever(autoreverses: false)) {
+                        borderRotation = 360
+                    }
+                }
             }
         }
     }
@@ -553,6 +557,26 @@ struct GamePatchesView: View {
                         lineWidth: 1
                     )
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(
+                        AngularGradient(
+                            colors: [
+                                .clear,
+                                AppTheme.techGlow.opacity(0.0),
+                                AppTheme.techGlow.opacity(0.90),
+                                AppTheme.neonPurple.opacity(0.95),
+                                AppTheme.techGlow.opacity(0.90),
+                                AppTheme.techGlow.opacity(0.0),
+                                .clear
+                            ],
+                            center: .center,
+                            startAngle: .degrees(borderRotation),
+                            endAngle: .degrees(borderRotation + 360)
+                        ),
+                        lineWidth: 1.5
+                    )
+            )
             .shadow(color: isOn ? rowColor.opacity(0.20) : AppTheme.neonPurple.opacity(0.06), radius: 10, y: 3)
         }
         .buttonStyle(PressScaleButtonStyle(scale: 0.95))
@@ -630,8 +654,9 @@ struct GamePatchesView: View {
     }
 
     private var videoTutorialButton: some View {
-        Button {
-            showVideoSheet = true
+        let hasUrl = currentContainerVideoUrl != nil
+        return Button {
+            if hasUrl { showVideoSheet = true }
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "play.rectangle.fill")
@@ -639,17 +664,21 @@ struct GamePatchesView: View {
                 Text(language.text("patch.watch_tutorial"))
                     .font(.system(size: 16, weight: .semibold))
             }
-            .foregroundStyle(AppTheme.techGlow)
+            .foregroundStyle(hasUrl ? AppTheme.techGlow : Color(red: 0.35, green: 0.40, blue: 0.55))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 15)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(AppTheme.techGlow.opacity(0.55), lineWidth: 1)
+                    .strokeBorder(
+                        hasUrl ? AppTheme.techGlow.opacity(0.55) : Color(red: 0.25, green: 0.30, blue: 0.45).opacity(0.40),
+                        lineWidth: 1
+                    )
             )
-            .shadow(color: AppTheme.techGlow.opacity(0.18), radius: 10, x: 0, y: 4)
+            .shadow(color: hasUrl ? AppTheme.techGlow.opacity(0.18) : .clear, radius: 10, x: 0, y: 4)
         }
         .buttonStyle(PressScaleButtonStyle())
+        .disabled(!hasUrl)
     }
 
     // MARK: - Helper Views
