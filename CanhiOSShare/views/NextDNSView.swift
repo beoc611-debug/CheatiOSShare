@@ -305,6 +305,8 @@ struct NextDNSView: View {
                         isActivating: activatingID == profile.id
                     ) {
                         Task { await activate(profile) }
+                    } onDeactivate: {
+                        Task { await deactivate() }
                     } onBottom: {
                         if let vid = profile.videoURL, let url = URL(string: vid) {
                             if isDirectVideoURL(vid) {
@@ -371,9 +373,11 @@ private struct DNSProfileCard: View {
     let isActive: Bool
     let isActivating: Bool
     let onActivate: () -> Void
+    let onDeactivate: () -> Void
     let onBottom: () -> Void
 
     private var hasVideo: Bool { profile.videoURL != nil }
+    private var red: Color { Color(red: 1.0, green: 0.35, blue: 0.30) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -399,7 +403,7 @@ private struct DNSProfileCard: View {
                     }
                     HStack(spacing: 4) {
                         Circle().fill(isActive ? green : Color.white.opacity(0.25)).frame(width: 5, height: 5)
-                        Text(isActive ? "Đang dùng · DNS-over-HTTPS" : "DNS-over-HTTPS · Sẵn sàng")
+                        Text(isActive ? "\u{0110}ang d\u{00F9}ng · DNS-over-HTTPS" : "DNS-over-HTTPS · S\u{1EB5}n s\u{00E0}ng")
                             .font(.system(size: 10.5, weight: .medium))
                             .foregroundStyle(isActive ? green.opacity(0.9) : Color(red: 0.50, green: 0.58, blue: 0.75))
                     }
@@ -407,37 +411,37 @@ private struct DNSProfileCard: View {
 
                 Spacer(minLength: 0)
 
-                // Download button (replaces old "Dùng")
-                Button { onActivate() } label: {
+                // Bật / Tắt button
+                Button { isActive ? onDeactivate() : onActivate() } label: {
                     ZStack {
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
                             .fill(isActive
-                                ? LinearGradient(colors: [green.opacity(0.22), green.opacity(0.10)],
+                                ? LinearGradient(colors: [red.opacity(0.22), red.opacity(0.10)],
                                                  startPoint: .topLeading, endPoint: .bottomTrailing)
                                 : LinearGradient(colors: [accent.opacity(0.22), green.opacity(0.14)],
                                                  startPoint: .topLeading, endPoint: .bottomTrailing))
                             .frame(width: 56, height: 40)
                             .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .strokeBorder((isActive ? green : accent).opacity(0.35), lineWidth: 1))
+                                .strokeBorder((isActive ? red : accent).opacity(0.40), lineWidth: 1))
                         if isActivating {
                             ProgressView().tint(accent).scaleEffect(0.75)
                         } else if isActive {
                             VStack(spacing: 1) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 14)).foregroundStyle(green)
-                                Text("Đang dùng").font(.system(size: 8, weight: .bold)).foregroundStyle(green)
+                                Image(systemName: "wifi.slash")
+                                    .font(.system(size: 13)).foregroundStyle(red)
+                                Text("T\u{1EAF}t").font(.system(size: 9, weight: .bold)).foregroundStyle(red)
                             }
                         } else {
                             VStack(spacing: 1) {
-                                Image(systemName: "arrow.down.to.line")
-                                    .font(.system(size: 14)).foregroundStyle(accent)
-                                Text("Tải").font(.system(size: 9, weight: .bold)).foregroundStyle(accent)
+                                Image(systemName: "wifi")
+                                    .font(.system(size: 13)).foregroundStyle(accent)
+                                Text("B\u{1EAD}t").font(.system(size: 9, weight: .bold)).foregroundStyle(accent)
                             }
                         }
                     }
                 }
                 .buttonStyle(.plain)
-                .disabled(isActivating || isActive)
+                .disabled(isActivating)
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
 
