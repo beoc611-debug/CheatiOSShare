@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 import WebKit
 
 struct GamePatchesView: View {
@@ -18,6 +18,7 @@ struct GamePatchesView: View {
     @State private var containersLoaded = false
     @State private var gameNotice: GameNotice?
     @State private var showVideoSheet = false
+    @State private var selectedFeatureTab = 0   // 0 = Tính năng nhanh, 1 = Thông tin
 
     private var currentContainerVideoUrl: String? {
         guard let id = selectedContainerID else { return nil }
@@ -73,12 +74,13 @@ struct GamePatchesView: View {
             VStack(spacing: 0) {
                 customNavBar
 
-                ScrollView {
-                    VStack(spacing: 16) {
-                        header
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                        headerCard
                         containerTabBar
                             .transition(.opacity)
-                        menuCard
+                        featureTabSelector
+                        featureContent
                         if !game.bundleID.isEmpty {
                             openGameButton
                         }
@@ -86,10 +88,11 @@ struct GamePatchesView: View {
                             videoTutorialButton
                         }
                     }
-                    .padding(.horizontal, 22)
+                    .padding(.horizontal, 18)
                     .padding(.bottom, 32)
                     .animation(.easeInOut(duration: 0.22), value: containers.isEmpty)
                     .animation(.easeInOut(duration: 0.2), value: selectedContainerID)
+                    .animation(.easeInOut(duration: 0.18), value: selectedFeatureTab)
                 }
                 .refreshable {
                     async let syncTask: () = sync()
@@ -98,8 +101,6 @@ struct GamePatchesView: View {
                     await loadProjectStates()
                 }
             }
-
-
         }
         .toolbarHidden15()
         .task {
@@ -128,7 +129,6 @@ struct GamePatchesView: View {
 
     private var customNavBar: some View {
         HStack(spacing: 0) {
-            // Circular back button
             Button { dismiss() } label: {
                 ZStack {
                     Circle()
@@ -159,72 +159,119 @@ struct GamePatchesView: View {
 
             Spacer()
 
-            // Balance — same width as back button; shows spinner while syncing
             ZStack {
+                Circle()
+                    .fill(Color(red: 0.04, green: 0.07, blue: 0.17).opacity(0.88))
+                    .overlay(
+                        Circle().strokeBorder(AppTheme.neonPurple.opacity(0.40), lineWidth: 1)
+                    )
                 if isSyncing {
                     ProgressView()
                         .tint(AppTheme.techGlow)
-                        .scaleEffect(0.85)
+                        .scaleEffect(0.75)
+                } else {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(AppTheme.neonPurple.opacity(0.75))
                 }
             }
             .frame(width: 44, height: 44)
         }
-        .padding(.horizontal, 22)
+        .padding(.horizontal, 18)
         .padding(.top, 8)
         .padding(.bottom, 10)
     }
 
-    // MARK: - Header (icon + name + bundle ID)
+    // MARK: - Header Card (compact horizontal)
 
-    private var header: some View {
-        VStack(spacing: 14) {
-            // Game icon with premium layered glow
-            ZStack {
-                // Blue outer glow
-                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    .fill(AppTheme.techGlow.opacity(0.14))
-                    .frame(width: 140, height: 140)
-                    .blur(radius: 22)
-
-                // Purple accent glow (lower-right)
-                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    .fill(AppTheme.neonPurple.opacity(0.10))
-                    .frame(width: 138, height: 138)
-                    .blur(radius: 14)
-                    .offset(x: 8, y: 8)
-
-                // Icon clipped in rounded square
+    private var headerCard: some View {
+        HStack(spacing: 14) {
+            // Game icon (compact)
+            ZStack(alignment: .topLeading) {
                 gameIconView
-                    .frame(width: 118, height: 118)
-                    .clipShape(RoundedRectangle(cornerRadius: 27, style: .continuous))
+                    .frame(width: 58, height: 58)
+                    .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 27, style: .continuous)
+                        RoundedRectangle(cornerRadius: 15, style: .continuous)
                             .strokeBorder(
                                 LinearGradient(
-                                    colors: [AppTheme.techGlow.opacity(0.75), AppTheme.neonPurple.opacity(0.55)],
+                                    colors: [AppTheme.techGlow.opacity(0.70), AppTheme.neonPurple.opacity(0.55)],
                                     startPoint: .topLeading, endPoint: .bottomTrailing
                                 ),
-                                lineWidth: 1.5
+                                lineWidth: 1.2
                             )
                     )
+                    .shadow(color: AppTheme.neonPurple.opacity(0.30), radius: 10)
+
+                // HOT badge on icon
+                Text("HOT")
+                    .font(.system(size: 8.5, weight: .black))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 5).padding(.vertical, 2)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 1.0, green: 0.32, blue: 0.08), Color(red: 1.0, green: 0.10, blue: 0.0)],
+                            startPoint: .leading, endPoint: .trailing
+                        ),
+                        in: Capsule()
+                    )
+                    .offset(x: -4, y: -6)
             }
 
-            VStack(spacing: 7) {
+            // Name + status
+            VStack(alignment: .leading, spacing: 6) {
                 Text(game.name)
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
+                    .lineLimit(1)
 
-                if !game.bundleID.isEmpty {
-                    Text(game.bundleID)
-                        .font(.system(size: 13).monospaced())
-                        .foregroundStyle(Color(red: 0.46, green: 0.56, blue: 0.72))
+                HStack(spacing: 5) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.18, green: 0.88, blue: 0.42))
+                    Text("\u{0110}\u{00E3} s\u{1EB5}n s\u{00E0}ng")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.18, green: 0.88, blue: 0.42))
                 }
             }
+
+            Spacer()
+
+            // Arrow button
+            ZStack {
+                Circle()
+                    .fill(AppTheme.techGlow.opacity(0.14))
+                    .overlay(Circle().strokeBorder(AppTheme.techGlow.opacity(0.45), lineWidth: 1))
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(AppTheme.techGlow)
+            }
+            .frame(width: 36, height: 36)
+            .shadow(color: AppTheme.techGlow.opacity(0.25), radius: 8)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 4)
-        .padding(.bottom, 8)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(
+            ZStack {
+                Color(red: 0.05, green: 0.08, blue: 0.18).opacity(0.92)
+                LinearGradient(
+                    colors: [AppTheme.neonPurple.opacity(0.06), .clear],
+                    startPoint: .topLeading, endPoint: .bottomTrailing
+                )
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [AppTheme.techGlow.opacity(0.50), AppTheme.neonPurple.opacity(0.35)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+        .shadow(color: AppTheme.neonPurple.opacity(0.12), radius: 16, y: 4)
     }
 
     @ViewBuilder
@@ -241,7 +288,7 @@ struct GamePatchesView: View {
             AppTheme.resolvedBannerColor(game.bannerColor)
             Image(systemName: "app.fill")
                 .resizable().scaledToFit()
-                .padding(22)
+                .padding(14)
                 .foregroundStyle(.white)
         }
     }
@@ -322,201 +369,236 @@ struct GamePatchesView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Menu Card
+    // MARK: - Feature Tab Selector ("Tính năng nhanh" | "Thông tin")
 
-    private var menuCard: some View {
-        VStack(spacing: 0) {
-            menuHeader
+    private var featureTabSelector: some View {
+        HStack(spacing: 0) {
+            featureTabPill(title: "T\u{00ED}nh n\u{0103}ng nhanh", index: 0)
+            featureTabPill(title: "Th\u{00F4}ng tin", index: 1)
+        }
+        .padding(4)
+        .background(
+            Color(red: 0.04, green: 0.06, blue: 0.15).opacity(0.92),
+            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(AppTheme.neonPurple.opacity(0.20), lineWidth: 1)
+        )
+    }
 
-            Group {
-                if !containersLoaded {
-                    loadingPlaceholder
-                } else if displayedItems.isEmpty {
-                    emptyState
-                } else if displayedItems.count > Self.maxVisibleRows {
-                    ScrollView(showsIndicators: false) {
-                        rowsList
+    private func featureTabPill(title: String, index: Int) -> some View {
+        let isSelected = selectedFeatureTab == index
+        return Button {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.68)) {
+                selectedFeatureTab = index
+            }
+        } label: {
+            Text(title)
+                .font(.system(size: 13.5, weight: .bold))
+                .foregroundStyle(isSelected ? .white : Color(red: 0.45, green: 0.55, blue: 0.72))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background {
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [AppTheme.neonPurple.opacity(0.70), AppTheme.techGlow.opacity(0.55)],
+                                    startPoint: .leading, endPoint: .trailing
+                                )
+                            )
+                            .shadow(color: AppTheme.neonPurple.opacity(0.40), radius: 8, y: 2)
                     }
-                    .frame(height: Self.rowHeight * CGFloat(Self.maxVisibleRows))
-                } else {
-                    rowsList
+                }
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Feature Content (tab body)
+
+    @ViewBuilder
+    private var featureContent: some View {
+        if selectedFeatureTab == 0 {
+            featureGrid
+        } else {
+            infoTab
+        }
+    }
+
+    // MARK: - Feature Grid (2-column)
+
+    private let gridIcons = ["bolt.fill", "cube", "scope", "person.fill", "hare.fill", "figure.run", "eye.fill", "target", "waveform", "shield.fill"]
+
+    private var featureGrid: some View {
+        Group {
+            if !containersLoaded {
+                loadingPlaceholder
+            } else if displayedItems.isEmpty {
+                emptyState
+            } else {
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 12),
+                        GridItem(.flexible(), spacing: 12)
+                    ],
+                    spacing: 12
+                ) {
+                    ForEach(Array(displayedItems.enumerated()), id: \.element.id) { index, item in
+                        featureCard(item, colorIndex: index)
+                    }
                 }
             }
-            .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
         }
-        .background(Color(red: 0.030, green: 0.050, blue: 0.115).opacity(0.82))
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    private func featureCard(_ item: PatchLibraryItem, colorIndex: Int) -> some View {
+        let isOn = projectStates[item.id] ?? false
+        let isToggling = togglingProjectID == item.id
+        let rowColor = AppTheme.rowColor(colorIndex)
+        let iconName = gridIcons[colorIndex % gridIcons.count]
+        let binding = projectToggleBinding(for: item)
+        let rules = item.project?.rules ?? []
+        let toggleableCount = rules.filter(\.hasReplacement).count
+
+        return Button {
+            if !item.isLocked && toggleableCount > 0 && !isToggling {
+                binding.wrappedValue.toggle()
+            } else if item.isLocked {
+                store.requestUnlock(for: item)
+            }
+        } label: {
+            VStack(alignment: .leading, spacing: 0) {
+                // Icon + status row
+                HStack(alignment: .top) {
+                    // Feature icon
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(rowColor.opacity(isOn ? 0.22 : 0.10))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .strokeBorder(rowColor.opacity(isOn ? 0.65 : 0.30), lineWidth: 1)
+                            )
+                            .shadow(color: rowColor.opacity(isOn ? 0.35 : 0.0), radius: 8)
+                        if isToggling {
+                            ProgressView()
+                                .tint(rowColor)
+                                .scaleEffect(0.75)
+                        } else {
+                            Image(systemName: item.isLocked ? "lock.fill" : iconName)
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(isOn ? rowColor : rowColor.opacity(0.55))
+                        }
+                    }
+                    .frame(width: 46, height: 46)
+
+                    Spacer()
+
+                    // On/Off indicator dot
+                    Circle()
+                        .fill(isOn ? Color(red: 0.18, green: 0.88, blue: 0.42) : Color(red: 0.30, green: 0.35, blue: 0.48))
+                        .frame(width: 8, height: 8)
+                        .shadow(color: isOn ? Color(red: 0.18, green: 0.88, blue: 0.42).opacity(0.70) : .clear, radius: 4)
+                        .padding(.top, 4)
+                }
+                .padding(.bottom, 10)
+
+                // Feature name
+                Text(displayName(for: item))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .padding(.bottom, 6)
+
+                // Status label
+                HStack(spacing: 4) {
+                    if isOn {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Color(red: 0.18, green: 0.88, blue: 0.42))
+                        Text("\u{0110}\u{00E3} b\u{1EAD}t")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Color(red: 0.18, green: 0.88, blue: 0.42))
+                    } else {
+                        Circle()
+                            .fill(Color(red: 0.35, green: 0.40, blue: 0.55))
+                            .frame(width: 8, height: 8)
+                        Text("T\u{1EAF}t")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Color(red: 0.45, green: 0.52, blue: 0.68))
+                    }
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                ZStack {
+                    Color(red: 0.05, green: 0.07, blue: 0.16).opacity(0.90)
+                    if isOn {
+                        LinearGradient(
+                            colors: [rowColor.opacity(0.10), .clear],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        )
+                    }
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(
+                        isOn
+                            ? LinearGradient(colors: [rowColor.opacity(0.70), rowColor.opacity(0.35)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                            : LinearGradient(colors: [AppTheme.techGlow.opacity(0.22), AppTheme.neonPurple.opacity(0.15)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(color: isOn ? rowColor.opacity(0.20) : AppTheme.neonPurple.opacity(0.06), radius: 10, y: 3)
+        }
+        .buttonStyle(PressScaleButtonStyle(scale: 0.95))
+        .animation(.easeInOut(duration: 0.18), value: isOn)
+    }
+
+    // MARK: - Info Tab
+
+    private var infoTab: some View {
+        VStack(spacing: 0) {
+            infoRow(label: "Bundle ID", value: game.bundleID.isEmpty ? "—" : game.bundleID)
+            Divider().overlay(AppTheme.techGlow.opacity(0.15)).padding(.horizontal, 16)
+            infoRow(label: "S\u{1ED1} t\u{00EDnh} n\u{0103}ng", value: "\(displayedItems.count)")
+            if !game.type.isEmpty {
+                Divider().overlay(AppTheme.techGlow.opacity(0.15)).padding(.horizontal, 16)
+                infoRow(label: "Lo\u{1EA1}i", value: game.type.uppercased())
+            }
+        }
+        .background(Color(red: 0.05, green: 0.07, blue: 0.16).opacity(0.90))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .strokeBorder(
                     LinearGradient(
-                        colors: [
-                            AppTheme.techGlow.opacity(0.55),
-                            AppTheme.neonPurple.opacity(0.38),
-                            AppTheme.techGlow.opacity(0.18)
-                        ],
+                        colors: [AppTheme.techGlow.opacity(0.35), AppTheme.neonPurple.opacity(0.22)],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     ),
                     lineWidth: 1
                 )
         )
-        .shadow(color: AppTheme.techGlow.opacity(0.10), radius: 24, y: 6)
-        .shadow(color: AppTheme.neonPurple.opacity(0.08), radius: 16, y: 4)
-        .animation(.easeInOut(duration: 0.22), value: containersLoaded)
     }
 
-    private var menuHeader: some View {
-        HStack(spacing: 10) {
-            // Cyan neon vertical bar
-            RoundedRectangle(cornerRadius: 2, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [AppTheme.neonCyan, AppTheme.techGlow],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
-                .frame(width: 3, height: 20)
-                .shadow(color: AppTheme.neonCyan.opacity(0.80), radius: 6)
-
-            // Purple bolt
-            Image(systemName: "bolt.fill")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(AppTheme.neonPurple)
-
-            Text(language.text("patch.menu_title"))
-                .font(.system(size: 16, weight: .heavy))
+    private func infoRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(Color(red: 0.46, green: 0.56, blue: 0.72))
+            Spacer()
+            Text(value)
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.white)
-                .textCase(.uppercase)
-                .tracking15(0.6)
-
-            Spacer()
-
-            if isSyncing {
-                ProgressView()
-                    .scaleEffect(0.8)
-                    .tint(AppTheme.techGlow)
-            } else {
-                // AUTO pill
-                Text(language.text("patch.menu_auto_badge"))
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(AppTheme.neonCyan)
-                    .tracking15(0.5)
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 5)
-                    .background(
-                        Color(red: 0.04, green: 0.16, blue: 0.26).opacity(0.90),
-                        in: Capsule()
-                    )
-                    .overlay(
-                        Capsule().strokeBorder(AppTheme.neonCyan.opacity(0.65), lineWidth: 1)
-                    )
-                    .shadow(color: AppTheme.neonCyan.opacity(0.30), radius: 6)
-            }
+                .multilineTextAlignment(.trailing)
+                .lineLimit(2)
         }
         .padding(.horizontal, 18)
-        .padding(.vertical, 16)
-        .overlay(alignment: .bottom) {
-            // Subtle neon separator line under header
-            LinearGradient(
-                colors: [AppTheme.techGlow.opacity(0.22), AppTheme.neonPurple.opacity(0.14)],
-                startPoint: .leading, endPoint: .trailing
-            )
-            .frame(height: 1)
-        }
-    }
-
-    // MARK: - Rows
-
-    private static let rowHeight: CGFloat = 70
-    private static let maxVisibleRows = 5
-
-    private var rowsList: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(displayedItems.enumerated()), id: \.element.id) { index, item in
-                itemRow(item, colorIndex: index)
-                    .transition(
-                        .opacity.combined(with: .move(edge: .top)).combined(with: .scale(scale: 0.94, anchor: .top))
-                    )
-                    .animation(
-                        .spring(response: 0.4, dampingFraction: 0.78).delay(Double(index) * 0.045),
-                        value: selectedContainerID
-                    )
-                if item.id != displayedItems.last?.id {
-                    // Subtle blue-gray 1px separator
-                    Rectangle()
-                        .fill(Color(red: 0.18, green: 0.26, blue: 0.44).opacity(0.30))
-                        .frame(height: 1)
-                        .padding(.horizontal, 18)
-                }
-            }
-        }
-        .padding(.bottom, 10)
-    }
-
-    @ViewBuilder
-    private func itemRow(_ item: PatchLibraryItem, colorIndex: Int) -> some View {
-        if item.isLocked {
-            Button { store.requestUnlock(for: item) } label: {
-                PatchProjectRow(item: item, language: language)
-            }
-            .buttonStyle(.plain)
-        } else {
-            toggleRow(item, colorIndex: colorIndex)
-        }
-    }
-
-    private func toggleRow(_ item: PatchLibraryItem, colorIndex: Int) -> some View {
-        let rules = item.project?.rules ?? []
-        let toggleableCount = rules.filter(\.hasReplacement).count
-        let rowColor = AppTheme.rowColor(colorIndex)
-        let binding = projectToggleBinding(for: item)
-        let isOn = binding.wrappedValue
-
-        return HStack(spacing: 14) {
-            // Glass icon container with colored border + glow
-            ZStack {
-                RoundedRectangle(cornerRadius: 13, style: .continuous)
-                    .fill(rowColor.opacity(0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 13, style: .continuous)
-                            .strokeBorder(rowColor.opacity(0.48), lineWidth: 1)
-                    )
-                    .shadow(color: rowColor.opacity(0.28), radius: 8)
-                Image(systemName: "bolt.fill")
-                    .font(.system(size: 19, weight: .bold))
-                    .foregroundStyle(rowColor)
-            }
-            .frame(width: 48, height: 48)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(displayName(for: item))
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                Text(language.text("patch.rules_count", Int64(rules.count)))
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color(red: 0.46, green: 0.56, blue: 0.72))
-            }
-
-            Spacer()
-
-            if togglingProjectID == item.id {
-                ProgressView()
-                    .tint(Color(red: 0.18, green: 0.84, blue: 0.42))
-            } else {
-                Button {
-                    binding.wrappedValue.toggle()
-                } label: {
-                    Image(systemName: isOn ? "checkmark.seal.fill" : "xmark.seal.fill")
-                        .font(.system(size: 24))
-                        .foregroundStyle(isOn ? Color(red: 0.18, green: 0.84, blue: 0.42) : Color(red: 1.0, green: 0.27, blue: 0.27))
-                        .animation(.easeInOut(duration: 0.15), value: isOn)
-                }
-                .disabled(toggleableCount == 0)
-            }
-        }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 11)
+        .padding(.vertical, 14)
     }
 
     // MARK: - Open Game Button
@@ -526,9 +608,9 @@ struct GamePatchesView: View {
             AppLauncherOpenBundleID(game.bundleID)
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: "play.fill")
+                Image(systemName: "rocket.fill")
                     .font(.system(size: 16, weight: .bold))
-                Text(game.type == "app" ? "Mở ứng dụng ngay" : language.text("patch.open_game_now"))
+                Text(game.type == "app" ? "M\u{1EDF} \u{1EE9}ng d\u{1EE5}ng ngay" : language.text("patch.open_game_now"))
                     .font(.system(size: 18, weight: .bold))
             }
             .foregroundStyle(.white)
@@ -536,13 +618,13 @@ struct GamePatchesView: View {
             .padding(.vertical, 19)
             .background(
                 LinearGradient(
-                    colors: [AppTheme.techGlow, AppTheme.neonPurple],
+                    colors: [AppTheme.neonPurple, Color(red: 0.40, green: 0.18, blue: 0.85), AppTheme.techGlow.opacity(0.70)],
                     startPoint: .leading, endPoint: .trailing
                 ),
                 in: RoundedRectangle(cornerRadius: 18, style: .continuous)
             )
-            .shadow(color: AppTheme.techGlow.opacity(0.50), radius: 16, x: -4, y: 8)
-            .shadow(color: AppTheme.neonPurple.opacity(0.40), radius: 16, x: 4, y: 8)
+            .shadow(color: AppTheme.neonPurple.opacity(0.55), radius: 16, x: -4, y: 8)
+            .shadow(color: AppTheme.techGlow.opacity(0.35), radius: 16, x: 4, y: 8)
         }
         .buttonStyle(PressScaleButtonStyle())
     }

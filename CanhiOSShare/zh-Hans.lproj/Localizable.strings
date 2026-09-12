@@ -1,4 +1,4 @@
-"app.subtitle" = "MobileGestalt 编辑器";
+﻿"app.subtitle" = "MobileGestalt 编辑器";
 "app.capability_editor" = "MobileGestalt 功能编辑器";
 "common.close" = "关闭";
 "common.done" = "完成";
@@ -536,6 +536,7 @@
 "license.error.device_mismatch" = "该密钥已在其他设备上使用。";
 "license.error.device_limit_reached" = "该密钥已达到设备数量上限。";
 "license.error.network" = "无法连接服务器。";
+"license.error.seller_not_vip" = "此密钒属于未获得VIP权限的分销商，无法使用。";
 
 "common.build" = "Build %@";
 

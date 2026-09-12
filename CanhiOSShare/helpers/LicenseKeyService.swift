@@ -1,4 +1,4 @@
-import Foundation
+﻿import Foundation
 
 struct LicenseDeviceEntry {
     let deviceModel: String?
@@ -11,6 +11,7 @@ struct LicenseRedeemResult {
     let expiresAt: Date
     let devices: [LicenseDeviceEntry]
     let keySource: String  // "admin" | "seller" | "getkey"
+    let sellerVip: Bool
 }
 
 enum LicenseKeyError: Error {
@@ -20,6 +21,7 @@ enum LicenseKeyError: Error {
     case deviceMismatch
     case deviceLimitReached
     case network
+    case sellerNotVip
 
     var localizationKey: String {
         switch self {
@@ -29,6 +31,7 @@ enum LicenseKeyError: Error {
         case .deviceMismatch: return "license.error.device_mismatch"
         case .deviceLimitReached: return "license.error.device_limit_reached"
         case .network: return "license.error.network"
+        case .sellerNotVip: return "license.error.seller_not_vip"
         }
     }
 }
@@ -49,6 +52,7 @@ enum LicenseKeyService {
         let expiresAt: String?
         let devices: [KeyDeviceEntry]?
         let keySource: String?
+        let sellerVip: Bool?
     }
 
     private static let dateFormatterWithFraction: ISO8601DateFormatter = {
@@ -69,6 +73,7 @@ enum LicenseKeyService {
         case "expired": return .expired
         case "device_mismatch": return .deviceMismatch
         case "device_limit_reached": return .deviceLimitReached
+        case "seller_not_vip": return .sellerNotVip
         default: return .network
         }
     }
@@ -85,7 +90,11 @@ enum LicenseKeyService {
             LicenseDeviceEntry(deviceModel: $0.deviceModel, redeemedAt: parseDate($0.redeemedAt))
         }
         let keySource = response.keySource ?? "admin"
-        return LicenseRedeemResult(redeemedAt: redeemedAt, durationDays: durationDays, expiresAt: expiresAt, devices: devices, keySource: keySource)
+        let sellerVip = response.sellerVip ?? false
+        if keySource == "seller" && !sellerVip {
+            throw LicenseKeyError.sellerNotVip
+        }
+        return LicenseRedeemResult(redeemedAt: redeemedAt, durationDays: durationDays, expiresAt: expiresAt, devices: devices, keySource: keySource, sellerVip: sellerVip)
     }
 
     private static func formBody(_ params: [String: String]) -> Data {

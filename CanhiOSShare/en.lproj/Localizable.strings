@@ -1,4 +1,4 @@
-"app.subtitle" = "MobileGestalt editor";
+﻿"app.subtitle" = "MobileGestalt editor";
 "app.capability_editor" = "MobileGestalt capability editor";
 "common.close" = "Close";
 "common.done" = "Done";
@@ -536,6 +536,7 @@
 "license.error.device_mismatch" = "This key is already in use on another device.";
 "license.error.device_limit_reached" = "This key has reached its device limit.";
 "license.error.network" = "Couldn't reach the server.";
+"license.error.seller_not_vip" = "This key belongs to a seller without VIP access.";
 
 "common.build" = "Build %@";
 
