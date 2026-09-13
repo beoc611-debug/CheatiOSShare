@@ -8,8 +8,10 @@ final class LicenseGateStore: ObservableObject {
     @Published private(set) var expiresAt: Date?
     @Published private(set) var licenseDevices: [LicenseDeviceEntry] = []
     @Published private(set) var keySource: String = "admin"  // "admin" | "seller" | "getkey"
+    @Published private(set) var isSellerVip: Bool = false
 
     var isAdminKey: Bool { keySource == "admin" }
+    var isVipEligible: Bool { isAdminKey || isSellerVip }
     @Published var errorMessage: String?
     @Published var activationToast: ToastMessage?
 
@@ -115,6 +117,7 @@ final class LicenseGateStore: ObservableObject {
             expiresAt = result.expiresAt
             licenseDevices = result.devices
             keySource = result.keySource
+            isSellerVip = result.sellerVip
             isUnlocked = true
             let language = AppLanguage.vietnamese
             let detail = language.text("license.activated_detail", AppInfo.hardwareDisplayName, remainingTimeText(language: language))
@@ -134,6 +137,7 @@ final class LicenseGateStore: ObservableObject {
         expiresAt = nil
         licenseDevices = []
         keySource = "admin"
+        isSellerVip = false
         isUnlocked = false
         errorMessage = nil
     }
@@ -144,6 +148,7 @@ final class LicenseGateStore: ObservableObject {
             expiresAt = result.expiresAt
             licenseDevices = result.devices
             keySource = result.keySource
+            isSellerVip = result.sellerVip
             isUnlocked = true
         } catch LicenseKeyError.network {
             // Connectivity issue only — keep whatever unlocked state we already had.

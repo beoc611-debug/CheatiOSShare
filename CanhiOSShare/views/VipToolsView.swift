@@ -138,7 +138,7 @@ struct VipToolsView: View {
 
     @ViewBuilder
     private var linkSection: some View {
-        if !licenseGate.isAdminKey {
+        if !licenseGate.isVipEligible {
             notSupportedCard
         } else {
             switch vm.state {
@@ -175,7 +175,7 @@ struct VipToolsView: View {
                 Text("Không hỗ trợ")
                     .font(.system(size: 18, weight: .black))
                     .foregroundStyle(.white)
-                Text("Vip Tools chỉ dành cho key được tạo bởi Admin.\nKey của bạn không có quyền sử dụng tính năng này.")
+                Text("Vip Tools dành cho key Admin hoặc Seller được cấp VIP.\nKey của bạn không có quyền sử dụng tính năng này.")
                     .font(.system(size: 13))
                     .foregroundStyle(Color(red: 0.55, green: 0.63, blue: 0.80))
                     .multilineTextAlignment(.center)
