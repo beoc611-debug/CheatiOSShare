@@ -9,7 +9,7 @@ struct MakeFileView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            Color(red: 0.027, green: 0.043, blue: 0.082).ignoresSafeArea()
+            TechBackground()
             VStack(spacing: 0) {
                 makeFileHeader
                 MakeFileWebView { filename, data in
@@ -82,9 +82,9 @@ struct MakeFileWebView: UIViewRepresentable {
 
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.scrollView.showsVerticalScrollIndicator = true
-        webView.backgroundColor = UIColor(red: 0.027, green: 0.043, blue: 0.082, alpha: 1)
         webView.isOpaque = false
-        webView.scrollView.backgroundColor = UIColor(red: 0.027, green: 0.043, blue: 0.082, alpha: 1)
+        webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
 
         if let url = Bundle.main.url(forResource: "make-file", withExtension: "html") {
             webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())

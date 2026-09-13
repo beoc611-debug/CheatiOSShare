@@ -6,25 +6,49 @@
 <title>UMA Mod</title>
 <style>
   :root{
-    --bg:#070B14; --panel:#0D1522; --ink:#D4DFEE; --muted:#5A6A8A; --line:#162034;
+    --bg:transparent; --panel:rgba(13,21,38,0.82); --ink:#D4DFEE; --muted:#5A6A8A; --line:rgba(74,125,255,0.18);
     --accent:#4A7DFF; --ok:#1ACC7A; --warn:#E8A030; --bad:#E85060;
-    --chip:#0F1928; --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --chip:rgba(15,25,40,0.75); --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-       font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-       padding:28px 20px 60px}
-  .wrap{max-width:880px;margin:0 auto}
+  body{margin:0;background:transparent;color:var(--ink);
+       font:15px/1.55 -apple-system,"Helvetica Neue",system-ui,sans-serif;
+       padding:14px 16px 80px;-webkit-text-size-adjust:100%}
+  .wrap{max-width:100%;margin:0 auto}
+
+  /* ── hướng dẫn ── */
+  .guide{border-radius:16px;padding:16px;margin-bottom:14px;
+         background:rgba(13,21,38,0.78);border:1px solid rgba(74,125,255,0.22);
+         backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .guide-title{font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+               color:#4A7DFF;margin:0 0 12px;display:flex;align-items:center;gap:7px}
+  .guide-title::before{content:"ℹ";font-size:14px}
+  .steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .steps li{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink)}
+  .step-n{min-width:22px;height:22px;border-radius:50%;display:flex;align-items:center;
+          justify-content:center;font-size:11px;font-weight:800;flex-none;
+          background:linear-gradient(135deg,#2E63DB,#6040C8);color:#fff;margin-top:1px}
+  .steps li b{color:#D4DFEE}
+  .steps li span{color:var(--muted);font-size:12px;display:block;margin-top:1px}
+  .presets-guide{margin-top:12px;padding-top:11px;border-top:1px solid var(--line);
+                 display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .pg-item{background:rgba(74,125,255,0.07);border:1px solid rgba(74,125,255,0.15);
+           border-radius:9px;padding:8px 10px}
+  .pg-item .pg-num{font-size:10px;font-weight:800;color:#4A7DFF;margin-bottom:2px}
+  .pg-item .pg-name{font-size:12px;font-weight:700;color:var(--ink)}
+  .pg-item .pg-desc{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
   h1{font-size:21px;margin:0 0 4px;letter-spacing:-.01em}
   .sub{color:var(--muted);font-size:13.5px;margin:0 0 22px}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+  .panel{background:rgba(13,21,38,0.80);border:1px solid rgba(74,125,255,0.18);border-radius:14px;
+         padding:16px;margin-bottom:14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 
-  #drop{border:1.5px dashed var(--line);border-radius:12px;padding:30px 20px;text-align:center;
-        cursor:pointer;transition:.15s;background:var(--panel);margin-bottom:16px}
-  #drop:hover,#drop.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--panel))}
-  #drop b{display:block;font-size:15px;margin-bottom:5px}
-  #drop span{color:var(--muted);font-size:13px}
-  #drop.has{padding:18px 20px;border-style:solid}
+  #drop{border:1.5px dashed rgba(74,125,255,0.35);border-radius:14px;padding:28px 16px;text-align:center;
+        cursor:pointer;transition:.15s;background:rgba(74,125,255,0.06);margin-bottom:14px;
+        backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  #drop:hover,#drop.over{border-color:var(--accent);background:rgba(74,125,255,0.12)}
+  #drop b{display:block;font-size:15px;margin-bottom:5px;color:var(--ink)}
+  #drop span{color:var(--muted);font-size:12.5px}
+  #drop.has{padding:14px 16px;border-style:solid;border-color:rgba(74,125,255,0.6)}
 
   h2{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
      margin:0 0 12px;font-weight:600}
@@ -43,10 +67,11 @@
   .old{color:var(--bad)} .new{color:var(--ok)} .dim{color:var(--muted)}
 
   .presets{display:grid;gap:10px;margin-bottom:16px}
-  .pre{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:11px;
-       padding:14px 16px;cursor:pointer;background:var(--panel);transition:.13s}
-  .pre:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
-  .pre.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--panel))}
+  .pre{display:flex;gap:12px;align-items:flex-start;border:1.5px solid rgba(74,125,255,0.18);border-radius:12px;
+       padding:13px 14px;cursor:pointer;background:rgba(13,21,38,0.72);transition:.13s;
+       backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .pre:hover{border-color:rgba(74,125,255,0.45)}
+  .pre.sel{border-color:var(--accent);background:rgba(74,125,255,0.10)}
   .off{display:none !important}
   .pre input{margin:3px 0 0;accent-color:var(--accent);flex:none}
   .pre .t{font-weight:600;font-size:14.5px;margin-bottom:3px}
@@ -77,17 +102,17 @@
   .flds{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px}
   .fld label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px}
   .fld input{width:100%;font:inherit;font-family:var(--mono);font-size:13px;padding:7px 9px;
-             border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink)}
+             border:1px solid rgba(74,125,255,0.22);border-radius:7px;background:rgba(7,11,20,0.6);color:var(--ink)}
 
   .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:12px}
   .cfld label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:6px}
   .cfld label .dim{font-family:var(--mono);font-size:11px}
   .crow{display:flex;gap:8px;align-items:center}
-  .crow input[type=color]{width:44px;height:36px;padding:2px;border:1px solid var(--line);
-                          border-radius:7px;background:var(--bg);cursor:pointer;flex:none}
+  .crow input[type=color]{width:44px;height:36px;padding:2px;border:1px solid rgba(74,125,255,0.22);
+                          border-radius:7px;background:rgba(7,11,20,0.6);cursor:pointer;flex:none}
   .crow input[type=text]{flex:1;min-width:0;font:inherit;font-family:var(--mono);font-size:13px;
-                         padding:8px 9px;border:1px solid var(--line);border-radius:7px;
-                         background:var(--bg);color:var(--ink);text-transform:uppercase}
+                         padding:8px 9px;border:1px solid rgba(74,125,255,0.22);border-radius:7px;
+                         background:rgba(7,11,20,0.6);color:var(--ink);text-transform:uppercase}
   .crow input[type=text].bad{border-color:var(--bad)}
   .wfld,.afld{margin-top:16px}
   .wfld label,.afld label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:7px}
@@ -103,13 +128,68 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>UMA Mod</h1>
-  <p class="sub">Sửa UnityFS bundle <code>assetindexer</code>. Giữ nguyên tuyệt đối dung lượng và tên file. Chạy hoàn toàn ngoại tuyến.</p>
+
+  <!-- Hướng dẫn sử dụng -->
+  <div class="guide">
+    <div class="guide-title">Hướng dẫn sử dụng</div>
+    <ul class="steps">
+      <li>
+        <div class="step-n">1</div>
+        <div>
+          <b>Lấy file bundle từ game</b>
+          <span>Dùng app quản lý file (Filza, Esplorer…) vào thư mục cài đặt Free Fire → <code>assets/bin/Data/</code>. File cần tìm: <code>assetindexer.*</code> (preset 1–2) hoặc <code>shaders.*</code> / <code>optionalavatarres_commonab_shader.*</code> (preset 3–4).</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">2</div>
+        <div>
+          <b>Bấm vào ô chọn file bên dưới</b>
+          <span>Chọn file bundle từ Files app. Tool sẽ tự nhận diện loại file và chỉ bật những preset phù hợp.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">3</div>
+        <div>
+          <b>Chọn preset và bấm "Tạo file"</b>
+          <span>Chỉnh màu sắc (preset 3–4) hoặc giữ mặc định. Xử lý chạy hoàn toàn ngoại tuyến, dung lượng file đầu ra giữ nguyên 100%.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">4</div>
+        <div>
+          <b>Bấm "Tải file đã sửa" → lưu vào Files</b>
+          <span>Chép đè file đã sửa lên file gốc trong game (cùng tên, cùng vị trí). Xong là vào game thấy hiệu ứng.</span>
+        </div>
+      </li>
+    </ul>
+    <div class="presets-guide">
+      <div class="pg-item">
+        <div class="pg-num">PRESET 1</div>
+        <div class="pg-name">Dị Tật Aim Head</div>
+        <div class="pg-desc">Tráo bone_Hips ↔ bone_Neck, aim tự khóa đầu địch</div>
+      </div>
+      <div class="pg-item">
+        <div class="pg-num">PRESET 2</div>
+        <div class="pg-name">AimDrag USP</div>
+        <div class="pg-desc">Bone Head giả + indexer 12 mục, kéo aim mượt cân cap</div>
+      </div>
+      <div class="pg-item">
+        <div class="pg-num">PRESET 3</div>
+        <div class="pg-name">Định vị súng</div>
+        <div class="pg-desc">X-Ray súng hiện qua tường, đổi màu tuỳ ý (file shaders)</div>
+      </div>
+      <div class="pg-item">
+        <div class="pg-num">PRESET 4</div>
+        <div class="pg-name">Định vị nhân vật</div>
+        <div class="pg-desc">Hologram xuyên tường toàn thân, chỉnh màu + hiệu ứng</div>
+      </div>
+    </div>
+  </div>
 
   <div id="drop">
     <div id="dropText">
-      <b>Thả file bundle vào đây</b>
-      <span>hoặc bấm để chọn — vd. <code>assetindexer.H5ak1JM1Eck~2F…~3D</code></span>
+      <b>Bấm để chọn file bundle</b>
+      <span>assetindexer / shaders / optionalavatarres_commonab_shader</span>
     </div>
     <input type="file" id="file" class="hide">
   </div>
