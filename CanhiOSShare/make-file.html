@@ -129,63 +129,6 @@
 <body>
 <div class="wrap">
 
-  <!-- Hướng dẫn sử dụng -->
-  <div class="guide">
-    <div class="guide-title">Hướng dẫn sử dụng</div>
-    <ul class="steps">
-      <li>
-        <div class="step-n">1</div>
-        <div>
-          <b>Lấy file bundle từ game</b>
-          <span>Dùng app quản lý file (Filza, Esplorer…) vào thư mục cài đặt Free Fire → <code>assets/bin/Data/</code>. File cần tìm: <code>assetindexer.*</code> (preset 1–2) hoặc <code>shaders.*</code> / <code>optionalavatarres_commonab_shader.*</code> (preset 3–4).</span>
-        </div>
-      </li>
-      <li>
-        <div class="step-n">2</div>
-        <div>
-          <b>Bấm vào ô chọn file bên dưới</b>
-          <span>Chọn file bundle từ Files app. Tool sẽ tự nhận diện loại file và chỉ bật những preset phù hợp.</span>
-        </div>
-      </li>
-      <li>
-        <div class="step-n">3</div>
-        <div>
-          <b>Chọn preset và bấm "Tạo file"</b>
-          <span>Chỉnh màu sắc (preset 3–4) hoặc giữ mặc định. Xử lý chạy hoàn toàn ngoại tuyến, dung lượng file đầu ra giữ nguyên 100%.</span>
-        </div>
-      </li>
-      <li>
-        <div class="step-n">4</div>
-        <div>
-          <b>Bấm "Tải file đã sửa" → lưu vào Files</b>
-          <span>Chép đè file đã sửa lên file gốc trong game (cùng tên, cùng vị trí). Xong là vào game thấy hiệu ứng.</span>
-        </div>
-      </li>
-    </ul>
-    <div class="presets-guide">
-      <div class="pg-item">
-        <div class="pg-num">PRESET 1</div>
-        <div class="pg-name">Dị Tật Aim Head</div>
-        <div class="pg-desc">Tráo bone_Hips ↔ bone_Neck, aim tự khóa đầu địch</div>
-      </div>
-      <div class="pg-item">
-        <div class="pg-num">PRESET 2</div>
-        <div class="pg-name">AimDrag USP</div>
-        <div class="pg-desc">Bone Head giả + indexer 12 mục, kéo aim mượt cân cap</div>
-      </div>
-      <div class="pg-item">
-        <div class="pg-num">PRESET 3</div>
-        <div class="pg-name">Định vị súng</div>
-        <div class="pg-desc">X-Ray súng hiện qua tường, đổi màu tuỳ ý (file shaders)</div>
-      </div>
-      <div class="pg-item">
-        <div class="pg-num">PRESET 4</div>
-        <div class="pg-name">Định vị nhân vật</div>
-        <div class="pg-desc">Hologram xuyên tường toàn thân, chỉnh màu + hiệu ứng</div>
-      </div>
-    </div>
-  </div>
-
   <div id="drop">
     <div id="dropText">
       <b>Bấm để chọn file bundle</b>
@@ -332,6 +275,64 @@
   </div>
 
   <div id="out"></div>
+
+  <!-- Hướng dẫn sử dụng -->
+  <div class="guide">
+    <div class="guide-title">Hướng dẫn sử dụng</div>
+    <ul class="steps">
+      <li>
+        <div class="step-n">1</div>
+        <div>
+          <b>Lấy file bundle từ game</b>
+          <span>Dùng app quản lý file (Filza, Esplorer…) vào thư mục cài đặt Free Fire → <code>assets/bin/Data/</code>. File cần tìm: <code>assetindexer.*</code> (preset 1–2) hoặc <code>shaders.*</code> / <code>optionalavatarres_commonab_shader.*</code> (preset 3–4).</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">2</div>
+        <div>
+          <b>Bấm vào ô chọn file bên trên</b>
+          <span>Chọn file bundle từ Files app. Tool sẽ tự nhận diện loại file và chỉ bật những preset phù hợp.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">3</div>
+        <div>
+          <b>Chọn preset và bấm "Tạo file"</b>
+          <span>Chỉnh màu sắc (preset 3–4) hoặc giữ mặc định. Xử lý chạy hoàn toàn ngoại tuyến, dung lượng file đầu ra giữ nguyên 100%.</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-n">4</div>
+        <div>
+          <b>Bấm "Tải file đã sửa" → lưu vào Files</b>
+          <span>Chép đè file đã sửa lên file gốc trong game (cùng tên, cùng vị trí). Xong là vào game thấy hiệu ứng.</span>
+        </div>
+      </li>
+    </ul>
+    <div class="presets-guide">
+      <div class="pg-item">
+        <div class="pg-num">PRESET 1</div>
+        <div class="pg-name">Dị Tật Aim Head</div>
+        <div class="pg-desc">Tráo bone_Hips ↔ bone_Neck, aim tự khóa đầu địch</div>
+      </div>
+      <div class="pg-item">
+        <div class="pg-num">PRESET 2</div>
+        <div class="pg-name">AimDrag USP</div>
+        <div class="pg-desc">Bone Head giả + indexer 12 mục, kéo aim mượt cân cap</div>
+      </div>
+      <div class="pg-item">
+        <div class="pg-num">PRESET 3</div>
+        <div class="pg-name">Định vị súng</div>
+        <div class="pg-desc">X-Ray súng hiện qua tường, đổi màu tuỳ ý (file shaders)</div>
+      </div>
+      <div class="pg-item">
+        <div class="pg-num">PRESET 4</div>
+        <div class="pg-name">Định vị nhân vật</div>
+        <div class="pg-desc">Hologram xuyên tường toàn thân, chỉnh màu + hiệu ứng</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
