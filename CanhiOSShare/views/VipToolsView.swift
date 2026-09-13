@@ -82,7 +82,7 @@ struct VipToolsView: View {
             VipToolsNoticeSheet(text: wrapper.text)
         }
         .task {
-            guard licenseGate.isAdminKey else { return }
+            guard licenseGate.isVipEligible else { return }
             vm.currentKeyCode = licenseGate.storedKeyCode
             await vm.checkStatus()
         }
