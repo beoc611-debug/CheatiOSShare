@@ -536,7 +536,7 @@
 "license.error.device_mismatch" = "Key này đã được dùng trên thiết bị khác.";
 "license.error.device_limit_reached" = "Key này đã đạt giới hạn số thiết bị cho phép.";
 "license.error.network" = "Không thể kết nối máy chủ.";
-"license.error.seller_not_vip" = "Seller chưa được cấp VIP, key không hợp lệ.";
+"license.error.seller_not_vip" = "Seller chưa được cấp VIP, key không hợp lệ. Key này không thể truy cập vào app CheatiOSVip, hãy liên hệ với người cung cấp để được hỗ trợ.";
 
 "common.build" = "Build %@";
 
