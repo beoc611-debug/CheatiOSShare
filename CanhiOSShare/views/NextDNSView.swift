@@ -113,6 +113,10 @@ struct NextDNSView: View {
     @State private var activatingID: String? = nil
     @State private var noticeText: String? = nil
     @State private var videoURL: URL? = nil
+    @State private var pendingInstallProfileID: String? = nil
+
+    // Tracks profile IDs installed via .mobileconfig (persists across launches)
+    @AppStorage("dns_manual_active_id") private var manualActiveID: String = ""
 
     private let accent = Color(red: 0.20, green: 0.70, blue: 1.00)
     private let green  = Color(red: 0.10, green: 0.85, blue: 0.55)
@@ -164,10 +168,17 @@ struct NextDNSView: View {
                     .ignoresSafeArea()
             }
         }
-        // Safari download sheet
+        // Safari download sheet — when dismissed, mark profile as manually installed
         .sheet(isPresented: Binding(get: { safariURL != nil }, set: { if !$0 { safariURL = nil } })) {
             if let url = safariURL {
-                SafariInstallView(url: url) { safariURL = nil }.ignoresSafeArea()
+                SafariInstallView(url: url) {
+                    safariURL = nil
+                    if let pid = pendingInstallProfileID {
+                        manualActiveID = pid
+                        pendingInstallProfileID = nil
+                        showToast("\u{2713} DNS \u{0111}\u{00E3} c\u{00E0}i, \u{0111}ang ho\u{1EA1}t \u{0111}\u{1ED9}ng")
+                    }
+                }.ignoresSafeArea()
             }
         }
         .onChange(of: vm.pendingNotice) { notice in
@@ -270,24 +281,15 @@ struct NextDNSView: View {
         } else {
             VStack(spacing: 10) {
                 // Status bar
+                let anyActive = dns.isEnabled || !manualActiveID.isEmpty
                 HStack(spacing: 8) {
                     Circle()
-                        .fill(dns.isEnabled ? green : Color.white.opacity(0.3))
+                        .fill(anyActive ? green : Color.white.opacity(0.3))
                         .frame(width: 6, height: 6)
-                    Text(dns.isEnabled ? "DNS đang hoạt động" : "Đang dùng DNS mặc định")
+                    Text(anyActive ? "DNS \u{0111}ang ho\u{1EA1}t \u{0111}\u{1ED9}ng" : "\u{0110}ang d\u{00F9}ng DNS m\u{1EB7}c \u{0111}\u{1ECB}nh")
                         .font(.system(size: 11.5, weight: .medium))
-                        .foregroundStyle(dns.isEnabled ? green.opacity(0.9) : Color(red: 0.50, green: 0.62, blue: 0.80))
+                        .foregroundStyle(anyActive ? green.opacity(0.9) : Color(red: 0.50, green: 0.62, blue: 0.80))
                     Spacer()
-                    if dns.isEnabled {
-                        Button { Task { await deactivate() } } label: {
-                            Text("Tắt DNS")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(Color(red: 1.0, green: 0.45, blue: 0.40))
-                                .padding(.horizontal, 10).padding(.vertical, 4)
-                                .background(Color(red: 1.0, green: 0.3, blue: 0.25).opacity(0.15), in: Capsule())
-                                .overlay(Capsule().strokeBorder(Color(red: 1.0, green: 0.3, blue: 0.25).opacity(0.3), lineWidth: 1))
-                        }.buttonStyle(.plain)
-                    }
                 }
                 .padding(.horizontal, 12).padding(.vertical, 8)
                 .background(
@@ -301,12 +303,12 @@ struct NextDNSView: View {
                     DNSProfileCard(
                         profile: profile,
                         accent: accent, green: green, purple: purple,
-                        isActive: dns.activeProfileID == profile.id && dns.isEnabled,
+                        isActive: (dns.activeProfileID == profile.id && dns.isEnabled) || manualActiveID == profile.id,
                         isActivating: activatingID == profile.id
                     ) {
                         Task { await activate(profile) }
                     } onDeactivate: {
-                        Task { await deactivate() }
+                        Task { await deactivateProfile(profile) }
                     } onBottom: {
                         if let vid = profile.videoURL, let url = URL(string: vid) {
                             if isDirectVideoURL(vid) {
@@ -341,20 +343,27 @@ struct NextDNSView: View {
         if let doh = profile.dohURL {
             let ok = await dns.activate(profileID: profile.id, dohURL: doh)
             if ok {
-                showToast("✓ Đã bật DNS: \(profile.name)")
-            } else {
-                // Fallback: download .mobileconfig via Safari
-                if let url = URL(string: profile.downloadURL) { safariURL = url }
-                showToast("Cần cài profile để kích hoạt DNS")
+                manualActiveID = profile.id
+                showToast("\u{2713} \u{0110}\u{00E3} b\u{1EAD}t DNS: \(profile.name)")
+                return
             }
-        } else {
-            if let url = URL(string: profile.downloadURL) { safariURL = url }
         }
+        // Fallback: open .mobileconfig in Safari; onDismiss will mark active
+        pendingInstallProfileID = profile.id
+        if let url = URL(string: profile.downloadURL) { safariURL = url }
+    }
+
+    private func deactivateProfile(_ profile: PatchHubService.DNSProfile) async {
+        // Clear manual tracking
+        if manualActiveID == profile.id { manualActiveID = "" }
+        // Also try NEDNSManager deactivate
+        _ = await dns.deactivate()
+        showToast("DNS \u{0111}\u{00E3} t\u{1EAF}t \u{2014} v\u{00E0}o C\u{00E0}i \u{0111}\u{1EB7}t \u{2192} VPN & Qu\u{1EA3}n l\u{00FD} \u{2192} DNS \u{0111}\u{1EC3} g\u{1EE1} profile")
     }
 
     private func deactivate() async {
         let ok = await dns.deactivate()
-        showToast(ok ? "DNS đã tắt, dùng DNS mặc định" : "Không thể tắt DNS")
+        showToast(ok ? "DNS \u{0111}\u{00E3} t\u{1EAF}t" : "Kh\u{00F4}ng th\u{1EC3} t\u{1EAF}t DNS")
     }
 
     private func showToast(_ msg: String) {
