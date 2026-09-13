@@ -1,0 +1,1936 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UMA Mod</title>
+<style>
+  :root{
+    --bg:#070B14; --panel:#0D1522; --ink:#D4DFEE; --muted:#5A6A8A; --line:#162034;
+    --accent:#4A7DFF; --ok:#1ACC7A; --warn:#E8A030; --bad:#E85060;
+    --chip:#0F1928; --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+       padding:28px 20px 60px}
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-size:21px;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 22px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+
+  #drop{border:1.5px dashed var(--line);border-radius:12px;padding:30px 20px;text-align:center;
+        cursor:pointer;transition:.15s;background:var(--panel);margin-bottom:16px}
+  #drop:hover,#drop.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--panel))}
+  #drop b{display:block;font-size:15px;margin-bottom:5px}
+  #drop span{color:var(--muted);font-size:13px}
+  #drop.has{padding:18px 20px;border-style:solid}
+
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+     margin:0 0 12px;font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  td{padding:5px 0;vertical-align:top}
+  td:first-child{color:var(--muted);width:180px;padding-right:14px;white-space:nowrap}
+  td:last-child{font-family:var(--mono);font-size:12.5px;word-break:break-all}
+
+  .hexwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table.hex{font-family:var(--mono);font-size:12px;white-space:nowrap;width:auto;min-width:100%}
+  table.hex th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;
+               text-transform:uppercase;letter-spacing:.05em;padding:0 16px 7px 0;border-bottom:1px solid var(--line)}
+  table.hex td{padding:6px 16px 6px 0;border-bottom:1px solid var(--line);width:auto;color:var(--ink)}
+  table.hex td:first-child{width:auto;color:var(--muted)}
+  table.hex tr:last-child td{border-bottom:0}
+  .old{color:var(--bad)} .new{color:var(--ok)} .dim{color:var(--muted)}
+
+  .presets{display:grid;gap:10px;margin-bottom:16px}
+  .pre{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:11px;
+       padding:14px 16px;cursor:pointer;background:var(--panel);transition:.13s}
+  .pre:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+  .pre.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--panel))}
+  .off{display:none !important}
+  .pre input{margin:3px 0 0;accent-color:var(--accent);flex:none}
+  .pre .t{font-weight:600;font-size:14.5px;margin-bottom:3px}
+  .pre .d{color:var(--muted);font-size:12.5px;line-height:1.5}
+  .pre .n{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:6px}
+
+  .msg{border-radius:9px;padding:11px 14px;font-size:13.5px;margin-bottom:14px;border:1px solid}
+  .msg.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 35%,transparent);
+          background:color-mix(in srgb,var(--ok) 9%,transparent)}
+  .msg.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,transparent);
+           background:color-mix(in srgb,var(--bad) 9%,transparent)}
+  .msg.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 35%,transparent);
+            background:color-mix(in srgb,var(--warn) 9%,transparent)}
+
+  button{font:inherit;font-size:14px;font-weight:600;border:0;border-radius:10px;padding:12px 24px;
+         background:linear-gradient(90deg,#2E63DB,#6040C8);color:#fff;cursor:pointer;
+         box-shadow:0 2px 12px rgba(74,125,255,0.35)}
+  button:hover:not(:disabled){filter:brightness(1.07)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .hide{display:none}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--chip);padding:1px 5px;border-radius:4px}
+  .note{color:var(--muted);font-size:12.5px;margin-top:10px;line-height:1.5}
+  .fname{font-family:var(--mono);font-size:12.5px;background:var(--chip);padding:8px 10px;
+         border-radius:7px;word-break:break-all;margin-top:6px;display:block}
+  .adv{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+  .adv summary{cursor:pointer;color:var(--muted);font-size:12.5px;user-select:none}
+  .flds{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px}
+  .fld label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px}
+  .fld input{width:100%;font:inherit;font-family:var(--mono);font-size:13px;padding:7px 9px;
+             border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink)}
+
+  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:12px}
+  .cfld label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:6px}
+  .cfld label .dim{font-family:var(--mono);font-size:11px}
+  .crow{display:flex;gap:8px;align-items:center}
+  .crow input[type=color]{width:44px;height:36px;padding:2px;border:1px solid var(--line);
+                          border-radius:7px;background:var(--bg);cursor:pointer;flex:none}
+  .crow input[type=text]{flex:1;min-width:0;font:inherit;font-family:var(--mono);font-size:13px;
+                         padding:8px 9px;border:1px solid var(--line);border-radius:7px;
+                         background:var(--bg);color:var(--ink);text-transform:uppercase}
+  .crow input[type=text].bad{border-color:var(--bad)}
+  .wfld,.afld{margin-top:16px}
+  .wfld label,.afld label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:7px}
+  .wfld label b,.afld label b{color:var(--ink);font-family:var(--mono)}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .swatch{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;
+          margin-right:6px;border:1px solid rgba(128,128,128,.45)}
+  .fxrow{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px}
+  .chk{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:13.5px}
+  .chk input{accent-color:var(--accent);width:16px;height:16px;cursor:pointer;flex:none}
+  .chk .dim{color:var(--muted);font-family:var(--mono);font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>UMA Mod</h1>
+  <p class="sub">Sửa UnityFS bundle <code>assetindexer</code>. Giữ nguyên tuyệt đối dung lượng và tên file. Chạy hoàn toàn ngoại tuyến.</p>
+
+  <div id="drop">
+    <div id="dropText">
+      <b>Thả file bundle vào đây</b>
+      <span>hoặc bấm để chọn — vd. <code>assetindexer.H5ak1JM1Eck~2F…~3D</code></span>
+    </div>
+    <input type="file" id="file" class="hide">
+  </div>
+
+  <div id="info"></div>
+
+  <div class="presets" id="presets">
+    <label class="pre sel">
+      <input type="radio" name="p" value="1" checked>
+      <div>
+        <div class="t">1 · Dị Tật Aim Head</div>
+        <div class="d">Tráo tên <code>bone_Hips</code> ↔ <code>bone_Neck</code> trong 2 mesh xương. Sửa tại chỗ, đổi 16 byte.</div>
+        <div class="n">bone_Hips ⇄ bone_Neck · nam + nữ</div>
+      </div>
+    </label>
+    <label class="pre">
+      <input type="radio" name="p" value="2">
+      <div>
+        <div class="t">2 · AimDrag Cân Cap USP</div>
+        <div class="d">Đổi <code>bone_Left_Spine_Backpack</code> thành <code>bone_Head</code> giả ở cả hai mesh, kèm indexer 12 mục. Dựng lại bundle.</div>
+        <div class="n">nam x=−0.313340 · nữ x=−0.23 z=−0.01 · scale ±1.5555556</div>
+      </div>
+    </label>
+    <label class="pre">
+      <input type="radio" name="p" value="3">
+      <div>
+        <div class="t">3 · Định vị súng</div>
+        <div class="d">Đổi màu súng, màu viền súng và màu keo của <code>backweapon</code>, <code>brmobilebumpspec</code>, <code>brmobilebumpspecdecal</code>. Nhận file <b>shaders</b> gốc hoặc đã mod.</div>
+        <div class="n">_XRayColor · _OutLineColor · _OutLineWidth · _DimColor</div>
+      </div>
+    </label>
+    <label class="pre">
+      <input type="radio" name="p" value="4">
+      <div>
+        <div class="t">4 · Định vị nhân vật</div>
+        <div class="d">Thay toàn bộ shader nhân vật (da, tóc, quần áo, mũ) bằng <code>hologram</code> phát sáng. Nhận file <b>optionalavatarres_commonab_shader</b> gốc hoặc đã mod.</div>
+        <div class="n">_TintColor · _RimColor · _ScanColor · đường quét · nhiễu</div>
+      </div>
+    </label>
+  </div>
+
+  <details class="panel adv" id="colBox">
+    <summary>Màu preset 3</summary>
+    <div class="cols">
+      <div class="cfld">
+        <label>Màu súng <span class="dim">(_XRayColor)</span></label>
+        <div class="crow">
+          <input type="color" id="cXray" value="#111111">
+          <input type="text" id="tXray" value="#111111" spellcheck="false">
+        </div>
+      </div>
+      <div class="cfld">
+        <label>Màu viền súng <span class="dim">(_OutLineColor)</span></label>
+        <div class="crow">
+          <input type="color" id="cLine" value="#ffffff">
+          <input type="text" id="tLine" value="#FFFFFF" spellcheck="false">
+        </div>
+      </div>
+      <div class="cfld">
+        <label>Màu Keo <span class="dim">(_DimColor)</span></label>
+        <div class="crow">
+          <input type="color" id="cDim" value="#111111">
+          <input type="text" id="tDim" value="#111111" spellcheck="false">
+        </div>
+      </div>
+    </div>
+    <div class="wfld">
+      <label>Độ dày viền <span class="dim">(_OutLineWidth)</span> — <b id="wVal">4.0</b></label>
+      <input type="range" id="rWidth" min="0" max="20" step="0.5" value="4">
+    </div>
+    <div class="afld">
+      <label>Độ đục màu súng <span class="dim">(alpha)</span> — <b id="aVal">1.00</b></label>
+      <input type="range" id="rAlpha" min="0" max="1" step="0.05" value="1">
+    </div>
+    <div class="note">Màu ghi vào shader dưới dạng 4 số thực RGBA (16 byte tại chỗ) — kích thước file không đổi. Đây là <code>m_DefValue</code>, giá trị mặc định của shader.</div>
+  </details>
+
+  <details class="panel adv" id="holoBox">
+    <summary>Màu preset 4</summary>
+    <div class="cols">
+      <div class="cfld">
+        <label>Màu nhân vật <span class="dim">(_TintColor)</span></label>
+        <div class="crow">
+          <input type="color" id="cTint" value="#00ffff">
+          <input type="text" id="tTint" value="#00FFFF" spellcheck="false">
+        </div>
+      </div>
+      <div class="cfld">
+        <label>Màu sáng mép <span class="dim">(_RimColor)</span></label>
+        <div class="crow">
+          <input type="color" id="cRim" value="#00ffff">
+          <input type="text" id="tRim" value="#00FFFF" spellcheck="false">
+        </div>
+      </div>
+      <div class="cfld">
+        <label>Màu quét <span class="dim">(_ScanColor)</span></label>
+        <div class="crow">
+          <input type="color" id="cScan" value="#000000">
+          <input type="text" id="tScan" value="#000000" spellcheck="false">
+        </div>
+      </div>
+    </div>
+    <div class="afld">
+      <label>Độ đục nhân vật <span class="dim">(_TintColor alpha)</span> — <b id="tintAVal">1.00</b></label>
+      <input type="range" id="rTintA" min="0" max="1" step="0.05" value="1">
+    </div>
+    <div class="afld">
+      <label>Độ mạnh sáng mép <span class="dim">(_RimColor alpha)</span> — <b id="rimAVal">1.00</b></label>
+      <input type="range" id="rRimA" min="0" max="1" step="0.05" value="1">
+    </div>
+    <div class="afld">
+      <label>Độ mạnh quét <span class="dim">(_ScanColor alpha)</span> — <b id="scanAVal">1.00</b></label>
+      <input type="range" id="rScanA" min="0" max="1" step="0.05" value="1">
+    </div>
+    <div class="fxrow">
+      <label class="chk"><input type="checkbox" id="kXray" checked>
+        <span><b>Xuyên tường</b> <span class="dim">(zTest = Always)</span></span></label>
+      <label class="chk"><input type="checkbox" id="kLine">
+        <span>Đường quét ngang <span class="dim">(_Line)</span></span></label>
+      <label class="chk"><input type="checkbox" id="kGlitch">
+        <span>Nhiễu / giật <span class="dim">(_LineAndGlitch)</span></span></label>
+    </div>
+    <div class="note"><b>Xuyên tường</b> đặt <code>zTest = 8 (Always)</code> trong render state — đây mới là thứ làm nhân vật hiện qua vật cản, màu sắc chỉ quyết định trông ra sao. Bỏ tick trả về <code>4 (LEqual)</code>, nhân vật bị tường che như bình thường.<br>Hai hiệu ứng còn lại: bỏ tick cả hai = đúng công thức bản mod đang chạy (thân đặc, dễ nhìn địch). Tick vào bật hiệu ứng hologram gốc — có đường kẻ cắt ngang người. Muốn thấy dải quét thì đặt <b>màu quét</b> khác đen.</div>
+    <div class="note"><b>Khác với định vị súng:</b> <code>hologram</code> chỉ có 1 pass và không có tham số bề dày. <code>_RimColor</code> là <i>fresnel rim</i> — sáng dần ở mép cơ thể theo góc nhìn, không phải đường viền nét như <code>_OutLineWidth</code> của preset 3 (shader đó có pass riêng phóng to mô hình để vẽ viền). Muốn thấy rõ sáng mép thì hạ <b>độ đục nhân vật</b> xuống, nếu không màu nền sẽ lấn át.</div>
+  </details>
+
+  <details class="panel adv" id="advBox">
+    <summary>Tinh chỉnh preset 2</summary>
+    <div class="flds">
+      <div class="fld"><label>Nữ · position.x</label><input id="fx" value="-0.23"></div>
+      <div class="fld"><label>Nữ · position.z</label><input id="fz" value="-0.01"></div>
+      <div class="fld"><label>Nam · position.x</label><input id="mx" value="-0.3133402466773987"></div>
+      <div class="fld"><label>scale (x âm)</label><input id="sc" value="1.5555556"></div>
+    </div>
+    <div class="note">Trục cục bộ: <code>x</code> âm hơn = cao hơn, <code>z</code> = trái/phải, <code>y</code> = trước/sau. Scale ghi vào là <code>(−s, +s, 1.0)</code>.</div>
+  </details>
+
+  <div class="row" style="margin-bottom:16px">
+    <button id="go" disabled>Tạo file</button>
+  </div>
+
+  <div id="out"></div>
+</div>
+
+<script>
+/* ═══════════ tiện ích ═══════════ */
+const $ = s => document.querySelector(s);
+const hx = n => n.toString(16);
+const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const a4 = n => (n + 3) & ~3;
+
+const CRC_TAB = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++){
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+const crc32 = b => {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < b.length; i++) c = CRC_TAB[(c ^ b[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+};
+const enc = s => new TextEncoder().encode(s);
+
+/* ═══════════ LZ4 ═══════════ */
+function lz4dec(src, outSize){
+  const dst = new Uint8Array(outSize);
+  const n = src.length;
+  let i = 0, o = 0;
+  while (i < n){
+    const tok = src[i++];
+
+    let lit = tok >> 4;
+    if (lit === 15){
+      let b;
+      do { if (i >= n) throw new Error('LZ4: hết dữ liệu ở độ dài literal'); b = src[i++]; lit += b; }
+      while (b === 255);
+    }
+    if (lit){
+      if (i + lit > n) throw new Error('LZ4: literal vượt biên');
+      if (o + lit > outSize) throw new Error('LZ4: literal vượt kích thước đầu ra');
+      dst.set(src.subarray(i, i + lit), o);
+      i += lit; o += lit;
+    }
+
+    /* token cuối chỉ có literal, không kèm match */
+    if (i >= n) break;
+
+    const off = src[i] | (src[i+1] << 8); i += 2;
+    if (off === 0 || off > o) throw new Error(`LZ4: offset không hợp lệ (${off})`);
+    let ml = tok & 15;
+    if (ml === 15){
+      let b;
+      do { if (i >= n) throw new Error('LZ4: hết dữ liệu ở độ dài match'); b = src[i++]; ml += b; }
+      while (b === 255);
+    }
+    ml += 4;
+    if (o + ml > outSize) throw new Error('LZ4: match vượt kích thước đầu ra');
+    /* copy từng byte — vùng match có thể chồng lấn khi off < ml */
+    let sp = o - off;
+    for (let k = 0; k < ml; k++) dst[o++] = dst[sp++];
+  }
+  if (o !== outSize) throw new Error(`LZ4: giải ra ${o} byte, cần ${outSize}`);
+  return dst;
+}
+
+/* Nén LZ4 block (greedy hash-chain). Tỉ lệ kém LZ4HC vài phần trăm nhưng
+   đủ dùng để đóng gói lại block đã sửa. */
+function lz4enc(src){
+  const n = src.length;
+  if (!n) return new Uint8Array(0);
+  const out = [];
+  const HLOG = 16, HSIZE = 1 << HLOG;
+  const head = new Int32Array(HSIZE).fill(-1);
+  const prev = new Int32Array(n).fill(-1);
+  const MFLIMIT = 12, LASTLIT = 5, MAXDIST = 65535, CHAIN = 32;
+
+  const h4 = i => {
+    const v = (src[i] | (src[i+1]<<8) | (src[i+2]<<16) | (src[i+3]<<24)) >>> 0;
+    return (Math.imul(v, 2654435761) >>> (32 - HLOG));
+  };
+  const same4 = (a, b) =>
+    src[a]===src[b] && src[a+1]===src[b+1] && src[a+2]===src[b+2] && src[a+3]===src[b+3];
+
+  const emit = (ls, le, mlen, moff) => {
+    const litlen = le - ls;
+    const ml = mlen ? mlen - 4 : 0;
+    out.push(((litlen >= 15 ? 15 : litlen) << 4) | (ml >= 15 ? 15 : ml));
+    if (litlen >= 15){
+      let r = litlen - 15;
+      while (r >= 255){ out.push(255); r -= 255; }
+      out.push(r);
+    }
+    for (let k = ls; k < le; k++) out.push(src[k]);
+    if (mlen){
+      out.push(moff & 255, (moff >> 8) & 255);
+      if (ml >= 15){
+        let r = ml - 15;
+        while (r >= 255){ out.push(255); r -= 255; }
+        out.push(r);
+      }
+    }
+  };
+
+  let anchor = 0, i = 0;
+  while (i < n - MFLIMIT){
+    const hv = h4(i);
+    let bestLen = 0, bestOff = 0, cur = head[hv], cnt = 0;
+    while (cur >= 0 && cnt < CHAIN){
+      const off = i - cur;
+      if (off > MAXDIST) break;
+      if (same4(cur, i)){
+        let l = 4;
+        const lim = n - LASTLIT - i;
+        while (l < lim && src[cur+l] === src[i+l]) l++;
+        if (l > bestLen){ bestLen = l; bestOff = off; if (l >= 255) break; }
+      }
+      cur = prev[cur]; cnt++;
+    }
+    prev[i] = head[hv]; head[hv] = i;
+
+    if (bestLen >= 4){
+      emit(anchor, i, bestLen, bestOff);
+      const stop = Math.min(i + bestLen, n - 3);
+      for (let k = i + 1; k < stop; k++){ const hk = h4(k); prev[k] = head[hk]; head[hk] = k; }
+      i += bestLen; anchor = i;
+    } else i++;
+  }
+  const litlen = n - anchor;
+  out.push((litlen >= 15 ? 15 : litlen) << 4);
+  if (litlen >= 15){
+    let r = litlen - 15;
+    while (r >= 255){ out.push(255); r -= 255; }
+    out.push(r);
+  }
+  for (let k = anchor; k < n; k++) out.push(src[k]);
+  return new Uint8Array(out);
+}
+
+/* Truy vết nguồn gốc từng byte của kết quả giải nén.
+   - literal  → { src: offset trong luồng nén }
+   - match    → { from: vị trí byte đầu ra mà nó sao chép lại }
+   Nhờ đó biết được sửa byte nào trong luồng nén để đổi byte đầu ra mong muốn. */
+function lz4Trace(src, outSize){
+  const litOf  = new Int32Array(outSize).fill(-1);
+  const copyOf = new Int32Array(outSize).fill(-1);
+  let i = 0, o = 0;
+  while (i < src.length && o < outSize){
+    const tok = src[i++];
+    let lit = tok >> 4;
+    if (lit === 15){ let b; do { b = src[i++]; lit += b; } while (b === 255); }
+    for (let k = 0; k < lit; k++){ litOf[o++] = i++; }
+    if (i >= src.length) break;
+    const off = src[i] | (src[i+1] << 8); i += 2;
+    let ml = tok & 15;
+    if (ml === 15){ let b; do { b = src[i++]; ml += b; } while (b === 255); }
+    ml += 4;
+    let sp = o - off;
+    for (let k = 0; k < ml; k++){ copyOf[o] = sp; o++; sp++; }
+  }
+  /* Lần về gốc: byte match nào cuối cùng cũng bắt nguồn từ một literal. */
+  const root = new Int32Array(outSize).fill(-1);
+  for (let k = 0; k < outSize; k++){
+    let cur = k, guard = 0;
+    while (litOf[cur] < 0 && copyOf[cur] >= 0 && guard++ < outSize) cur = copyOf[cur];
+    root[k] = litOf[cur] >= 0 ? litOf[cur] : -1;
+  }
+  return root;
+}
+
+/* ═══════════ UnityFS ═══════════ */
+function parseBundle(u8){
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  let p = 0;
+  const cstr = () => { let s = ''; while (u8[p]) s += String.fromCharCode(u8[p++]); p++; return s; };
+
+  const sig = cstr();
+  if (sig !== 'UnityFS') throw new Error(`Không phải UnityFS bundle (signature "${sig}")`);
+  const fmt = dv.getUint32(p, false); p += 4;
+  const uv = cstr(), rev = cstr();
+  const declared = Number(dv.getBigInt64(p, false)); p += 8;
+  const ciSize = dv.getUint32(p, false); p += 4;
+  const uiSize = dv.getUint32(p, false); p += 4;
+  const flags  = dv.getUint32(p, false); p += 4;
+  const headerEnd = p;
+  const ic = flags & 0x3F;
+
+  let infoOff, info, dataStart;
+  if (flags & 0x80){
+    /* blocksInfoAtTheEnd: blocksInfo nằm cuối phần dữ liệu thực dùng.
+       Trường size có thể sai (file còn đuôi thừa) nên dò ngược để tìm.
+       Vùng dữ liệu vẫn căn lề 16 sau header, kể cả khi cờ 0x200 không bật. */
+    dataStart = (headerEnd + 15) & ~15;
+    infoOff = null;
+    const from = Math.min(declared, u8.length) - ciSize;
+    for (let off = from; off >= Math.max(0, from - 80000); off--){
+      try {
+        const cand = (ic === 2 || ic === 3)
+          ? lz4dec(u8.subarray(off, off + ciSize), uiSize)
+          : u8.subarray(off, off + ciSize).slice();
+        info = cand; infoOff = off; break;
+      } catch (e) { /* thử vị trí trước đó */ }
+    }
+    if (infoOff === null) throw new Error('Không tìm được blocksInfo ở cuối file.');
+  } else {
+    if (fmt >= 7 || (flags & 0x200)) p = (p + 15) & ~15;
+    infoOff = p;
+    const infoRaw = u8.subarray(p, p + ciSize);
+    if (ic === 2 || ic === 3) info = lz4dec(infoRaw, uiSize);
+    else if (ic === 0) info = infoRaw.slice();
+    else throw new Error(`blocksInfo nén kiểu ${ic} (chưa hỗ trợ)`);
+    /* sau blocksInfo còn căn lề 16 trước khi vào vùng dữ liệu */
+    dataStart = infoOff + ciSize;
+    if (flags & 0x200) dataStart = (dataStart + 15) & ~15;
+  }
+
+  const idv = new DataView(info.buffer, info.byteOffset, info.byteLength);
+  let q = 16;
+  const nB = idv.getUint32(q, false); q += 4;
+  const blocks = [];
+  for (let i = 0; i < nB; i++){
+    blocks.push({ u: idv.getUint32(q,false), c: idv.getUint32(q+4,false), f: idv.getUint16(q+8,false) });
+    q += 10;
+  }
+  const nN = idv.getUint32(q, false); q += 4;
+  const nodes = [];
+  for (let i = 0; i < nN; i++){
+    const off = Number(idv.getBigInt64(q,false)), sz = Number(idv.getBigInt64(q+8,false));
+    const nf = idv.getUint32(q+16,false); q += 20;
+    let nm = ''; while (info[q]) nm += String.fromCharCode(info[q++]); q++;
+    nodes.push({ off, size: sz, flags: nf, name: nm });
+  }
+  return { fmt, uv, rev, declared, ciSize, uiSize, flags, blocks, nodes,
+           dataStart, infoOff, info, headerEnd };
+}
+
+/* ═══════════ SerializedFile ═══════════ */
+function parseSF(cab){
+  const dv = new DataView(cab.buffer, cab.byteOffset, cab.byteLength);
+  const version = dv.getUint32(8, false);
+  if (version !== 22) throw new Error(`SerializedFile v${version} (tool chỉ hỗ trợ v22)`);
+  const metaSize = dv.getUint32(20, false);
+  const fileSize = Number(dv.getBigInt64(24, false));
+  const dataOffset = Number(dv.getBigInt64(32, false));
+
+  let p = 48;
+  const cstr = () => { let s=''; while (cab[p]) s += String.fromCharCode(cab[p++]); p++; return s; };
+  const unityVer = cstr();
+  const target = dv.getInt32(p, true); p += 4;
+  const hasTT = cab[p]; p += 1;
+
+  const i32 = () => { const v = dv.getInt32(p, true); p += 4; return v; };
+  const u32 = () => { const v = dv.getUint32(p, true); p += 4; return v; };
+
+  const tcount = i32();
+  const types = [];
+  for (let i = 0; i < tcount; i++){
+    const cid = i32();
+    p += 1;                              // stripped
+    p += 2;                              // scriptTypeIndex
+    if (cid === 114) p += 16;            // scriptHash
+    const th = cab.slice(p, p+16); p += 16;
+    let nodes = null, sb = null;
+    if (hasTT){
+      const nn = i32(), sbs = i32();
+      nodes = [];
+      for (let k = 0; k < nn; k++){
+        const ver = dv.getUint16(p, true);
+        const level = cab[p+2], tflags = cab[p+3];
+        const to = dv.getUint32(p+4, true), no = dv.getUint32(p+8, true);
+        const bsize = dv.getInt32(p+12, true), idx = dv.getInt32(p+16, true), meta = dv.getInt32(p+20, true);
+        p += 32;
+        nodes.push({ ver, level, tflags, to, no, bsize, idx, meta });
+      }
+      sb = cab.slice(p, p + sbs); p += sbs;
+      const nd = i32(); p += nd * 4;     // typeDependencies
+    }
+    types.push({ cid, th, nodes, sb });
+  }
+
+  const ocount = i32();
+  const objs = [];
+  for (let i = 0; i < ocount; i++){
+    p = a4(p);
+    const ent = p;
+    const pid = dv.getBigInt64(p, true);
+    const off = Number(dv.getBigInt64(p+8, true));
+    const size = dv.getUint32(p+16, true);
+    const tid = dv.getInt32(p+20, true);
+    p += 24;
+    objs.push({ pid, off, size, tid, cid: types[tid].cid, ent });
+  }
+  return { version, metaSize, fileSize, dataOffset, unityVer, target, hasTT, types, objs, cab };
+}
+
+/* ═══════════ typetree reader ═══════════ */
+const COMMON = "AABB\0AnimationClip\0AnimationCurve\0AnimationState\0Array\0Base\0BitField\0bitset\0bool\0char\0ColorRGBA\0Component\0data\0deque\0double\0dynamic_array\0FastPropertyName\0first\0float\0Font\0GameObject\0Generic Mono\0GradientNEW\0GUID\0GUIStyle\0int\0list\0long long\0map\0Matrix4x4f\0MdFour\0MonoBehaviour\0MonoScript\0m_ByteSize\0m_Curve\0m_EditorClassIdentifier\0m_EditorHideFlags\0m_Enabled\0m_ExtensionPtr\0m_GameObject\0m_Index\0m_IsArray\0m_IsStatic\0m_MetaFlag\0m_Name\0m_ObjectHideFlags\0m_PrefabInternal\0m_PrefabParentObject\0m_Script\0m_StaticEditorFlags\0m_Type\0m_Version\0Object\0pair\0PPtr<Component>\0PPtr<GameObject>\0PPtr<Material>\0PPtr<MonoBehaviour>\0PPtr<MonoScript>\0PPtr<Object>\0PPtr<Prefab>\0PPtr<Sprite>\0PPtr<TextAsset>\0PPtr<Texture>\0PPtr<Texture2D>\0PPtr<Transform>\0Prefab\0Quaternionf\0Rectf\0RectInt\0RectOffset\0second\0set\0short\0size\0SInt16\0SInt32\0SInt64\0SInt8\0staticvector\0string\0TextAsset\0TextMesh\0Texture\0Texture2D\0Transform\0TypelessData\0UInt16\0UInt32\0UInt64\0UInt8\0unsigned int\0unsigned long long\0unsigned short\0vector\0Vector2f\0Vector3f\0Vector4f\0m_ScriptingClassIdentifier\0Gradient\0Type*\0int2_storage\0int3_storage\0BoundsInt\0m_CorrespondingSourceObject\0m_PrefabInstance\0m_PrefabAsset\0FileSize\0Hash128\0";
+const COMMON_B = enc(COMMON);
+
+function sname(sb, off){
+  const buf = (off & 0x80000000) ? COMMON_B : sb;
+  let o = off & 0x7fffffff, s = '';
+  while (buf[o]) s += String.fromCharCode(buf[o++]);
+  return s;
+}
+function buildNodes(t){
+  return t.nodes.map(n => ({
+    type: sname(t.sb, n.to), name: sname(t.sb, n.no),
+    level: n.level, meta: n.meta
+  }));
+}
+
+/* Đọc giá trị theo typetree; ghi lại offset của mọi chuỗi vào trace */
+function makeReader(data){
+  const dv = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  return { data, dv, p: 0, align(){ this.p = a4(this.p); } };
+}
+function readVal(nodes, i, r, trace){
+  const n = nodes[i];
+  const t = n.type;
+  const doAlign = (n.meta & 0x4000) !== 0;
+  const kids = [];
+  let j = i + 1;
+  while (j < nodes.length && nodes[j].level > n.level){
+    if (nodes[j].level === n.level + 1) kids.push(j);
+    j++;
+  }
+  let v;
+  switch (t){
+    case 'SInt8':  v = r.dv.getInt8(r.p);  r.p += 1; break;
+    case 'UInt8': case 'char': v = r.data[r.p]; r.p += 1; break;
+    case 'SInt16': case 'short': v = r.dv.getInt16(r.p,true); r.p += 2; break;
+    case 'UInt16': case 'unsigned short': v = r.dv.getUint16(r.p,true); r.p += 2; break;
+    case 'SInt32': case 'int': case 'Type*': v = r.dv.getInt32(r.p,true); r.p += 4; break;
+    case 'UInt32': case 'unsigned int': v = r.dv.getUint32(r.p,true); r.p += 4; break;
+    case 'SInt64': case 'long long': v = r.dv.getBigInt64(r.p,true); r.p += 8; break;
+    case 'UInt64': case 'unsigned long long': case 'FileSize':
+      v = r.dv.getBigUint64(r.p,true); r.p += 8; break;
+    case 'float':  v = r.dv.getFloat32(r.p,true); r.p += 4; break;
+    case 'double': v = r.dv.getFloat64(r.p,true); r.p += 8; break;
+    case 'bool':   v = r.data[r.p] !== 0; r.p += 1; break;
+    case 'string': {
+      const st = r.p;
+      const ln = r.dv.getInt32(r.p,true); r.p += 4;
+      v = new TextDecoder().decode(r.data.subarray(r.p, r.p+ln)); r.p += ln;
+      r.align();
+      if (trace) trace.push({ node: n.name, start: st, len: ln, val: v });
+      break;
+    }
+    case 'TypelessData': {
+      const ln = r.dv.getInt32(r.p,true); r.p += 4;
+      v = r.data.slice(r.p, r.p+ln); r.p += ln;
+      break;
+    }
+    default: {
+      if (kids.length && nodes[kids[0]].type === 'Array'){
+        const ai = kids[0];
+        const ak = [];
+        let k = ai + 1;
+        while (k < nodes.length && nodes[k].level > nodes[ai].level){
+          if (nodes[k].level === nodes[ai].level + 1) ak.push(k);
+          k++;
+        }
+        const size = r.dv.getInt32(r.p,true); r.p += 4;
+        v = [];
+        for (let m = 0; m < size; m++) v.push(readVal(nodes, ak[1], r, trace));
+        if (nodes[ai].meta & 0x4000) r.align();
+      } else {
+        v = {};
+        for (const c of kids) v[nodes[c].name] = readVal(nodes, c, r, trace);
+      }
+    }
+  }
+  if (doAlign) r.align();
+  return v;
+}
+
+function objBody(sf, o){ return sf.cab.subarray(sf.dataOffset + o.off, sf.dataOffset + o.off + o.size); }
+function readObj(sf, o, trace){
+  const nodes = buildNodes(sf.types[o.tid]);
+  const r = makeReader(objBody(sf, o));
+  const v = readVal(nodes, 0, r, trace);
+  return v;
+}
+
+/* ═══════════ PRESET 1: tráo bone_Hips ⇄ bone_Neck ═══════════ */
+const HIPS = enc('bone_Hips'), NECK = enc('bone_Neck');
+const H_HIPS = crc32(HIPS), H_NECK = crc32(NECK);
+
+function findSwapTargets(u8, from, to){
+  const hits = [];
+  const want = [
+    { nm: HIPS, lb:'bone_Hips', h: H_HIPS, ot: NECK, ol:'bone_Neck', cons:true  },
+    { nm: NECK, lb:'bone_Neck', h: H_NECK, ot: HIPS, ol:'bone_Hips', cons:true  },
+    { nm: HIPS, lb:'bone_Hips', h: H_NECK, ot: NECK, ol:'bone_Neck', cons:false },
+    { nm: NECK, lb:'bone_Neck', h: H_HIPS, ot: HIPS, ol:'bone_Hips', cons:false }
+  ];
+  for (const w of want){
+    const pat = new Uint8Array(20);
+    const pv = new DataView(pat.buffer);
+    pv.setInt32(0, 9, true);
+    pat.set(w.nm, 4);
+    pv.setUint32(16, w.h, true);
+    for (let i = from; i <= to - 20; i++){
+      let ok = true;
+      for (let k = 0; k < 20; k++) if (u8[i+k] !== pat[k]) { ok = false; break; }
+      if (ok) hits.push({ at: i + 4, ...w });
+    }
+  }
+  return hits.sort((a,b) => a.at - b.at);
+}
+
+function applyPreset1(orig, b){
+  const node = b.nodes[0];
+  if (b.blocks.some(x => (x.f & 0x3F) !== 0))
+    throw new Error('Bundle có block bị nén — preset 1 chỉ sửa được bundle lưu thô.');
+  const from = b.dataStart + node.off, to = from + node.size;
+  const hits = findSwapTargets(orig, from, to);
+  if (!hits.length) throw new Error('Không tìm thấy cặp bone_Hips / bone_Neck nào trong file này.');
+  const out = orig.slice();
+  for (const h of hits) out.set(h.ot, h.at);
+  const rows = hits.map(h => [`0x${hx(h.at).padStart(5,'0')}`, String(h.h), h.lb, h.ol]);
+  const st = hits.every(h => h.cons) ? 'nguyên bản'
+           : hits.every(h => !h.cons) ? 'đã hoán đổi' : 'lẫn lộn';
+  return {
+    out,
+    note: `Tìm thấy <b>${hits.length}</b> mục tiêu (trạng thái trước đó: <b>${st}</b>) — hoán đổi ${hits.length*4} byte.`,
+    cols: ['Offset','Hash (CRC32)','Trước','Sau'], rows
+  };
+}
+
+/* ═══════════ PRESET 2: bone_Head giả + indexer 12 mục ═══════════ */
+const MALE_PID = -9165109095992080675n, FEMALE_PID = 2680591970127643204n;
+const BACKPACK = 'bone_Left_Spine_Backpack';
+
+/* Sửa một mesh: đổi tên xương Backpack → bone_Head, đặt position + scale */
+function patchMesh(sf, o, px, pz, s){
+  const trace = [];
+  const val = readObj(sf, o, trace);
+  const bones = val.meshData.umaBones;
+  const names = trace.filter(t => t.node === 'name');
+  if (names.length !== bones.length) throw new Error('Không khớp số xương với chuỗi tên.');
+
+  const idx = bones.findIndex(b => b.name === BACKPACK);
+  if (idx < 0) return null;                       // mesh này không có
+  const tr = names[idx];
+
+  const body = objBody(sf, o);
+  const posOff = tr.start - 40;                   // position(12) rotation(16) scale(12) name
+  const scOff  = tr.start - 12;
+
+  const oldFieldLen = 4 + tr.len + ((-(4 + tr.len)) & 3);
+  const nb = enc('bone_Head');
+  const newField = new Uint8Array(4 + nb.length + ((-(4 + nb.length)) & 3));
+  new DataView(newField.buffer).setInt32(0, nb.length, true);
+  newField.set(nb, 4);
+
+  const out = new Uint8Array(body.length - oldFieldLen + newField.length);
+  out.set(body.subarray(0, tr.start), 0);
+  out.set(newField, tr.start);
+  out.set(body.subarray(tr.start + oldFieldLen), tr.start + newField.length);
+
+  const odv = new DataView(out.buffer);
+  const before = { x: bones[idx].position.x, y: bones[idx].position.y, z: bones[idx].position.z,
+                   sx: bones[idx].scale.x, sy: bones[idx].scale.y, sz: bones[idx].scale.z };
+  if (px !== null) odv.setFloat32(posOff, px, true);
+  if (pz !== null) odv.setFloat32(posOff + 8, pz, true);
+  odv.setFloat32(scOff,     -s, true);
+  odv.setFloat32(scOff + 4,  s, true);
+  odv.setFloat32(scOff + 8,  1.0, true);
+
+  return { body: out, idx, before,
+           after: { x: px ?? before.x, y: before.y, z: pz ?? before.z, sx: -s, sy: s, sz: 1.0 } };
+}
+
+/* Ghi một chuỗi Unity: [int32 độ dài][bytes][đệm căn 4] */
+function wstr(s){
+  const sb = enc(s);
+  const f = new Uint8Array(a4(4 + sb.length));
+  new DataView(f.buffer).setInt32(0, sb.length, true);
+  f.set(sb, 4);
+  return f;
+}
+
+/*
+  Dựng lại UMAAssetIndexer:
+   - Thêm mọi recipe/race có trong bundle mà indexer chưa liệt kê (4 mục _max).
+   - Rút gọn _Path để tổng kích thước object khớp đúng `targetSize`,
+     nhờ đó dung lượng file cuối bằng đúng bản gốc.
+  _Name / _TypeIndex / m_Item (PPtr) giữ nguyên tuyệt đối — runtime chỉ dùng chúng.
+*/
+function rebuildIndexer(sf, o, known, targetSize){
+  const trace = [];
+  const val = readObj(sf, o, trace);
+  const items = val.Items;
+  const paths = trace.filter(t => t.node === '_Path');
+  if (paths.length !== items.length) throw new Error('Không khớp số _Path với số mục indexer.');
+
+  /* mục hiện có + mục còn thiếu (đối chiếu theo pathID của object trong bundle) */
+  const have = new Set(items.map(it => it.m_Item.m_PathID));
+  const added = [];
+  for (const k of known){
+    if (have.has(k.pid)) continue;
+    const sib = items.find(it => it._TypeIndex === k.typeIndex);
+    added.push({
+      _QualifiedName: '', _TypeIndex: k.typeIndex, _Name: k.name,
+      m_Item: { m_FileID: 0, m_PathID: k.pid },
+      _Path: sib ? sib._Path.replace(/[^/]+\.asset$/, k.name + '.asset') : k.name + '.asset'
+    });
+  }
+  const all = [...items, ...added].sort((a,b) => a._Name < b._Name ? -1 : a._Name > b._Name ? 1 : 0);
+
+  /* head = mọi thứ trước mảng Items (int32 số mục nằm ngay trước _QualifiedName đầu tiên) */
+  const firstQN = trace.find(t => t.node === '_QualifiedName');
+  if (!firstQN) throw new Error('Indexer không có mục nào để tham chiếu bố cục.');
+  const body0 = objBody(sf, o);
+  const head = body0.subarray(0, firstQN.start - 4);
+  const fixed = all.reduce((acc, it) =>
+    acc + a4(4 + enc(it._QualifiedName).length) + 4 + a4(4 + enc(it._Name).length) + 12, 0);
+  const budget = targetSize - head.length - 4 - fixed - 24;    // 4 = size mảng, 24 = 2 PPtr cuối
+  if (budget < all.length * 4)
+    throw new Error(`Không đủ chỗ cho ${all.length} mục (_Path cần tối thiểu ${all.length*4} B, còn ${budget} B).`);
+
+  /* rút gọn _Path: bắt đầu từ tên file, nối dần thư mục cha cho đến sát ngân sách */
+  const cur = all.map(it => it._Path.split('/').pop());
+  const total = () => cur.reduce((a,p) => a + a4(4 + enc(p).length), 0);
+  if (total() > budget) throw new Error('Không đủ chỗ cho _Path ngay cả khi chỉ giữ tên file.');
+  for (let k = 0; k < all.length; k++){
+    const parts = all[k]._Path.split('/');
+    for (let d = 2; d <= parts.length; d++){
+      const old = cur[k];
+      cur[k] = parts.slice(-d).join('/');
+      if (total() > budget){ cur[k] = old; break; }
+    }
+  }
+  /* phần dư còn lại: nới thêm thư mục cha cho mục nào vừa khít, không chèn ký tự rác */
+  let guard = 0;
+  while (total() < budget && guard++ < 2000){
+    let done = true;
+    for (let k = 0; k < all.length; k++){
+      const parts = all[k]._Path.split('/');
+      const depth = cur[k].split('/').length;
+      if (depth >= parts.length) continue;
+      const old = cur[k];
+      cur[k] = parts.slice(-(depth + 1)).join('/');
+      if (total() > budget){ cur[k] = old; } else { done = false; break; }
+    }
+    if (done) break;
+  }
+  /* nếu vẫn thiếu vài byte, đệm bằng './' ở đầu một đường dẫn (vẫn là path hợp lệ) */
+  guard = 0;
+  while (total() < budget && guard++ < 500){
+    let j = 0;
+    for (let k = 1; k < cur.length; k++) if (cur[k].length < cur[j].length) j = k;
+    cur[j] = './' + cur[j];
+  }
+  if (total() !== budget)
+    throw new Error(`Không khớp ngân sách _Path (${total()} ≠ ${budget}).`);
+
+  /* ghi lại object */
+  const parts = [head];
+  const cnt = new Uint8Array(4);
+  new DataView(cnt.buffer).setInt32(0, all.length, true);
+  parts.push(cnt);
+  for (let k = 0; k < all.length; k++){
+    const it = all[k];
+    parts.push(wstr(it._QualifiedName));
+    const ti = new Uint8Array(4);
+    new DataView(ti.buffer).setInt32(0, it._TypeIndex, true);
+    parts.push(ti);
+    parts.push(wstr(it._Name));
+    const pp = new Uint8Array(12);
+    const pv = new DataView(pp.buffer);
+    pv.setInt32(0, it.m_Item.m_FileID, true);
+    pv.setBigInt64(4, it.m_Item.m_PathID, true);
+    parts.push(pp);
+    parts.push(wstr(cur[k]));
+  }
+  const tail = new Uint8Array(24);
+  const tv = new DataView(tail.buffer);
+  tv.setInt32(0, val.BaseMaleBone.m_FileID, true);
+  tv.setBigInt64(4, val.BaseMaleBone.m_PathID, true);
+  tv.setInt32(12, val.BaseFemaleBone.m_FileID, true);
+  tv.setBigInt64(16, val.BaseFemaleBone.m_PathID, true);
+  parts.push(tail);
+
+  const len = parts.reduce((a,x) => a + x.length, 0);
+  if (len !== targetSize) throw new Error(`Indexer dựng ra ${len} B, cần ${targetSize} B.`);
+  const out = new Uint8Array(len);
+  let w = 0;
+  for (const x of parts){ out.set(x, w); w += x.length; }
+  return { body: out, names: all.map(i => i._Name), paths: cur, addedCount: added.length };
+}
+
+/* Dựng lại CAB với các object đã thay */
+function rebuildCab(sf, repl){
+  const old = sf.cab.subarray(sf.dataOffset);
+  const order = [...sf.objs].sort((a,b) => a.off - b.off);
+  const chunks = [];
+  const newOff = new Map();
+  let prevEnd = 0, cursor = 0;
+  for (const o of order){
+    const gap = old.subarray(prevEnd, o.off);
+    chunks.push(gap); cursor += gap.length;
+    const body = repl.get(o.pid) ?? old.subarray(o.off, o.off + o.size);
+    newOff.set(o.pid, cursor);
+    chunks.push(body); cursor += body.length;
+    prevEnd = o.off + o.size;
+  }
+  const tail = old.subarray(prevEnd);
+  chunks.push(tail); cursor += tail.length;
+
+  const data = new Uint8Array(cursor);
+  let w = 0;
+  for (const c of chunks){ data.set(c, w); w += c.length; }
+
+  const meta = sf.cab.slice(0, sf.dataOffset);
+  const mdv = new DataView(meta.buffer);
+  for (const o of sf.objs){
+    if (mdv.getBigInt64(o.ent, true) !== o.pid) throw new Error('Lệch bảng object.');
+    const sz = repl.has(o.pid) ? repl.get(o.pid).length : o.size;
+    mdv.setBigInt64(o.ent + 8, BigInt(newOff.get(o.pid)), true);
+    mdv.setUint32(o.ent + 16, sz, true);
+  }
+  const cabLen = sf.dataOffset + data.length;
+  mdv.setBigInt64(0x18, BigInt(cabLen), false);      // m_FileSize (big-endian)
+
+  const cab = new Uint8Array(cabLen);
+  cab.set(meta, 0); cab.set(data, meta.length);
+  return cab;
+}
+
+/* Dựng lại bundle, tái dùng luồng LZ4 blocksInfo của file gốc */
+function rebuildBundle(orig, b, cab){
+  /* Bản gốc đệm block thêm một số byte 0 sau node (ở đây là 4). Giữ đúng
+     lượng đệm đó thì block — và do đó cả file — dài đúng như cũ. */
+  const pad = b.blocks.reduce((a,x) => a + x.u, 0) - b.nodes[0].size;
+  const block = new Uint8Array(cab.length + Math.max(0, pad));
+  block.set(cab, 0);
+
+  const info = b.info.slice();
+  const idv = new DataView(info.buffer);
+  idv.setUint32(20, block.length, false);           // block.u
+  idv.setUint32(24, block.length, false);           // block.c
+  idv.setBigInt64(42, BigInt(cab.length), false);   // node.size
+
+  const ic = b.flags & 0x3F;
+  let infoOut;
+  if (ic === 0){
+    infoOut = info;
+  } else {
+    /* blocksInfo mới chỉ khác bản gốc ở vài byte kích thước, và những byte đó
+       nằm trong vùng literal của luồng LZ4 — vá thẳng vào luồng đã nén để giữ
+       nguyên độ dài như bản gốc (tự nén lại sẽ dài hơn, làm lệch dung lượng). */
+    const compOrig = orig.slice(b.infoOff, b.infoOff + b.ciSize);
+    const root = lz4Trace(compOrig, b.uiSize);
+    const patched = compOrig.slice();
+    /* Một byte trong luồng nén có thể sinh ra nhiều byte đầu ra (qua match),
+       nên gom yêu cầu lại và chỉ chấp nhận khi mọi byte liên quan cùng giá trị. */
+    const want = new Map();
+    for (let i = 0; i < info.length; i++){
+      const src = root[i];
+      if (src < 0){
+        if (info[i] !== b.info[i])
+          throw new Error(`blocksInfo: byte ${i} không truy được về literal.`);
+        continue;
+      }
+      if (want.has(src) && want.get(src) !== info[i])
+        throw new Error(`blocksInfo: byte ${i} xung đột với byte khác dùng chung nguồn.`);
+      want.set(src, info[i]);
+    }
+    for (const [src, val] of want) patched[src] = val;
+    const check = lz4dec(patched, b.uiSize);
+    for (let i = 0; i < info.length; i++)
+      if (check[i] !== info[i]) throw new Error('blocksInfo vá xong không khớp.');
+    infoOut = patched;
+  }
+
+  const head = [];
+  head.push(enc('UnityFS'), new Uint8Array([0]));
+  const fb = new Uint8Array(4); new DataView(fb.buffer).setUint32(0, b.fmt, false);
+  head.push(fb);
+  head.push(enc(b.uv), new Uint8Array([0]), enc(b.rev), new Uint8Array([0]));
+  const tailH = new Uint8Array(20);
+  const tdv = new DataView(tailH.buffer);
+  tdv.setUint32(8, infoOut.length, false);
+  tdv.setUint32(12, b.uiSize, false);
+  tdv.setUint32(16, b.flags, false);
+  head.push(tailH);
+  let hl = head.reduce((a,x) => a + x.length, 0);
+  const padded = (b.fmt >= 7 || (b.flags & 0x200)) ? ((hl + 15) & ~15) : hl;
+  const hdr = new Uint8Array(padded);
+  let w = 0;
+  for (const x of head){ hdr.set(x, w); w += x.length; }
+  const sizePos = hdr.length - padded + (hl - 20);
+  const total = padded + infoOut.length + block.length;
+  new DataView(hdr.buffer).setBigInt64(sizePos, BigInt(total), false);
+
+  const out = new Uint8Array(total);
+  out.set(hdr, 0); out.set(infoOut, padded); out.set(block, padded + infoOut.length);
+  return out;
+}
+
+function applyPreset2(orig, b, opt){
+  if (b.blocks.some(x => (x.f & 0x3F) !== 0))
+    throw new Error('Bundle có block bị nén — chưa hỗ trợ.');
+  const node = b.nodes[0];
+  const cab = orig.subarray(b.dataStart + node.off, b.dataStart + node.off + node.size);
+  const sf = parseSF(cab);
+
+  const male = sf.objs.find(o => o.pid === MALE_PID);
+  const female = sf.objs.find(o => o.pid === FEMALE_PID);
+  if (!male || !female) throw new Error('Không tìm thấy 2 UMAMeshAsset quen thuộc trong file này.');
+
+  const rows = [];
+  const repl = new Map();
+
+  const pm = patchMesh(sf, male, opt.mx, null, opt.s);
+  if (pm){
+    repl.set(MALE_PID, pm.body);
+    rows.push(['mesh nam', `umaBones[${pm.idx}]`, BACKPACK, 'bone_Head']);
+    rows.push(['', 'position.x', pm.before.x.toFixed(6), pm.after.x.toFixed(6)]);
+    rows.push(['', 'scale', `(${pm.before.sx.toFixed(4)}, ${pm.before.sy.toFixed(4)}, ${pm.before.sz.toFixed(4)})`,
+                            `(${pm.after.sx.toFixed(4)}, ${pm.after.sy.toFixed(4)}, ${pm.after.sz.toFixed(4)})`]);
+  }
+  const pf = patchMesh(sf, female, opt.fx, opt.fz, opt.s);
+  if (pf){
+    repl.set(FEMALE_PID, pf.body);
+    rows.push(['mesh nữ', `umaBones[${pf.idx}]`, BACKPACK, 'bone_Head']);
+    rows.push(['', 'position.x', pf.before.x.toFixed(6), pf.after.x.toFixed(6)]);
+    rows.push(['', 'position.z', pf.before.z.toFixed(6), pf.after.z.toFixed(6)]);
+    rows.push(['', 'scale', `(${pf.before.sx.toFixed(4)}, ${pf.before.sy.toFixed(4)}, ${pf.before.sz.toFixed(4)})`,
+                            `(${pf.after.sx.toFixed(4)}, ${pf.after.sy.toFixed(4)}, ${pf.after.sz.toFixed(4)})`]);
+  }
+  if (!repl.size) throw new Error(`Không tìm thấy xương ${BACKPACK} trong mesh nào — file có thể đã được sửa rồi.`);
+
+  /* Tìm UMAAssetIndexer */
+  const idxObj = sf.objs.find(o => {
+    const t = sf.types[o.tid];
+    if (t.cid !== 114 || !t.nodes) return false;
+    return buildNodes(t).some(n => n.level === 1 && n.name === 'Items');
+  });
+  if (!idxObj) throw new Error('Không tìm thấy UMAAssetIndexer.');
+
+  /* Mọi RaceData / UMATextRecipe trong bundle — để bổ sung mục còn thiếu */
+  const known = [];
+  for (const o of sf.objs){
+    const t = sf.types[o.tid];
+    if (t.cid !== 114 || !t.nodes || o.pid === idxObj.pid) continue;
+    const nn = buildNodes(t).filter(n => n.level === 1).map(n => n.name);
+    const isRace   = nn.includes('raceName');
+    const isRecipe = nn.includes('recipeData');
+    if (!isRace && !isRecipe) continue;
+    const v = readObj(sf, o, null);
+    known.push({ pid: o.pid, name: v.m_Name, typeIndex: isRace ? 2 : 3 });
+  }
+
+  /* Kích thước đích của indexer: bù lại đúng phần mà 2 mesh đã co lại,
+     để tổng CAB — và do đó dung lượng file — không đổi. */
+  let delta = 0;
+  for (const [pid, body] of repl) delta += body.length - sf.objs.find(o => o.pid === pid).size;
+  const targetSize = idxObj.size - delta;
+
+  const si = rebuildIndexer(sf, idxObj, known, targetSize);
+  repl.set(idxObj.pid, si.body);
+  rows.push(['indexer', `${si.names.length} mục`,
+             `${si.names.length - si.addedCount} mục ban đầu`,
+             `thêm ${si.addedCount} mục · _Path rút gọn`]);
+
+  const newCab = rebuildCab(sf, repl);
+  const out = rebuildBundle(orig, b, newCab);
+  return {
+    out,
+    note: `Đã dựng lại bundle — ${repl.size} object thay đổi, dung lượng giữ nguyên ${out.length.toLocaleString('vi-VN')} byte.`,
+    cols: ['Vùng','Trường','Trước','Sau'], rows,
+    extra: si
+  };
+}
+
+/* ═══════════ PRESET 3: shader định vị + đổi màu ═══════════ */
+
+/* 3 shader X-Ray trich tu ban mod, nen deflate + base64.
+   Dung de ghep vao bundle GOC o preset 3. */
+const XRAY_BLOB = {"backweapon":{"pid":"-3333330928057165289","size":8560,"z":"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"},"brmobilebumpspecdecal":{"pid":"893500320385684910","size":4656,"z":"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"},"brmobilebumpspec":{"pid":"3504935391519681939","size":8560,"z":"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"}};
+
+/* Giải nén một shader đã nhúng (deflate + base64) */
+async function loadXray(key){
+  const e = XRAY_BLOB[key];
+  if (!e) throw new Error(`Không có shader nhúng tên "${key}".`);
+  const raw = Uint8Array.from(atob(e.z), c => c.charCodeAt(0));
+  const ds = new DecompressionStream('deflate');
+  const buf = new Uint8Array(await new Response(
+    new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer());
+  if (buf.length !== e.size)
+    throw new Error(`Shader nhúng "${key}" giải ra ${buf.length} byte, cần ${e.size}.`);
+  return { body: buf, pid: BigInt(e.pid) };
+}
+
+/* Đọc danh sách property của một Shader (class 48) và offset byte của m_DefValue.
+   SerializedProperty: m_Name, m_Description, m_Attributes[], m_Type(i32),
+   m_Flags(u32), m_DefValue[0..3](f32), m_DefTexture{m_DefaultName, m_TexDim} */
+function readShaderProps(body){
+  const dv = new DataView(body.buffer, body.byteOffset, body.byteLength);
+  let p = 0;
+  const rd = () => { const v = dv.getInt32(p, true); p += 4; return v; };
+  const str = () => {
+    const n = rd();
+    if (n < 0 || p + n > body.length) throw new Error('chuỗi hỏng trong shader');
+    const s = new TextDecoder().decode(body.subarray(p, p + n));
+    p = a4(p + n);
+    return s;
+  };
+  str();                                   // Shader.m_Name
+  const cnt = rd();
+  if (cnt < 0 || cnt > 500) throw new Error(`số property bất thường: ${cnt}`);
+  const props = [];
+  for (let i = 0; i < cnt; i++){
+    const name = str(), desc = str();
+    const na = rd();
+    if (na < 0 || na > 100) throw new Error('m_Attributes hỏng');
+    for (let k = 0; k < na; k++) str();
+    const type = rd();
+    p += 4;                                // m_Flags
+    const valOff = p;
+    const val = [dv.getFloat32(p,true), dv.getFloat32(p+4,true),
+                 dv.getFloat32(p+8,true), dv.getFloat32(p+12,true)];
+    p += 16;
+    str();                                 // m_DefTexture.m_DefaultName
+    p += 4;                                // m_TexDim
+    props.push({ name, desc, type, valOff, val });
+  }
+  return props;
+}
+
+const hex2rgb = h => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(h.trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return [((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255];
+};
+const rgb2hex = v =>
+  '#' + v.slice(0,3).map(x => Math.round(Math.max(0,Math.min(1,x))*255)
+        .toString(16).padStart(2,'0')).join('').toUpperCase();
+
+/* Những property tool biết cách chỉnh, và lấy giá trị từ đâu */
+const COLOR_MAP = {
+  _XRayColor:    { kind:'color', src:'xray', label:'màu súng' },
+  _OutLineColor: { kind:'color', src:'line', label:'màu viền súng' },
+  _DimColor:     { kind:'color', src:'dim',  label:'màu keo' },
+  _OutLineWidth: { kind:'float', src:'width',label:'độ dày viền' }
+};
+
+/* Chỉ đụng đúng 3 shader định vị. Các shader gốc của game cũng có
+   _OutLineColor / _DimColor (uibgglass, toonoutline…) nhưng không liên quan
+   wallhack — đổi chúng sẽ hỏng giao diện và viền toon. */
+const XRAY_SHADERS = ['backweapon', 'brmobilebumpspec', 'brmobilebumpspecdecal'];
+const isXrayShader = path => {
+  const f = path.split('/').pop().replace(/\.shader$/, '');
+  return XRAY_SHADERS.includes(f);
+};
+
+/* Ghi màu vào một shader body (sửa tại chỗ, không đổi độ dài) */
+function paintShader(body, opt, short, rows){
+  const props = readShaderProps(body);
+  const dv = new DataView(body.buffer, body.byteOffset, body.byteLength);
+  let n = 0;
+  for (const p of props){
+    const spec = COLOR_MAP[p.name];
+    if (!spec) continue;
+    let next;
+    if (spec.kind === 'color'){
+      const rgb = opt[spec.src];
+      const alpha = (p.name === '_XRayColor') ? opt.alpha : p.val[3];
+      next = [rgb[0], rgb[1], rgb[2], alpha];
+    } else {
+      next = [opt.width, p.val[1], p.val[2], p.val[3]];
+    }
+    const before = spec.kind === 'color' ? rgb2hex(p.val) : p.val[0].toFixed(2);
+    const after  = spec.kind === 'color' ? rgb2hex(next)  : next[0].toFixed(2);
+    for (let i = 0; i < 4; i++) dv.setFloat32(p.valOff + i*4, next[i], true);
+    n++;
+    if (rows){
+      const sw  = spec.kind === 'color' ? `<span class="swatch" style="background:${before}"></span>` : '';
+      const sw2 = spec.kind === 'color' ? `<span class="swatch" style="background:${after}"></span>` : '';
+      rows.push([short, p.name, sw + before, sw2 + after]);
+    }
+  }
+  return n;
+}
+
+async function applyPreset3(orig, b, opt){
+  const node = b.nodes[0];
+  if (!node) throw new Error('Bundle không có node nào.');
+
+  const { data, blockAt } = decompressAll(orig, b);
+  const cab = data.subarray(node.off, node.off + node.size);
+  const sf = parseSF(cab);
+
+  /* Ánh xạ pathID → đường dẫn asset, để nhận diện shader theo tên */
+  const abObj = sf.objs.find(o => o.cid === 142);
+  const nameOf = new Map();
+  if (abObj){
+    const v = readObj(sf, abObj, null);
+    for (const c of v.m_Container) nameOf.set(c.second.asset.m_PathID, c.first);
+  }
+
+  /* Xem 3 shader định vị đang ở dạng nào */
+  const slots = new Map();                  // key → object
+  for (const o of sf.objs){
+    if (o.cid !== 48) continue;
+    const path = nameOf.get(o.pid);
+    if (!path || !isXrayShader(path)) continue;
+    slots.set(path.split('/').pop().replace(/\.shader$/, ''), o);
+  }
+  if (!slots.size)
+    throw new Error('Không tìm thấy backweapon / brmobilebumpspec / brmobilebumpspecdecal ' +
+                    'trong bundle này. Đây có phải file shaders của game không?');
+
+  const rows = [];
+  const repl = new Map();                   // pid → body mới
+  let swapped = 0, painted = 0;
+
+  for (const [key, o] of slots){
+    const bodyStart = sf.dataOffset + o.off;
+    const cur = cab.subarray(bodyStart, bodyStart + o.size);
+
+    /* Đã là bản X-Ray chưa? (nhận biết qua property đặc trưng) */
+    let isXray = false;
+    try {
+      isXray = readShaderProps(cur).some(p => p.name === '_XRayColor' || p.name === '_DimColor');
+    } catch (e) { /* không đọc được -> coi như chưa */ }
+
+    let body;
+    if (isXray){
+      body = cur.slice();                   // giữ nguyên, chỉ sơn lại màu
+    } else {
+      const x = await loadXray(key);        // thay bằng shader X-Ray nhúng sẵn
+      if (x.pid !== o.pid)
+        throw new Error(`pathID của ${key} không khớp shader nhúng ` +
+                        `(${o.pid} ≠ ${x.pid}) — bundle này khác phiên bản.`);
+      if (x.body.length > o.size)
+        throw new Error(`Shader X-Ray của ${key} (${x.body.length} B) lớn hơn shader gốc ` +
+                        `(${o.size} B) — không đệm vừa.`);
+      /* Giữ NGUYÊN kích thước object: phần dư đệm 0.
+         Nhờ vậy chỉ những block chứa shader mới phải nén lại, các block khác
+         giữ nguyên byte gốc — nếu để object co lại thì mọi block phía sau đều
+         dịch, phải nén lại toàn bộ, và bộ nén ở đây kém LZ4HC ~5% nên sẽ vượt
+         dung lượng gốc. Đệm 0 lại nén rất tốt. */
+      body = new Uint8Array(o.size);
+      body.set(x.body, 0);
+      swapped++;
+      rows.push([key + '.shader', '(toàn bộ shader)',
+                 `gốc ${o.size.toLocaleString('vi-VN')} B`,
+                 `X-Ray ${x.body.length.toLocaleString('vi-VN')} B + đệm`]);
+    }
+    painted += paintShader(body, opt, key + '.shader', rows);
+    repl.set(o.pid, body);
+  }
+
+  const out = rebuildShaders(orig, b, data, blockAt, sf, node, repl);
+  const what = swapped
+    ? `Đã thay <b>${swapped}</b> shader gốc bằng bản X-Ray và đặt màu`
+    : `Đã đổi màu <b>${slots.size}</b> shader định vị`;
+  return {
+    out,
+    note: `${what} — ${painted} giá trị, dung lượng giữ nguyên ` +
+          `${out.length.toLocaleString('vi-VN')} byte.`,
+    cols: ['Shader','Property','Trước','Sau'], rows, html: true
+  };
+}
+
+/* Giải nén mọi block, ghi lại block nào phủ vùng nào */
+function decompressAll(orig, b){
+  const parts = [];
+  const blockAt = [];
+  let pos = b.dataStart, outPos = 0;
+  for (const blk of b.blocks){
+    const raw = orig.subarray(pos, pos + blk.c);
+    const ct = blk.f & 0x3F;
+    const dec = (ct === 2 || ct === 3) ? lz4dec(raw, blk.u) : raw.slice();
+    parts.push(dec);
+    blockAt.push({ start: outPos, end: outPos + blk.u, comp: blk.c, ct, srcOff: pos });
+    outPos += blk.u; pos += blk.c;
+  }
+  const data = new Uint8Array(outPos);
+  let w = 0;
+  for (const p of parts){ data.set(p, w); w += p.length; }
+  return { data, blockAt };
+}
+
+/*
+  Dựng lại bundle shaders sau khi thay/sơn shader.
+
+  Thay shader làm object đổi độ dài → phải dựng lại CAB (bảng object + vùng dữ
+  liệu), rồi nén lại toàn bộ block. Bộ nén ở đây kém LZ4HC gốc vài phần trăm;
+  phần phình ra được bù bằng vùng đệm cuối file để dung lượng không đổi.
+*/
+function rebuildShaders(orig, b, data, blockAt, sf, node, repl){
+  /* Mọi object giữ nguyên kích thước (shader X-Ray đã được đệm 0 cho bằng
+     shader gốc), nên chỉ cần ghi đè tại chỗ vào luồng dữ liệu đã giải nén và
+     nén lại đúng những block bị đụng. */
+  const touched = new Set();
+  for (const o of sf.objs){
+    const body = repl.get(o.pid);
+    if (!body) continue;
+    if (body.length !== o.size)
+      throw new Error(`Object ${o.pid} đổi kích thước (${o.size} → ${body.length}) — chưa hỗ trợ.`);
+    const abs = node.off + sf.dataOffset + o.off;
+    data.set(body, abs);
+    for (let i = 0; i < blockAt.length; i++){
+      const s = blockAt[i];
+      if (abs < s.end && abs + body.length > s.start) touched.add(i);
+    }
+  }
+  if (!touched.size) throw new Error('Không có gì thay đổi.');
+
+  /* Nén lại block bị đụng, giữ nguyên byte gốc cho các block còn lại */
+  const parts = [], newBlocks = [];
+  for (let i = 0; i < b.blocks.length; i++){
+    const blk = b.blocks[i], at = blockAt[i];
+    if (!touched.has(i)){
+      parts.push(orig.subarray(at.srcOff, at.srcOff + blk.c));
+      newBlocks.push({ u: blk.u, c: blk.c, f: blk.f });
+      continue;
+    }
+    const raw = data.subarray(at.start, at.end);
+    let comp, flags = blk.f;
+    if ((blk.f & 0x3F) === 0){
+      comp = raw;
+    } else {
+      comp = lz4enc(raw);
+      const back = lz4dec(comp, raw.length);
+      for (let k = 0; k < raw.length; k++)
+        if (back[k] !== raw[k]) throw new Error(`Nén lại block ${i} sai ở byte ${k}.`);
+      if (comp.length >= raw.length){ comp = raw; flags = blk.f & ~0x3F; }
+    }
+    parts.push(comp);
+    newBlocks.push({ u: blk.u, c: comp.length, f: flags });
+  }
+
+  /* blocksInfo: giữ nguyên bố cục gốc, chỉ cập nhật kích thước block */
+  const info = b.info.slice();
+  const idv = new DataView(info.buffer, info.byteOffset, info.byteLength);
+  let q = 20;
+  for (const nb of newBlocks){
+    idv.setUint32(q, nb.u, false);
+    idv.setUint32(q + 4, nb.c, false);
+    idv.setUint16(q + 8, nb.f, false);
+    q += 10;
+  }
+  const infoOut = ((b.flags & 0x3F) === 0) ? info : lz4enc(info);
+
+  /* 5. ráp lại, đệm 0 cho bằng đúng dung lượng file nguồn */
+  const dataLen = parts.reduce((a, x) => a + x.length, 0);
+  const atEnd = !!(b.flags & 0x80);
+  const headLen = atEnd ? b.dataStart : b.infoOff;
+  let core = headLen + dataLen + infoOut.length;
+  if (!atEnd && (b.flags & 0x200))
+    core = ((headLen + infoOut.length + 15) & ~15) + dataLen;
+  if (core > orig.length)
+    throw new Error(`Nén lại phình ${(core - orig.length).toLocaleString('vi-VN')} byte so với ` +
+                    `dung lượng gốc — không đủ chỗ đệm.`);
+
+  const out = new Uint8Array(orig.length);           // phần dư tự là 0
+  if (atEnd){
+    out.set(orig.subarray(0, headLen), 0);
+    let p = headLen;
+    for (const x of parts){ out.set(x, p); p += x.length; }
+    out.set(infoOut, p);
+  } else {
+    out.set(orig.subarray(0, b.infoOff), 0);
+    out.set(infoOut, b.infoOff);
+    let p = b.infoOff + infoOut.length;
+    if (b.flags & 0x200) p = (p + 15) & ~15;
+    for (const x of parts){ out.set(x, p); p += x.length; }
+  }
+  const sp = findSizePos(out);
+  const odv = new DataView(out.buffer);
+  /* Với blocksInfoAtTheEnd, blocksInfo nằm ngay sau vùng dữ liệu chứ không ở
+     cuối file — phần đệm nằm sau nó. Trường size phải khai đúng phần thực
+     dùng, nếu không hàm dò blocksInfo sẽ tìm sai chỗ. */
+  odv.setBigInt64(sp, BigInt(atEnd ? core : out.length), false);
+  odv.setUint32(sp + 8, infoOut.length, false);      // ciSize
+  odv.setUint32(sp + 12, info.length, false);        // uiSize
+  return out;
+}
+
+/* Vị trí trường size (int64 BE) trong header UnityFS */
+function findSizePos(u8){
+  let p = 0;
+  while (u8[p]) p++;               // "UnityFS"
+  p++; p += 4;                     // \0 + version
+  while (u8[p]) p++; p++;          // unityVersion
+  while (u8[p]) p++; p++;          // unityRevision
+  return p;
+}
+
+/* ═══════════ PRESET 4: định vị nhân vật (hologram) ═══════════ */
+
+/* hologram.shader goc, nen deflate + base64. Dung de thay toan bo
+   shader nhan vat o preset 4. */
+const HOLO_BLOB = {"hologram":{"pid":"-8478029966577821520","size":7072,"z":"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"}};
+
+/* 48 shader nhân vật đều được thay bằng hologram, nên mọi thứ trên người
+   (da, tóc, quần áo, mũ) đều vẽ bằng shader phát sáng này. */
+const HOLO_PROPS = {
+  _TintColor:     { kind:'color',  src:'tint', label:'màu nhân vật' },
+  _RimColor:      { kind:'color',  src:'rim',  label:'màu sáng mép' },
+  _ScanColor:     { kind:'color',  src:'scan', label:'màu quét' },
+  /* Bật/tắt hiệu ứng: tắt = (0,0,0,0), bật = giá trị gốc của shader */
+  _Line:          { kind:'vec4', src:'line',   on:[100,100,50,50], off:[0,0,0,0] },
+  _LineAndGlitch: { kind:'vec4', src:'glitch', on:[0.5,0.5,5,0.1], off:[0,0,0,0] }
+};
+
+async function loadHolo(){
+  const e = HOLO_BLOB.hologram;
+  const raw = Uint8Array.from(atob(e.z), c => c.charCodeAt(0));
+  const ds = new DecompressionStream('deflate');
+  const buf = new Uint8Array(await new Response(
+    new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer());
+  if (buf.length !== e.size)
+    throw new Error(`Shader hologram giải ra ${buf.length} byte, cần ${e.size}.`);
+  return { body: buf, pid: BigInt(e.pid) };
+}
+
+/*
+  zTest quyết định XUYÊN TƯỜNG, và nó KHÔNG phải property — nằm trong
+  m_ParsedForm.m_SubShaders[].m_Passes[].m_State.zTest (float 4 byte).
+    4 = LEqual  → chỉ vẽ khi ở gần hơn, bị tường che (mặc định)
+    8 = Always  → luôn vẽ, xuyên qua mọi vật cản
+  Bản mod gốc đặt 8. Dò offset bằng chính typetree thay vì hardcode. */
+const ZTEST_NAMES = { 0:'Disabled',1:'Never',2:'Less',3:'Equal',4:'LEqual',
+                      5:'Greater',6:'NotEqual',7:'GEqual',8:'Always' };
+
+/* Tìm offset byte của mọi m_State.zTest trong một Shader object */
+function findZTest(body, type){
+  const nodes = buildNodes(type);
+  const r = makeReader(body);
+  const hits = [];
+  const walk = (i, inState) => {
+    const n = nodes[i];
+    const align = (n.meta & 0x4000) !== 0;
+    const kids = [];
+    let j = i + 1;
+    while (j < nodes.length && nodes[j].level > n.level){
+      if (nodes[j].level === n.level + 1) kids.push(j);
+      j++;
+    }
+    const start = r.p;
+    const t = n.type;
+    if (t === 'SInt8' || t === 'UInt8' || t === 'char' || t === 'bool') r.p += 1;
+    else if (t === 'SInt16' || t === 'UInt16' || t === 'short' || t === 'unsigned short') r.p += 2;
+    else if (t === 'SInt32' || t === 'int' || t === 'Type*' || t === 'UInt32' ||
+             t === 'unsigned int' || t === 'float') r.p += 4;
+    else if (t === 'SInt64' || t === 'UInt64' || t === 'long long' ||
+             t === 'unsigned long long' || t === 'FileSize' || t === 'double') r.p += 8;
+    else if (t === 'string'){
+      const ln = r.dv.getInt32(r.p, true); r.p += 4 + ln; r.align();
+    } else if (t === 'TypelessData'){
+      const ln = r.dv.getInt32(r.p, true); r.p += 4 + ln;
+    } else if (kids.length && nodes[kids[0]].type === 'Array'){
+      const ai = kids[0];
+      const ak = [];
+      let k = ai + 1;
+      while (k < nodes.length && nodes[k].level > nodes[ai].level){
+        if (nodes[k].level === nodes[ai].level + 1) ak.push(k);
+        k++;
+      }
+      const size = r.dv.getInt32(r.p, true); r.p += 4;
+      for (let m = 0; m < size; m++) walk(ak[1], inState);
+      if (nodes[ai].meta & 0x4000) r.align();
+    } else {
+      for (const c of kids) walk(c, inState || n.name === 'm_State');
+    }
+    if (align) r.align();
+    /* SerializedShaderFloatValue { float val; FastPropertyName name; } */
+    if (n.name === 'zTest' && inState) hits.push(start);
+  };
+  walk(0, false);
+  return hits;
+}
+
+/* Ghi 3 màu + 2 vector hiệu ứng + zTest vào một bản sao hologram */
+function paintHolo(body, opt, rows, label, type){
+  const props = readShaderProps(body);
+  const dv = new DataView(body.buffer, body.byteOffset, body.byteLength);
+  let n = 0;
+  for (const p of props){
+    const spec = HOLO_PROPS[p.name];
+    if (!spec) continue;
+    let next, before, after;
+    if (spec.kind === 'color'){
+      const rgb = opt[spec.src];
+      const a = opt[spec.src + 'A'];
+      next = [rgb[0], rgb[1], rgb[2], a];
+      before = rgb2hex(p.val); after = rgb2hex(next);
+    } else {
+      next = opt[spec.src] ? spec.on : spec.off;
+      before = `(${p.val.map(x => +x.toFixed(2)).join(', ')})`;
+      after  = `(${next.join(', ')})`;
+    }
+    for (let i = 0; i < 4; i++) dv.setFloat32(p.valOff + i*4, next[i], true);
+    n++;
+    if (rows){
+      const sw  = spec.kind === 'color' ? `<span class="swatch" style="background:${before}"></span>` : '';
+      const sw2 = spec.kind === 'color' ? `<span class="swatch" style="background:${after}"></span>` : '';
+      rows.push([label, p.name, sw + before, sw2 + after]);
+    }
+  }
+
+  /* zTest — thứ thực sự làm xuyên tường */
+  const want = opt.xray ? 8 : 4;
+  const zs = findZTest(body, type);
+  for (const off of zs){
+    const old = dv.getFloat32(off, true);
+    if (old === want) continue;
+    dv.setFloat32(off, want, true);
+    n++;
+    if (rows) rows.push([label, 'zTest (xuyên tường)',
+      `${old} · ${ZTEST_NAMES[old] || '?'}`, `${want} · ${ZTEST_NAMES[want]}`]);
+  }
+  if (!zs.length && rows)
+    rows.push([label, 'zTest', 'không tìm thấy', '— bỏ qua']);
+  return n;
+}
+
+async function applyPreset4(orig, b, opt){
+  const node = b.nodes[0];
+  if (!node) throw new Error('Bundle không có node nào.');
+
+  const { data, blockAt } = decompressAll(orig, b);
+  const cab = data.subarray(node.off, node.off + node.size);
+  const sf = parseSF(cab);
+
+  const abObj = sf.objs.find(o => o.cid === 142);
+  const nameOf = new Map();
+  if (abObj){
+    const v = readObj(sf, abObj, null);
+    for (const c of v.m_Container) nameOf.set(c.second.asset.m_PathID, c.first);
+  }
+
+  const shaders = sf.objs.filter(o => o.cid === 48);
+  if (!shaders.length)
+    throw new Error('Bundle này không có shader nào — đây có phải optionalavatarres_commonab_shader không?');
+
+  const holo = await loadHolo();
+  const rows = [];
+  /* Sơn màu + đặt zTest một lần rồi dùng chung cho mọi shader */
+  const shType = sf.types[shaders[0].tid];
+  const painted = holo.body.slice();
+  const nSet = paintHolo(painted, opt, rows, 'hologram', shType);
+
+  /* Thay từng shader bằng bản hologram đã sơn, đệm 0 cho bằng kích thước cũ.
+     Giữ nguyên kích thước object → chỉ nén lại block bị đụng, và dung lượng
+     file không đổi. Shader nhỏ hơn hologram thì bỏ qua (không đệm vừa). */
+  const repl = new Map();
+  let swapped = 0, skipped = 0;
+  for (const o of shaders){
+    if (o.size < painted.length){ skipped++; continue; }
+    const body = new Uint8Array(o.size);
+    body.set(painted, 0);
+    repl.set(o.pid, body);
+    swapped++;
+  }
+  if (!swapped)
+    throw new Error('Không shader nào đủ chỗ để thay bằng hologram.');
+
+  rows.push(['— áp dụng —', `${swapped} shader`,
+             `${shaders.length} shader trong bundle`,
+             `thay ${swapped}` + (skipped ? `, bỏ qua ${skipped} (quá nhỏ)` : '')]);
+
+  const out = rebuildShaders(orig, b, data, blockAt, sf, node, repl);
+  return {
+    out,
+    note: `Đã thay <b>${swapped}</b> shader nhân vật bằng hologram và đặt màu — ` +
+          `${nSet} giá trị, dung lượng giữ nguyên ${out.length.toLocaleString('vi-VN')} byte.`,
+    cols: ['Vùng','Property','Trước','Sau'], rows, html: true
+  };
+}
+
+/* ═══════════ giao diện ═══════════ */
+let FILE = null, ORIG = null, BUN = null, KIND = null, DET = null;
+
+function render(el, html){ $(el).innerHTML = html; }
+
+/*
+  Vân tay của các bản gốc đã biết, để phân biệt Free Fire Thường và Max.
+
+  shaders: số shader là dấu hiệu bền — preset 3 không thêm/bớt shader nào.
+
+  assetindexer: hai bản khác nhau DUY NHẤT ở indexer (Thường 8 mục, Max 12).
+  Preset 2 thêm 4 mục vào bản Thường nên nó thành 12 — trùng dấu hiệu của Max.
+  Vì vậy phải dựa vào DUNG LƯỢNG, thứ mà cả 3 preset đều giữ nguyên tuyệt đối.
+*/
+const BUILDS = {
+  uma: [
+    { name: 'Free Fire Thường', size: 46096, objs: 24, items: 8  },
+    { name: 'Free Fire Max',    size: 46640, objs: 24, items: 12 }
+  ],
+  shader: [
+    { name: 'Free Fire Thường', size: 1443632, shaders: 146 },
+    { name: 'Free Fire Max',    size: 1419165, shaders: 144 }
+  ],
+  holo: [
+    { name: 'Free Fire Thường', size: 382493, shaders: 48 },
+    { name: 'Free Fire Max',    size: 391791, shaders: 50 }
+  ]
+};
+
+/* Tên file gốc trên CDN = Base64(SHA1(nội dung)), '/'→~2F '+'→~2B '='→~3D */
+function sha1b64(bytes){
+  const ml = bytes.length;
+  const pad = new Uint8Array((((ml + 8) >> 6) + 1) << 6);
+  pad.set(bytes); pad[ml] = 0x80;
+  const dv = new DataView(pad.buffer);
+  dv.setUint32(pad.length - 4, (ml << 3) >>> 0, false);
+  dv.setUint32(pad.length - 8, Math.floor(ml / 536870912), false);
+  let h0=0x67452301,h1=0xEFCDAB89,h2=0x98BADCFE,h3=0x10325476,h4=0xC3D2E1F0;
+  const w = new Uint32Array(80);
+  const rol = (x,n) => ((x << n) | (x >>> (32 - n))) >>> 0;
+  for (let i = 0; i < pad.length; i += 64){
+    for (let j = 0; j < 16; j++) w[j] = dv.getUint32(i + j*4, false);
+    for (let j = 16; j < 80; j++) w[j] = rol(w[j-3]^w[j-8]^w[j-14]^w[j-16], 1);
+    let a=h0,b2=h1,c=h2,d=h3,e=h4;
+    for (let j = 0; j < 80; j++){
+      let f, k;
+      if (j < 20)      { f = (b2 & c) | (~b2 & d);              k = 0x5A827999; }
+      else if (j < 40) { f = b2 ^ c ^ d;                        k = 0x6ED9EBA1; }
+      else if (j < 60) { f = (b2 & c) | (b2 & d) | (c & d);     k = 0x8F1BBCDC; }
+      else             { f = b2 ^ c ^ d;                        k = 0xCA62C1D6; }
+      const t = (rol(a,5) + f + e + k + w[j]) >>> 0;
+      e = d; d = c; c = rol(b2, 30); b2 = a; a = t;
+    }
+    h0=(h0+a)>>>0; h1=(h1+b2)>>>0; h2=(h2+c)>>>0; h3=(h3+d)>>>0; h4=(h4+e)>>>0;
+  }
+  const o = new Uint8Array(20), odv = new DataView(o.buffer);
+  [h0,h1,h2,h3,h4].forEach((h,i) => odv.setUint32(i*4, h, false));
+  return btoa(String.fromCharCode(...o));
+}
+const cdnSuffix = b64 => b64.replace(/\+/g,'~2B').replace(/\//g,'~2F').replace(/=/g,'~3D');
+
+/*
+  Nhận diện bundle thuộc loại nào, dựa vào NỘI DUNG chứ không theo tên file.
+    'uma'    → có UMAMeshAsset / UMAAssetIndexer  → preset 1, 2
+    'shader' → có 3 shader định vị                → preset 3
+*/
+function detectKind(orig, b){
+  const node = b.nodes[0];
+  if (!node) return { kind: null, why: 'Bundle không có node nào.' };
+
+  let isUMA = false;
+  /* Bundle UMA: 1 block thô, nhận diện nhanh bằng chuỗi tên xương */
+  if (!b.blocks.some(x => (x.f & 0x3F) !== 0)){
+    const from = b.dataStart + node.off, to = from + node.size;
+    const probe = ['bone_Hips', 'bone_Left_Spine_Backpack', 'UMAAssetIndexer'];
+    const hay = orig.subarray(from, to);
+    for (const kw of probe){
+      const pat = enc(kw);
+      outer: for (let i = 0; i <= hay.length - pat.length; i++){
+        for (let k = 0; k < pat.length; k++) if (hay[i+k] !== pat[k]) continue outer;
+        isUMA = true; break;
+      }
+      if (isUMA) break;
+    }
+  }
+
+  try {
+    const { data } = decompressAll(orig, b);
+    const cab = data.subarray(node.off, node.off + node.size);
+    const sf = parseSF(cab);
+    const nShader = sf.objs.filter(o => o.cid === 48).length;
+
+    if (nShader){
+      const ab = sf.objs.find(o => o.cid === 142);
+      let hit = 0, hasHolo = false, hasDecal = false;
+      if (ab){
+        const v = readObj(sf, ab, null);
+        for (const c of v.m_Container){
+          if (isXrayShader(c.first)) hit++;
+          const f = c.first.split('/').pop();
+          if (f === 'hologram.shader') hasHolo = true;
+          if (f === 'brmobilebumpspecdecal.shader') hasDecal = true;
+        }
+      }
+
+      /* Hai bundle đều chứa backweapon + brmobilebumpspec, và cả hai đều có
+         hologram — nên phải tách bằng brmobilebumpspecdecal, thứ chỉ bundle
+         súng mới có. Bundle nhân vật = có hologram nhưng không có decal. */
+      if (hasHolo && !hasDecal){
+        let build = BUILDS.holo.find(x => x.shaders === nShader && x.size === orig.length);
+        let guess = false;
+        if (!build){ build = BUILDS.holo.find(x => x.shaders === nShader); guess = !!build; }
+        return {
+          kind: 'holo', build: build ? build.name : null, guess,
+          detail: `bundle shader nhân vật — ${nShader} shader, có hologram`
+        };
+      }
+
+      if (!hit)
+        return { kind: null, why: `Bundle có ${nShader} shader nhưng không có backweapon / brmobilebumpspec / brmobilebumpspecdecal.` };
+      /* Số shader là dấu hiệu bền (preset 3 không thêm/bớt shader nào);
+         dung lượng dùng để xác nhận. Lệch dung lượng thì chỉ là phỏng đoán. */
+      let build = BUILDS.shader.find(x => x.shaders === nShader && x.size === orig.length);
+      let guess = false;
+      if (!build){
+        build = BUILDS.shader.find(x => x.shaders === nShader);
+        guess = !!build;
+      }
+      return {
+        kind: 'shader', build: build ? build.name : null, guess,
+        detail: `bundle shader súng — ${nShader} shader, ${hit} shader định vị`
+      };
+    }
+
+    if (isUMA || sf.types.some(t => t.cid === 114)){
+      /* số mục indexer là dấu hiệu phân biệt Thường (8) và Max (12) */
+      let items = null;
+      const idx = sf.objs.find(o => {
+        const t = sf.types[o.tid];
+        return t.cid === 114 && t.nodes &&
+               buildNodes(t).some(n => n.level === 1 && n.name === 'Items');
+      });
+      if (idx){
+        try { items = readObj(sf, idx, null).Items.length; } catch (e) { /* bỏ qua */ }
+      }
+      /* Phân biệt theo dung lượng: Thường 46.096, Max 46.640.
+         Không dùng số mục indexer làm căn cứ chính, vì preset 2 thêm 4 mục vào
+         bản Thường khiến nó cũng thành 12 mục — trùng dấu hiệu của Max. */
+      let build = BUILDS.uma.find(x => x.size === orig.length && x.objs === sf.objs.length);
+      let guess = false;
+      if (!build && items !== null){
+        /* Dung lượng lạ (game cập nhật?) — đoán tạm theo số mục indexer.
+           Chỉ đáng tin khi file chưa qua preset 2. */
+        build = BUILDS.uma.find(x => x.items === items);
+        guess = !!build;
+      }
+      return {
+        kind: 'uma', build: build ? build.name : null, guess,
+        detail: `bundle UMA — ${sf.objs.length} object` +
+                (items !== null ? `, indexer ${items} mục` : '')
+      };
+    }
+  } catch (e) {
+    return { kind: null, why: `Không đọc được nội dung: ${e.message}` };
+  }
+  return { kind: null, why: 'Không nhận ra đây là bundle UMA hay bundle shader.' };
+}
+
+/* Bật/tắt preset theo loại bundle; tự chọn preset đầu tiên còn dùng được */
+function applyKind(kind){
+  const pres = [...document.querySelectorAll('.pre')];
+  const okFor = v => kind === null ? false
+                  : v === '3' ? kind === 'shader'
+                  : v === '4' ? kind === 'holo'
+                  : kind === 'uma';
+  let firstOk = null;
+  for (const el of pres){
+    const inp = el.querySelector('input');
+    const ok = okFor(inp.value);
+    el.classList.toggle('off', !ok);
+    inp.disabled = !ok;
+    if (ok && firstOk === null) firstOk = el;
+    if (!ok && inp.checked) inp.checked = false;
+  }
+  if (firstOk && !pres.some(e => e.querySelector('input').checked)){
+    firstOk.querySelector('input').checked = true;
+  }
+  syncPanels();
+}
+
+/* Hiện đúng khung tinh chỉnh cho preset đang chọn */
+function syncPanels(){
+  const sel = document.querySelector('input[name=p]:checked');
+  const v = sel ? sel.value : null;
+  for (const el of document.querySelectorAll('.pre'))
+    el.classList.toggle('sel', el.querySelector('input') === sel);
+  const adv = $('#advBox'), col = $('#colBox'), holo = $('#holoBox');
+  adv.classList.toggle('off',  v !== '2');
+  col.classList.toggle('off',  v !== '3');
+  holo.classList.toggle('off', v !== '4');
+  adv.open  = v === '2';
+  col.open  = v === '3';
+  holo.open = v === '4';
+}
+
+async function load(file){
+  FILE = file; ORIG = null; BUN = null; KIND = null; DET = null;
+  $('#go').disabled = true;
+  render('#out', '');
+  let buf;
+  try { buf = await file.arrayBuffer(); }
+  catch(e){ applyKind(null); return render('#info', `<div class="msg bad">Không đọc được file: ${esc(e.message)}</div>`); }
+  ORIG = new Uint8Array(buf);
+  try { BUN = parseBundle(ORIG); }
+  catch(e){ applyKind(null); return render('#info', `<div class="msg bad">${esc(e.message)}</div>`); }
+
+  const node = BUN.nodes[0];
+  const comp = BUN.blocks.filter(x => (x.f & 0x3F) !== 0).length;
+  const det = detectKind(ORIG, BUN);
+  KIND = det.kind; DET = det;
+
+  const warn = BUN.declared !== ORIG.length
+    ? `<div class="msg warn">Trường size trong header (${BUN.declared.toLocaleString('vi-VN')}) khác dung lượng thật (${ORIG.length.toLocaleString('vi-VN')}) — file có thể còn dữ liệu thừa ở đuôi. Tạo file mới sẽ sửa luôn.</div>` : '';
+  const bad = KIND ? '' :
+    `<div class="msg bad">${esc(det.why || 'Không nhận ra loại bundle.')} Tool này chỉ làm việc với <code>assetindexer</code> và <code>shaders</code>.</div>`;
+
+  /* Tên gốc trên CDN là Base64(SHA1) — file đã mod thì hash không còn khớp */
+  const suffix = file.name.includes('.') ? file.name.slice(file.name.indexOf('.') + 1) : '';
+  const nowHash = cdnSuffix(sha1b64(ORIG));
+  const isPristine = suffix && suffix === nowHash;
+
+  const buildRow = det.build
+    ? `<tr><td>Phiên bản</td><td><b>${esc(det.build)}</b>${
+        det.guess ? ' <span class="dim">(phỏng đoán — dung lượng không khớp bản gốc đã biết)</span>'
+                  : (isPristine ? ' · bản gốc' : ' · đã chỉnh sửa')}</td></tr>`
+    : (KIND ? `<tr><td>Phiên bản</td><td>không rõ — dung lượng ${ORIG.length.toLocaleString('vi-VN')} byte không khớp Thường hay Max</td></tr>` : '');
+
+  render('#info', `${warn}${bad}<div class="panel"><h2>File nguồn</h2><table>
+    <tr><td>Tên</td><td>${esc(file.name)}</td></tr>
+    <tr><td>Dung lượng</td><td>${ORIG.length.toLocaleString('vi-VN')} byte</td></tr>
+    ${buildRow}
+    <tr><td>Định dạng</td><td>UnityFS fmt ${BUN.fmt} · ${esc(BUN.rev)}</td></tr>
+    <tr><td>Block</td><td>${BUN.blocks.length} · ${comp ? 'có nén' : 'uncompressed'} · flags 0x${hx(BUN.flags)}</td></tr>
+    ${node ? `<tr><td>Node</td><td>${esc(node.name)} · ${node.size.toLocaleString('vi-VN')} byte</td></tr>` : ''}
+    ${det.detail ? `<tr><td>Nhận diện</td><td>${esc(det.detail)}</td></tr>` : ''}
+  </table></div>`);
+
+  $('#drop').classList.add('has');
+  /* Chỉ thay phần chữ — nếu ghi đè innerHTML của #drop thì <input id="file">
+     bên trong bị huỷ, và lần chọn file sau sẽ không kích hoạt onchange nữa. */
+  $('#dropText').innerHTML =
+    `<b>${esc(file.name)}</b><span>${ORIG.length.toLocaleString('vi-VN')} byte — bấm để chọn file khác</span>`;
+  applyKind(KIND);
+  $('#go').disabled = !KIND;
+}
+
+$('#go').onclick = async () => {
+  const p = document.querySelector('input[name=p]:checked').value;
+  const btn = $('#go');
+  btn.disabled = true;
+  const label = btn.textContent;
+  btn.textContent = 'Đang xử lý…';
+  let res;
+  try {
+    if (p === '1') res = applyPreset1(ORIG, BUN);
+    else if (p === '2') res = applyPreset2(ORIG, BUN, {
+      fx: parseFloat($('#fx').value), fz: parseFloat($('#fz').value),
+      mx: parseFloat($('#mx').value), s:  parseFloat($('#sc').value)
+    });
+    else if (p === '3') {
+      const grab = (id, name) => {
+        const v = hex2rgb($('#' + id).value);
+        if (!v) throw new Error(`Mã màu ${name} không hợp lệ: "${$('#'+id).value}" (cần dạng #RRGGBB).`);
+        return v;
+      };
+      res = await applyPreset3(ORIG, BUN, {
+        xray:  grab('tXray', 'súng'),
+        line:  grab('tLine', 'viền súng'),
+        dim:   grab('tDim',  'keo'),
+        width: parseFloat($('#rWidth').value),
+        alpha: parseFloat($('#rAlpha').value)
+      });
+    }
+    else {
+      const grab = (id, name) => {
+        const v = hex2rgb($('#' + id).value);
+        if (!v) throw new Error(`Mã màu ${name} không hợp lệ: "${$('#'+id).value}" (cần dạng #RRGGBB).`);
+        return v;
+      };
+      res = await applyPreset4(ORIG, BUN, {
+        tint:  grab('tTint', 'nhân vật'),  tintA:  parseFloat($('#rTintA').value),
+        rim:   grab('tRim',  'viền'),      rimA:   parseFloat($('#rRimA').value),
+        scan:  grab('tScan', 'quét'),      scanA:  parseFloat($('#rScanA').value),
+        xray:   $('#kXray').checked,
+        line:   $('#kLine').checked,
+        glitch: $('#kGlitch').checked
+      });
+    }
+  } catch(e){
+    render('#out', `<div class="msg bad">${esc(e.message)}</div>`);
+    return;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = label;
+  }
+
+  const same = res.out.length === ORIG.length;
+  let nd = 0;
+  if (same) for (let i = 0; i < ORIG.length; i++) if (ORIG[i] !== res.out[i]) nd++;
+
+  render('#out', `
+    <div class="msg ok">${res.note}</div>
+    <div class="panel"><h2>Thay đổi</h2><div class="hexwrap"><table class="hex">
+      <tr>${res.cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr>
+      ${res.rows.map(r => `<tr>
+        <td class="dim">${esc(r[0])}</td><td class="dim">${esc(r[1])}</td>
+        <td class="old">${res.html ? r[2] : esc(r[2])}</td>
+        <td class="new">${res.html ? r[3] : esc(r[3])}</td></tr>`).join('')}
+    </table></div>
+    ${res.extra ? `<div class="note"><b>_Path sau khi rút gọn</b> (chỉ dùng ở editor; runtime tra bằng _Name và PPtr):<br>${
+      res.extra.names.map((n,i) => `<code>${esc(n)}</code> → ${esc(res.extra.paths[i])}`).join('<br>')}</div>` : ''}
+    </div>
+    <div class="panel"><h2>Kết quả</h2><table>
+      <tr><td>Dung lượng</td><td>${res.out.length.toLocaleString('vi-VN')} byte ${same ? '— khớp file nguồn' : `— <b>khác nguồn ${(res.out.length-ORIG.length > 0 ? '+' : '')}${res.out.length-ORIG.length}</b>`}</td></tr>
+      ${same ? `<tr><td>Số byte đổi</td><td>${nd.toLocaleString('vi-VN')}</td></tr>` : ''}
+      ${KIND && DET && DET.build ? `<tr><td>Phiên bản</td><td>${esc(DET.build)}</td></tr>` : ''}
+    </table>
+    <div class="note" style="margin-top:12px">File tải về giữ nguyên tên gốc, chép đè thẳng lên file cũ:</div>
+    <span class="fname">${esc(FILE.name)}</span>
+    <div class="row" style="margin-top:14px"><button id="dl">Tải file đã sửa</button></div></div>`);
+
+  $('#dl').onclick = () => {
+    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.saveFile) {
+      const bytes = res.out;
+      const CHUNK = 65536;
+      const parts = [];
+      for (let i = 0; i < bytes.length; i += CHUNK)
+        parts.push(String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + CHUNK, bytes.length))));
+      window.webkit.messageHandlers.saveFile.postMessage({name: FILE.name, b64: btoa(parts.join(''))});
+    } else {
+      const url = URL.createObjectURL(new Blob([res.out], { type:'application/octet-stream' }));
+      const a = document.createElement('a');
+      a.href = url; a.download = FILE.name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }
+  };
+};
+
+/* chọn preset */
+for (const el of document.querySelectorAll('.pre')){
+  el.addEventListener('click', () => {
+    if (el.querySelector('input').disabled) return;
+    el.querySelector('input').checked = true;
+    syncPanels();
+  });
+}
+
+/* lúc chưa có file: ẩn hết preset, khung tinh chỉnh, và khoá nút */
+for (const el of document.querySelectorAll('.pre')){
+  el.classList.add('off');
+  el.querySelector('input').checked = false;
+}
+for (const id of ['advBox', 'colBox', 'holoBox']) $('#' + id).classList.add('off');
+$('#go').disabled = true;
+
+/* bộ chọn màu: đồng bộ hai chiều giữa ô màu và ô mã hex */
+for (const [c, t] of [['cXray','tXray'], ['cLine','tLine'], ['cDim','tDim'],
+                      ['cTint','tTint'], ['cRim','tRim'], ['cScan','tScan']]){
+  const cel = $('#' + c), tel = $('#' + t);
+  cel.addEventListener('input', () => {
+    tel.value = cel.value.toUpperCase();
+    tel.classList.remove('bad');
+  });
+  tel.addEventListener('input', () => {
+    const v = hex2rgb(tel.value);
+    tel.classList.toggle('bad', !v);
+    if (v) cel.value = rgb2hex(v).toLowerCase();
+  });
+}
+$('#rWidth').addEventListener('input', e => { $('#wVal').textContent = (+e.target.value).toFixed(1); });
+$('#rAlpha').addEventListener('input', e => { $('#aVal').textContent = (+e.target.value).toFixed(2); });
+for (const [r, out] of [['rTintA','tintAVal'], ['rRimA','rimAVal'], ['rScanA','scanAVal']])
+  $('#' + r).addEventListener('input', e => { $('#' + out).textContent = (+e.target.value).toFixed(2); });
+
+/* drag & drop */
+const drop = $('#drop'), input = $('#file');
+drop.onclick = e => { if (e.target !== input) input.click(); };
+input.onchange = () => {
+  const f = input.files[0];
+  input.value = '';              // để chọn lại cùng file vẫn kích hoạt onchange
+  if (f) load(f);
+};
+['dragenter','dragover'].forEach(ev =>
+  drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev =>
+  drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) load(f); });
+</script>
+</body>
+</html>

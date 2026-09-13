@@ -106,6 +106,8 @@ struct GamesHomeView: View {
                     VipToolsView()
                 } else if selectedTab == 2 {
                     NextDNSView()
+                } else if selectedTab == 3 {
+                    MakeFileView()
                 }
             }
             .navigationTitle("")
@@ -432,6 +434,7 @@ struct GamesHomeView: View {
             tabItem(icon: "gamecontroller.fill", label: "Game", index: 0)
             tabItem(icon: "wrench.and.screwdriver.fill", label: "Vip Tools", index: 1)
             tabItem(icon: "network.badge.shield.half.filled", label: "Next DNS", index: 2)
+            tabItem(icon: "doc.badge.gearshape.fill", label: "Make File", index: 3)
         }
         .padding(.top, 8)
         .padding(.bottom, 4)

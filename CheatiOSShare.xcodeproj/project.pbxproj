@@ -105,6 +105,8 @@
 		D0400B /* DisplayIdentity.m in Sources */ = {isa = PBXBuildFile; fileRef = C04006 /* DisplayIdentity.m */; };
 		D0400C /* wallpaper_zip.c in Sources */ = {isa = PBXBuildFile; fileRef = C04008 /* wallpaper_zip.c */; };
 		E05001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = E05002 /* Localizable.strings */; };
+		MK0001 /* MakeFileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MK0002 /* MakeFileView.swift */; };
+		MK0003 /* make-file.html in Resources */ = {isa = PBXBuildFile; fileRef = MK0004 /* make-file.html */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -121,6 +123,8 @@
 		CA10CAFEDEADBEEF0000F009 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		DEADBEEF0000000000SPLASH2 /* SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashScreenView.swift; sourceTree = "<group>"; };
 		DEADBEEF000000000DNS00002 /* NextDNSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextDNSView.swift; sourceTree = "<group>"; };
+		MK0002 /* MakeFileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MakeFileView.swift; sourceTree = "<group>"; };
+		MK0004 /* make-file.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "make-file.html"; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00B /* ContainerStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerStore.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00D /* NetworkSecurityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkSecurityMonitor.swift; sourceTree = "<group>"; };
@@ -281,6 +285,7 @@
 				CA10CAFEDEADBEEF0000F026 /* Info.plist */,
 				CA10CAFEDEADBEEF0000F027 /* Assets.xcassets */,
 				E05002 /* Localizable.strings */,
+				MK0004 /* make-file.html */,
 				CA10CAFEDEADBEEF0000000E /* views */,
 				CA10CAFEDEADBEEF0000000F /* helpers */,
 				CA10CAFEDEADBEEF0000000G /* exploit */,
@@ -322,6 +327,7 @@
 				F04032 /* AppManagerView.swift */,
 				DEADBEEF0000000000SPLASH2 /* SplashScreenView.swift */,
 			DEADBEEF000000000DNS00002 /* NextDNSView.swift */,
+				MK0002 /* MakeFileView.swift */,
 			);
 			path = views;
 			sourceTree = "<group>";
@@ -543,6 +549,7 @@
 			files = (
 				CA10CAFEDEADBEEF0000B018 /* Assets.xcassets in Resources */,
 				E05001 /* Localizable.strings in Resources */,
+				MK0003 /* make-file.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -595,6 +602,7 @@
 					CA10CAFEDEADBEEF0000B009 /* SettingsView.swift in Sources */,
 					DEADBEEF00000000000SPLASH /* SplashScreenView.swift in Sources */,
 				DEADBEEF000000000DNS00001 /* NextDNSView.swift in Sources */,
+				MK0001 /* MakeFileView.swift in Sources */,
 				CA10CAFEDEADBEEF0000B00A /* AppState.swift in Sources */,
 				CA10CAFEDEADBEEF0000B00B /* ContainerStore.swift in Sources */,
 					CA10CAFEDEADBEEF0000B00D /* NetworkSecurityMonitor.swift in Sources */,
