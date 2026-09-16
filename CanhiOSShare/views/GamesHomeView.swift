@@ -444,6 +444,7 @@ struct GamesHomeView: View {
                     startPoint: .top, endPoint: .bottom
                 )
             }
+            .ignoresSafeArea(edges: .bottom)
         )
         .overlay(alignment: .top) {
             Rectangle()
