@@ -145,8 +145,6 @@ struct GamesHomeView: View {
                         .padding(.bottom, 10)
                     bottomTabBar
                 }
-                // Fill gap between LicenseStatusBar and tab bar so content cant bleed through
-                .background(Color(red: 0.04, green: 0.03, blue: 0.14))
             }
             .toast($licenseGate.activationToast)
             .sheet(item: $announcement) { item in
