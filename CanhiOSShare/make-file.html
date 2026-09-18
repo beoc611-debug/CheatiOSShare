@@ -3923,6 +3923,15 @@ document.getElementById('reset').onclick = () => { location.reload(); };
 const _srcActive = document.querySelector('.src-btn.active');
 if (_srcActive) _srcActive.addEventListener('click', () => document.getElementById('file').click());
 
+// Backup trigger: watch #info for content (load() writes here after applyKind)
+new MutationObserver(() => setTimeout(updateSectionLabels, 30))
+  .observe(document.getElementById('info'), { childList: true, subtree: true });
+
+// Backup trigger 2: file input change
+document.getElementById('file').addEventListener('change', () => {
+  setTimeout(updateSectionLabels, 400);
+}, true);
+
 // ─── Game picker ───
 let _curGame = 'ff';
 function setGame(game, card) {
@@ -3951,8 +3960,12 @@ function updateSectionLabels() {
       firstHb.dispatchEvent(new Event('change', { bubbles: true }));
       pickPreset(firstHb.value);
     }
-    // Always show action buttons
-    document.getElementById('actionButtons').style.display = '';
+    // Show action buttons for hitbox
+    document.getElementById('actionButtons').style.display = 'block';
+  }
+  // Show action buttons for UMA/Shader too (after preset selected)
+  if (hasUma || hasShader) {
+    document.getElementById('actionButtons').style.display = 'block';
   }
 
   // Build UMA preset list if needed
@@ -4018,8 +4031,8 @@ function pickPreset(value) {
     c.classList.toggle('sel', c.dataset.pv === value)
   );
   // Show finetune + action buttons
-  document.getElementById('finetuneSection').style.display = '';
-  document.getElementById('actionButtons').style.display   = '';
+  document.getElementById('finetuneSection').style.display = 'block';
+  document.getElementById('actionButtons').style.display   = 'block';
   // Sync sliders
   updateSliders(value);
   updateEffectDesc(value);
