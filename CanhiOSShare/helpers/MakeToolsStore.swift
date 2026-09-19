@@ -9,14 +9,18 @@ enum MakeGender: String {
 final class MakeToolsStore: ObservableObject {
     static let shared = MakeToolsStore()
 
+    private static let serverBase = "https://patches.cheatiosvip.net"
+
     // File
     @Published var fileName: String?
     @Published var fileSize = 0
     @Published var detection: MakeDetection?
     @Published var infoRows: [[String]] = []
     @Published var isLoading = false
+    @Published var isUploading = false
     @Published var loadError: String?
     @Published var loadWarning: String?
+    @Published var uploadStatus: String?
 
     // Chọn preset
     @Published var selectedID = "12"
@@ -36,6 +40,8 @@ final class MakeToolsStore: ObservableObject {
 
     private var orig: Bytes?
     private var bundle: UnityBundle?
+    private var serverToken: String?
+    private var serverResultData: Data?
 
     init() {
         resetAll()
@@ -103,10 +109,14 @@ final class MakeToolsStore: ObservableObject {
 
     func load(url: URL) {
         isLoading = true
+        isUploading = false
         loadError = nil
         loadWarning = nil
+        uploadStatus = nil
         result = nil
         resultError = nil
+        serverToken = nil
+        serverResultData = nil
         let name = url.lastPathComponent
 
         Task.detached(priority: .userInitiated) { [weak self] in
@@ -121,12 +131,48 @@ final class MakeToolsStore: ObservableObject {
                 await MainActor.run {
                     self?.finishLoad(name: name, bytes: bytes, bundle: b, detection: det, nowHash: nowHash)
                 }
+                // Upload to server after local parse
+                await self?.uploadToServer(data: data, fileName: name)
             } catch {
                 let msg = error.localizedDescription
                 await MainActor.run {
                     self?.failLoad(name: name, message: msg)
                 }
             }
+        }
+    }
+
+    private func uploadToServer(data: Data, fileName: String) async {
+        await MainActor.run { isUploading = true; uploadStatus = "Đang tải lên server…" }
+        defer { Task { @MainActor in self.isUploading = false } }
+        do {
+            guard let url = URL(string: MakeToolsStore.serverBase + "/api/make-tools/upload") else { return }
+            var req = URLRequest(url: url, timeoutInterval: 120)
+            req.httpMethod = "POST"
+            let boundary = "Boundary-\(UUID().uuidString)"
+            req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+            var body = Data()
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"bundle\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+            body.append("Content-Type: application/octet-stream\r\n\r\n".data(using: .utf8)!)
+            body.append(data)
+            body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+            req.httpBody = body
+            let (respData, resp) = try await URLSession.shared.data(for: req)
+            guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else {
+                let msg = (try? JSONDecoder().decode([String: String].self, from: respData))?["error"] ?? "Lỗi server"
+                await MainActor.run { self.uploadStatus = "Upload thất bại: \(msg)" }
+                return
+            }
+            if let json = try? JSONSerialization.jsonObject(with: respData) as? [String: Any],
+               let token = json["token"] as? String {
+                await MainActor.run {
+                    self.serverToken = token
+                    self.uploadStatus = "Đã tải lên server ✓"
+                }
+            }
+        } catch {
+            await MainActor.run { self.uploadStatus = "Upload lỗi: \(error.localizedDescription)" }
         }
     }
 
@@ -194,8 +240,11 @@ final class MakeToolsStore: ObservableObject {
         fileSize = 0
         loadError = nil
         loadWarning = nil
+        uploadStatus = nil
         result = nil
         resultError = nil
+        serverToken = nil
+        serverResultData = nil
     }
 
     // MARK: Tạo file
@@ -276,7 +325,7 @@ final class MakeToolsStore: ObservableObject {
     }
 
     func generate() {
-        guard let orig = orig, let bundle = bundle, canGenerate else { return }
+        guard canGenerate else { return }
         let id = selectedID
         if id == "3" || id == "4" {
             for f in selected.fields where f.kind == .color {
@@ -287,40 +336,122 @@ final class MakeToolsStore: ObservableObject {
                 }
             }
         }
-        let opt = options(for: id)
         isBusy = true
         result = nil
         resultError = nil
+        serverResultData = nil
 
-        Task.detached(priority: .userInitiated) { [weak self] in
-            do {
-                let res = try MakeToolsEngine.apply(preset: id, orig: orig, bundle: bundle, options: opt)
-                var changed = 0
-                let same = res.out.count == orig.count
-                if same {
-                    for i in 0..<orig.count where orig[i] != res.out[i] { changed += 1 }
-                }
-                let diff = res.out.count - orig.count
-                var sizeText = MakeToolsEngine.viNum(res.out.count) + " byte "
-                if same {
-                    sizeText += "— khớp file nguồn"
-                } else {
-                    sizeText += "— khác nguồn " + (diff > 0 ? "+" : "") + String(diff)
-                }
-                var stats: [[String]] = [["Dung lượng", sizeText]]
-                if same { stats.append(["Số byte đổi", MakeToolsEngine.viNum(changed)]) }
-                await MainActor.run {
-                    self?.result = res
-                    self?.resultStats = stats
-                    self?.isBusy = false
-                }
-            } catch {
-                let msg = error.localizedDescription
-                await MainActor.run {
-                    self?.resultError = msg
-                    self?.isBusy = false
+        if let token = serverToken {
+            // Server path
+            let opt = options(for: id)
+            Task { [weak self] in await self?.generateOnServer(token: token, presetId: id, options: opt) }
+        } else {
+            // Local fallback
+            guard let orig = orig, let bundle = bundle else {
+                resultError = "File chưa được tải."
+                isBusy = false
+                return
+            }
+            let opt = options(for: id)
+            Task.detached(priority: .userInitiated) { [weak self] in
+                do {
+                    let res = try MakeToolsEngine.apply(preset: id, orig: orig, bundle: bundle, options: opt)
+                    var changed = 0
+                    let same = res.out.count == orig.count
+                    if same { for i in 0..<orig.count where orig[i] != res.out[i] { changed += 1 } }
+                    let diff = res.out.count - orig.count
+                    var sizeText = MakeToolsEngine.viNum(res.out.count) + " byte "
+                    sizeText += same ? "— khớp file nguồn" : ("— khác nguồn " + (diff > 0 ? "+" : "") + String(diff))
+                    var stats: [[String]] = [["Dung lượng", sizeText]]
+                    if same { stats.append(["Số byte đổi", MakeToolsEngine.viNum(changed)]) }
+                    await MainActor.run {
+                        self?.result = res
+                        self?.resultStats = stats
+                        self?.isBusy = false
+                    }
+                } catch {
+                    let msg = error.localizedDescription
+                    await MainActor.run { self?.resultError = msg; self?.isBusy = false }
                 }
             }
+        }
+    }
+
+    private func generateOnServer(token: String, presetId: String, options opt: MakeOptions) async {
+        do {
+            // Build JSON options from opt struct
+            let body: [String: Any] = [
+                "token": token, "presetId": Int(presetId) ?? 1,
+                "options": [
+                    "male": opt.male, "female": opt.female,
+                    "posX": opt.posX, "posY": opt.posY, "posZ": opt.posZ,
+                    "rotY": opt.rotY, "scale": opt.scale,
+                    "maleScale": opt.maleScale, "femaleScale": opt.femaleScale,
+                    "toeScale": opt.toeScale, "toeX": opt.toeX, "toeY": opt.toeY,
+                    "p2Mx": opt.p2Mx, "p2Fx": opt.p2Fx, "p2Fz": opt.p2Fz, "p2Scale": opt.p2Scale,
+                    "antena": opt.antena, "antenaHeight": opt.antenaHeight,
+                    "toeDrag": opt.toeDrag,
+                    "maleCenterX": opt.maleCenterX, "maleRadius": opt.maleRadius,
+                    "femaleCenterX": opt.femaleCenterX, "femaleRadius": opt.femaleRadius,
+                    "zeroOthers": opt.zeroOthers,
+                    "colRadius": opt.colRadius, "colHeight": opt.colHeight,
+                    "bodyOn": opt.bodyOn, "headOn": opt.headOn,
+                    "width": opt.width, "alpha": opt.alpha,
+                    "xrayOn": opt.xrayOn, "lineOn": opt.lineOn, "glitchOn": opt.glitchOn,
+                    "xrayRGB": opt.xrayRGB, "lineRGB": opt.lineRGB, "dimRGB": opt.dimRGB,
+                    "tintRGB": opt.tintRGB, "rimRGB": opt.rimRGB, "scanRGB": opt.scanRGB,
+                    "tintA": opt.tintA, "rimA": opt.rimA, "scanA": opt.scanA,
+                    "label": opt.label
+                ]
+            ]
+            guard let genURL = URL(string: MakeToolsStore.serverBase + "/api/make-tools/generate") else { throw URLError(.badURL) }
+            var genReq = URLRequest(url: genURL, timeoutInterval: 180)
+            genReq.httpMethod = "POST"
+            genReq.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            genReq.httpBody = try JSONSerialization.data(withJSONObject: body)
+            let (genData, genResp) = try await URLSession.shared.data(for: genReq)
+            if let http = genResp as? HTTPURLResponse, http.statusCode != 200 {
+                let msg = (try? JSONSerialization.jsonObject(with: genData) as? [String: Any])?["error"] as? String ?? "Lỗi server \(http.statusCode)"
+                await MainActor.run { self.resultError = msg; self.isBusy = false }
+                return
+            }
+            guard let genJSON = try? JSONSerialization.jsonObject(with: genData) as? [String: Any] else {
+                await MainActor.run { self.resultError = "Phản hồi server không hợp lệ."; self.isBusy = false }
+                return
+            }
+            let note = genJSON["note"] as? String ?? "Xong!"
+            let cols = genJSON["cols"] as? [String] ?? []
+            let rows = (genJSON["rows"] as? [[Any]] ?? []).map { $0.map { "\($0)" } }
+
+            // Download result file
+            guard let dlURL = URL(string: MakeToolsStore.serverBase + "/api/make-tools/download/\(token)") else { throw URLError(.badURL) }
+            let (fileData, dlResp) = try await URLSession.shared.data(from: dlURL)
+            if let http = dlResp as? HTTPURLResponse, http.statusCode != 200 {
+                await MainActor.run { self.resultError = "Không tải được file kết quả."; self.isBusy = false }
+                return
+            }
+            let outBytes = Bytes(fileData)
+            let res = MakeResult(out: outBytes, note: note, cols: cols, rows: rows)
+            let origBytes = self.orig
+            var changed = 0
+            let origCount = origBytes?.count ?? 0
+            if let origBytes = origBytes, outBytes.count == origCount {
+                for i in 0..<origCount where origBytes[i] != outBytes[i] { changed += 1 }
+            }
+            let diff = outBytes.count - origCount
+            var sizeText = MakeToolsEngine.viNum(outBytes.count) + " byte "
+            sizeText += (origCount > 0 && outBytes.count == origCount) ? "— khớp file nguồn" : ("— khác nguồn \(diff > 0 ? "+" : "")\(diff)")
+            var stats: [[String]] = [["Dung lượng", sizeText], ["Nguồn", "Server ✓"]]
+            if origCount > 0 && outBytes.count == origCount { stats.append(["Số byte đổi", MakeToolsEngine.viNum(changed)]) }
+            await MainActor.run {
+                self.serverResultData = fileData
+                self.result = res
+                self.resultStats = stats
+                self.isBusy = false
+            }
+        } catch {
+            let msg = error.localizedDescription
+            await MainActor.run { self.resultError = "Server error: \(msg)"; self.isBusy = false }
         }
     }
 

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 // MARK: - Màu / định dạng dùng chung
@@ -30,7 +31,6 @@ private enum MTStyle {
 
 struct MakeToolsView: View {
     @ObservedObject private var store = MakeToolsStore.shared
-    @State private var showImporter = false
     @State private var showShare = false
     @State private var shareURL: URL?
     @State private var showInfo = false
@@ -56,16 +56,22 @@ struct MakeToolsView: View {
                 .scrollDismissesKeyboard15()
             }
         }
-        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data], allowsMultipleSelection: false) { res in
-            switch res {
-            case .success(let urls):
-                if let u = urls.first { store.load(url: u) }
-            case .failure(let err):
-                store.loadError = err.localizedDescription
-            }
-        }
         .sheet(isPresented: $showShare) {
             if let url = shareURL { MakeToolsShareSheet(url: url) }
+        }
+    }
+
+    /// Gọi thẳng UIDocumentPickerViewController từ UIKit (asCopy: true) — không lồng trong sheet của SwiftUI.
+    private func openPicker() {
+        MakeToolsPicker.shared.present { result in handlePicked(result) }
+    }
+
+    private func handlePicked(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            if let u = urls.first { store.load(url: u) }
+        case .failure(let err):
+            store.loadError = err.localizedDescription
         }
     }
 
@@ -118,6 +124,20 @@ struct MakeToolsView: View {
             }
             if let w = store.loadWarning { banner(w, color: MTStyle.warn, icon: "exclamationmark.triangle.fill") }
             if let e = store.loadError { banner(e, color: MTStyle.danger, icon: "xmark.octagon.fill") }
+            if store.isUploading {
+                HStack(spacing: 8) {
+                    ProgressView().tint(AppTheme.neonPurple)
+                    Text("Đang tải lên server…").font(.system(size: 12)).foregroundStyle(MTStyle.muted)
+                }.transition(.opacity)
+            } else if let st = store.uploadStatus {
+                HStack(spacing: 6) {
+                    Image(systemName: st.contains("✓") ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                        .foregroundStyle(st.contains("✓") ? MTStyle.ok : MTStyle.warn)
+                        .font(.system(size: 12))
+                    Text(st).font(.system(size: 12)).foregroundStyle(st.contains("✓") ? MTStyle.ok : MTStyle.warn)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }.transition(.opacity)
+            }
 
             if store.hasFile && showInfo && !store.infoRows.isEmpty {
                 VStack(spacing: 6) {
@@ -138,7 +158,7 @@ struct MakeToolsView: View {
     }
 
     private var pickButton: some View {
-        Button { showImporter = true } label: {
+        Button { openPicker() } label: {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -198,7 +218,7 @@ struct MakeToolsView: View {
                 }
                 .buttonStyle(.plain)
             }
-            Button { showImporter = true } label: {
+            Button { openPicker() } label: {
                 Text("Đổi file")
                     .font(.system(size: 12.5, weight: .bold))
                     .foregroundStyle(.white)
@@ -737,4 +757,45 @@ private struct MakeToolsShareSheet: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+// MARK: - Chọn file bằng UIKit
+
+/// Bảng chọn file của hệ thống, hiện thẳng từ view controller trên cùng.
+/// `asCopy: true` để iOS sao chép file vào app — không cần quyền truy cập tại chỗ.
+final class MakeToolsPicker: NSObject, UIDocumentPickerDelegate {
+    static let shared = MakeToolsPicker()
+    private var onPick: ((Result<[URL], Error>) -> Void)?
+
+    func present(onPick: @escaping (Result<[URL], Error>) -> Void) {
+        self.onPick = onPick
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.item], asCopy: true)
+        picker.delegate = self
+        picker.allowsMultipleSelection = false
+        picker.shouldShowFileExtensions = true
+        guard let top = MakeToolsPicker.topController() else {
+            self.onPick = nil
+            onPick(.failure(MakeToolsError("Không mở được bảng chọn file.")))
+            return
+        }
+        top.present(picker, animated: true)
+    }
+
+    private static func topController() -> UIViewController? {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let window = scenes.flatMap { $0.windows }.first { $0.isKeyWindow } ?? scenes.first?.windows.first
+        var vc = window?.rootViewController
+        while let presented = vc?.presentedViewController { vc = presented }
+        return vc
+    }
+
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        let cb = onPick
+        onPick = nil
+        cb?(.success(urls))
+    }
+
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        onPick = nil
+    }
 }
