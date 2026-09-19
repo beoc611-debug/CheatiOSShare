@@ -163,7 +163,7 @@ struct MakeToolsView: View {
     }
 
     private var pickButton: some View {
-        Button { openPicker() } label: {
+        Button { store.scanGameFiles() } label: {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -171,15 +171,19 @@ struct MakeToolsView: View {
                                              startPoint: .topLeading, endPoint: .bottomTrailing))
                         .frame(width: 56, height: 56)
                         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(AppTheme.neonCyan.opacity(0.4), lineWidth: 1))
-                    Image(systemName: "square.and.arrow.down.on.square.fill")
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(AppTheme.neonCyan)
+                    if store.isScanning {
+                        ProgressView().tint(AppTheme.neonCyan).scaleEffect(0.9)
+                    } else {
+                        Image(systemName: "magnifyingglass.circle.fill")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(AppTheme.neonCyan)
+                    }
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("CHỌN FILE BUNDLE")
+                    Text(store.isScanning ? "ĐANG DÒ FILE…" : "DÒ FILE TỪ GAME")
                         .font(.system(size: 16, weight: .heavy))
                         .foregroundStyle(.white)
-                    Text("assetindexer · cache_res · shaders")
+                    Text("Free Fire · Free Fire Max · assetindexer · cache_res")
                         .font(.system(size: 12, design: .monospaced))
                         .foregroundStyle(MTStyle.muted)
                 }
@@ -191,30 +195,26 @@ struct MakeToolsView: View {
                 .strokeBorder(AppTheme.neonCyan.opacity(0.35), style: StrokeStyle(lineWidth: 1.2, dash: [6, 5])))
         }
         .buttonStyle(PressScaleButtonStyle())
+        .disabled(store.isScanning)
     }
 
     private var scanRow: some View {
         HStack(spacing: 8) {
-            Button { store.scanGameFiles() } label: {
+            Button { openPicker() } label: {
                 HStack(spacing: 8) {
-                    if store.isScanning {
-                        ProgressView().tint(AppTheme.neonCyan).scaleEffect(0.75)
-                    } else {
-                        Image(systemName: "magnifyingglass.circle.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(AppTheme.neonCyan)
-                    }
-                    Text(store.isScanning ? "Đang dò…" : "Dò file từ game")
+                    Image(systemName: "folder.badge.plus")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(MTStyle.muted)
+                    Text("Chọn thủ công")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(store.isScanning ? MTStyle.muted : AppTheme.neonCyan)
+                        .foregroundStyle(MTStyle.muted)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .background(AppTheme.neonCyan.opacity(0.07), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(AppTheme.neonCyan.opacity(0.22), lineWidth: 1))
+                .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
             }
             .buttonStyle(.plain)
-            .disabled(store.isScanning)
 
             Button { store.showBackups = true } label: {
                 HStack(spacing: 6) {
