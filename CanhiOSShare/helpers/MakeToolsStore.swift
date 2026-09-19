@@ -1,0 +1,367 @@
+import SwiftUI
+
+enum MakeGender: String {
+    case male, female
+}
+
+/// Trạng thái của tab "Tools Make": file đang mở, preset đang chọn, mọi giá trị tùy chỉnh.
+/// Là singleton để chuyển tab không làm mất file/thông số.
+final class MakeToolsStore: ObservableObject {
+    static let shared = MakeToolsStore()
+
+    // File
+    @Published var fileName: String?
+    @Published var fileSize = 0
+    @Published var detection: MakeDetection?
+    @Published var infoRows: [[String]] = []
+    @Published var isLoading = false
+    @Published var loadError: String?
+    @Published var loadWarning: String?
+
+    // Chọn preset
+    @Published var selectedID = "12"
+    @Published var gender: MakeGender = .male
+    @Published var filter: MakeCategory?
+
+    // Giá trị tùy chỉnh (khoá giống id ô nhập của bản HTML)
+    @Published var values: [String: Double] = [:]
+    @Published var flags: [String: Bool] = [:]
+    @Published var hexes: [String: String] = [:]
+
+    // Kết quả
+    @Published var isBusy = false
+    @Published var result: MakeResult?
+    @Published var resultStats: [[String]] = []
+    @Published var resultError: String?
+
+    private var orig: Bytes?
+    private var bundle: UnityBundle?
+
+    init() {
+        resetAll()
+    }
+
+    // MARK: Giá trị mặc định
+
+    func resetAll() {
+        for p in MakeToolsCatalog.all { reset(p) }
+    }
+
+    func reset(_ p: MakePreset) {
+        for f in p.fields {
+            switch f.kind {
+            case .number, .slider: values[f.id] = f.num
+            case .toggle: flags[f.id] = f.flag
+            case .color: hexes[f.id] = f.hex
+            }
+        }
+    }
+
+    // Đọc giá trị — `val` mô phỏng `parseFloat(...) || mặc định` của script gốc
+    func val(_ id: String, _ d: Double) -> Double {
+        let v = values[id] ?? d
+        return (v == 0 || v.isNaN) ? d : v
+    }
+    func raw(_ id: String, _ d: Double) -> Double {
+        let v = values[id] ?? d
+        return v.isNaN ? d : v
+    }
+    func flag(_ id: String) -> Bool { flags[id] ?? false }
+    func hex(_ id: String, _ d: String = "#FFFFFF") -> String { hexes[id] ?? d }
+
+    func rgb(_ id: String, _ d: String) -> [Float] {
+        let h = hex(id, d)
+        guard let c = Color(hex: h) else { return [1, 1, 1] }
+        let ui = UIColor(c)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return [Float(r), Float(g), Float(b)]
+    }
+
+    // MARK: Tương thích preset với file đang mở
+
+    var kind: MakeBundleKind? { detection?.kind }
+    var hasFile: Bool { orig != nil && bundle != nil }
+
+    func isCompatible(_ p: MakePreset) -> Bool {
+        guard let k = kind else { return false }
+        return p.need == k
+    }
+
+    var selected: MakePreset {
+        MakeToolsCatalog.preset(selectedID) ?? MakeToolsCatalog.all[0]
+    }
+
+    var canGenerate: Bool { hasFile && isCompatible(selected) && !isBusy }
+
+    var visiblePresets: [MakePreset] {
+        guard let f = filter else { return MakeToolsCatalog.all }
+        return MakeToolsCatalog.all.filter { $0.category == f }
+    }
+
+    // MARK: Nạp file
+
+    func load(url: URL) {
+        isLoading = true
+        loadError = nil
+        loadWarning = nil
+        result = nil
+        resultError = nil
+        let name = url.lastPathComponent
+
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let started = url.startAccessingSecurityScopedResource()
+            defer { if started { url.stopAccessingSecurityScopedResource() } }
+            do {
+                let data = try Data(contentsOf: url)
+                let bytes = Bytes(data)
+                let b = try UnityBundle.parse(bytes)
+                let det = MakeToolsEngine.detect(bytes, b)
+                let nowHash = MakeToolsEngine.cdnHash(bytes)
+                await MainActor.run {
+                    self?.finishLoad(name: name, bytes: bytes, bundle: b, detection: det, nowHash: nowHash)
+                }
+            } catch {
+                let msg = error.localizedDescription
+                await MainActor.run {
+                    self?.failLoad(name: name, message: msg)
+                }
+            }
+        }
+    }
+
+    private func failLoad(name: String, message: String) {
+        orig = nil
+        bundle = nil
+        detection = nil
+        infoRows = []
+        fileName = name
+        fileSize = 0
+        loadError = message
+        isLoading = false
+    }
+
+    private func finishLoad(name: String, bytes: Bytes, bundle b: UnityBundle, detection det: MakeDetection, nowHash: String) {
+        orig = bytes
+        bundle = b
+        detection = det
+        fileName = name
+        fileSize = bytes.count
+        isLoading = false
+
+        if b.declared != bytes.count {
+            loadWarning = "Trường size trong header (\(MakeToolsEngine.viNum(b.declared))) khác dung lượng thật (\(MakeToolsEngine.viNum(bytes.count))) — file có thể còn dữ liệu thừa ở đuôi. Tạo file mới sẽ sửa luôn."
+        }
+        if det.kind == nil {
+            loadError = (det.why ?? "Không nhận ra loại bundle.") + " Tool này làm việc với assetindexer, shaders và cache_res."
+        }
+
+        let suffix: String = {
+            guard let dot = name.firstIndex(of: ".") else { return "" }
+            return String(name[name.index(after: dot)...])
+        }()
+        let isPristine = !suffix.isEmpty && suffix == nowHash
+        let comp = b.blocks.filter { ($0.f & 0x3F) != 0 }.count
+
+        var rows: [[String]] = []
+        rows.append(["Tên", name])
+        rows.append(["Dung lượng", "\(MakeToolsEngine.viNum(bytes.count)) byte"])
+        if let build = det.build {
+            let tag = det.guess ? " (phỏng đoán — dung lượng không khớp bản gốc đã biết)" : (isPristine ? " · bản gốc" : " · đã chỉnh sửa")
+            rows.append(["Phiên bản", build + tag])
+        } else if det.kind != nil {
+            rows.append(["Phiên bản", "không rõ — dung lượng \(MakeToolsEngine.viNum(bytes.count)) byte không khớp Thường hay Max"])
+        }
+        rows.append(["Định dạng", "UnityFS fmt \(b.fmt) · \(b.rev)"])
+        let compText = comp > 0 ? "có nén" : "uncompressed"
+        rows.append(["Block", "\(b.blocks.count) · \(compText) · flags 0x\(hexString(b.flags))"])
+        if let node = b.nodes.first { rows.append(["Node", "\(node.name) · \(MakeToolsEngine.viNum(node.size)) byte"]) }
+        if let d = det.detail { rows.append(["Nhận diện", d]) }
+        infoRows = rows
+
+        // Tự chọn preset đầu tiên dùng được nếu preset hiện tại không hợp file
+        if !isCompatible(selected), let first = MakeToolsCatalog.all.first(where: { isCompatible($0) }) {
+            selectedID = first.id
+        }
+    }
+
+    func clearFile() {
+        orig = nil
+        bundle = nil
+        detection = nil
+        infoRows = []
+        fileName = nil
+        fileSize = 0
+        loadError = nil
+        loadWarning = nil
+        result = nil
+        resultError = nil
+    }
+
+    // MARK: Tạo file
+
+    /// Dựng tham số cho engine từ các ô nhập — khớp trình xử lý nút "TẠO FILE" của bản HTML.
+    func options(for id: String) -> MakeOptions {
+        var o = MakeOptions()
+        switch id {
+        case "2":
+            o.p2Fx = raw("fx", -0.23); o.p2Fz = raw("fz", -0.01)
+            o.p2Mx = raw("mx", -0.3133402466773987); o.p2Scale = raw("sc", 1.5555556)
+        case "5":
+            o.toeScale = val("aimToeScale", 1.5); o.toeX = val("aimToeX", -0.3850825); o.toeY = val("aimToeY", -0.0746385)
+            o.male = flag("aimMale"); o.female = flag("aimFemale")
+        case "6":
+            o.antenaHeight = val("antenaHeight", 250)
+            o.male = flag("antenaMale"); o.female = flag("antenaFemale")
+        case "7":
+            o.maleScale = val("bodyMaleScale", 1.555556); o.femaleScale = val("bodyFemaleScale", 1.5)
+            o.posX = val("bodyPosX", -0.0446); o.posY = val("bodyPosY", -0.0039)
+            o.male = flag("bodyMale"); o.female = flag("bodyFemale")
+        case "8":
+            o.posX = val("neckPosX", -0.244620); o.scale = val("neckScale", 1.5)
+            o.male = flag("neckMale"); o.female = flag("neckFemale")
+        case "10":
+            o.label = "Aim Cằm Tap Shotgun / SMG (Face Lock)"
+            o.posX = val("facePosX", -0.31); o.scale = val("faceScale", 1.8)
+            o.male = flag("faceMale"); o.female = flag("faceFemale")
+        case "11":
+            o.label = "Aim Kín / Chống Tố Cáo (Legit Smooth Aim)"
+            o.posX = val("legitPosX", -0.18); o.scale = val("legitScale", 1.25)
+            o.male = flag("legitMale"); o.female = flag("legitFemale")
+        case "9":
+            o.label = "Magic Bullet (Hitbox Siêu To Khổng Lồ)"
+            o.posX = val("magicPosX", -0.2); o.scale = val("magicScale", 3.0)
+            o.male = flag("magicMale"); o.female = flag("magicFemale")
+        case "12":
+            o.label = "Combo Siêu Cấp: Antena + Aimlock Cổ"
+            o.posX = val("comboPosX", -0.244620); o.scale = val("comboScale", 1.5)
+            o.antena = true; o.antenaHeight = val("comboAntena", 250)
+            o.male = flag("comboMale"); o.female = flag("comboFemale")
+        case "13":
+            o.label = "Studio Tinh Chỉnh Aim Tự Do"
+            o.posX = val("custPosX", -0.244620); o.scale = val("custScale", 1.5)
+            o.antena = flag("custAntena"); o.antenaHeight = val("custAntenaHeight", 250)
+            o.toeDrag = flag("custToe")
+            o.male = flag("custMale"); o.female = flag("custFemale")
+        case "14":
+            o.maleCenterX = val("hbMaleCenterX", 0.124686); o.maleRadius = val("hbMaleRadius", 0.099059)
+            o.femaleCenterX = val("hbFemaleCenterX", 0.124096); o.femaleRadius = val("hbFemaleRadius", 0.099154)
+            o.male = flag("hbMale"); o.female = flag("hbFemale"); o.zeroOthers = flag("hbZeroOthers")
+        case "15":
+            o.maleCenterX = val("dragMaleCenterX", 0.005245); o.maleRadius = val("dragMaleRadius", 0.099059)
+            o.femaleCenterX = val("dragFemaleCenterX", 0.005775); o.femaleRadius = val("dragFemaleRadius", 0.099154)
+            o.male = flag("dragMale"); o.female = flag("dragFemale")
+        case "16":
+            o.maleCenterX = val("neckCacheMaleCenterX", 0.005245); o.maleRadius = val("neckCacheMaleRadius", 0.075)
+            o.femaleCenterX = val("neckCacheFemaleCenterX", 0.005775); o.femaleRadius = val("neckCacheFemaleRadius", 0.0751)
+            o.male = flag("neckCacheMale"); o.female = flag("neckCacheFemale")
+        case "17":
+            o.colRadius = val("magicCacheRadius", 0.8); o.colHeight = val("magicCacheHeight", 0.8)
+            o.bodyOn = flag("magicCacheBody"); o.headOn = flag("magicCacheHead")
+        case "18":
+            o.maleCenterX = val("chestMaleCenterX", -0.030); o.maleRadius = val("chestMaleRadius", 0.099059)
+            o.femaleCenterX = val("chestFemaleCenterX", -0.032); o.femaleRadius = val("chestFemaleRadius", 0.099154)
+            o.male = flag("chestMale"); o.female = flag("chestFemale")
+        case "3":
+            o.xrayRGB = rgb("tXray", "#111111"); o.lineRGB = rgb("tLine", "#FFFFFF"); o.dimRGB = rgb("tDim", "#111111")
+            o.width = Float(raw("rWidth", 4)); o.alpha = Float(raw("rAlpha", 1))
+        case "4":
+            o.tintRGB = rgb("tTint", "#00FFFF"); o.rimRGB = rgb("tRim", "#00FFFF"); o.scanRGB = rgb("tScan", "#000000")
+            o.tintA = Float(raw("rTintA", 1)); o.rimA = Float(raw("rRimA", 1)); o.scanA = Float(raw("rScanA", 1))
+            o.xrayOn = flag("kXray"); o.lineOn = flag("kLine"); o.glitchOn = flag("kGlitch")
+        default:
+            break
+        }
+        return o
+    }
+
+    func generate() {
+        guard let orig = orig, let bundle = bundle, canGenerate else { return }
+        let id = selectedID
+        if id == "3" || id == "4" {
+            for f in selected.fields where f.kind == .color {
+                if Color(hex: hex(f.id, f.hex)) == nil {
+                    resultError = "Mã màu \"\(f.label)\" không hợp lệ (cần dạng #RRGGBB)."
+                    result = nil
+                    return
+                }
+            }
+        }
+        let opt = options(for: id)
+        isBusy = true
+        result = nil
+        resultError = nil
+
+        Task.detached(priority: .userInitiated) { [weak self] in
+            do {
+                let res = try MakeToolsEngine.apply(preset: id, orig: orig, bundle: bundle, options: opt)
+                var changed = 0
+                let same = res.out.count == orig.count
+                if same {
+                    for i in 0..<orig.count where orig[i] != res.out[i] { changed += 1 }
+                }
+                let diff = res.out.count - orig.count
+                var sizeText = MakeToolsEngine.viNum(res.out.count) + " byte "
+                if same {
+                    sizeText += "— khớp file nguồn"
+                } else {
+                    sizeText += "— khác nguồn " + (diff > 0 ? "+" : "") + String(diff)
+                }
+                var stats: [[String]] = [["Dung lượng", sizeText]]
+                if same { stats.append(["Số byte đổi", MakeToolsEngine.viNum(changed)]) }
+                await MainActor.run {
+                    self?.result = res
+                    self?.resultStats = stats
+                    self?.isBusy = false
+                }
+            } catch {
+                let msg = error.localizedDescription
+                await MainActor.run {
+                    self?.resultError = msg
+                    self?.isBusy = false
+                }
+            }
+        }
+    }
+
+    /// Ghi file đã sửa ra thư mục tạm (giữ nguyên tên gốc) để chia sẻ / lưu.
+    func writeResultFile() -> URL? {
+        guard let res = result, let name = fileName else { return nil }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
+        do {
+            try Data(res.out).write(to: url, options: .atomic)
+            return url
+        } catch {
+            resultError = "Không ghi được file: \(error.localizedDescription)"
+            return nil
+        }
+    }
+
+    // MARK: Kéo trên hình để đổi vị trí hitbox
+
+    /// (khoá nam, khoá nữ, hệ toạ độ: true = UMA position.x, false = cache_res Center.x)
+    static let dragKeys: [String: (String, String, Bool)] = [
+        "2": ("mx", "fx", true), "5": ("aimToeX", "aimToeX", true), "7": ("bodyPosX", "bodyPosX", true),
+        "8": ("neckPosX", "neckPosX", true), "9": ("magicPosX", "magicPosX", true), "10": ("facePosX", "facePosX", true),
+        "11": ("legitPosX", "legitPosX", true), "12": ("comboPosX", "comboPosX", true), "13": ("custPosX", "custPosX", true),
+        "14": ("hbMaleCenterX", "hbFemaleCenterX", false), "15": ("dragMaleCenterX", "dragFemaleCenterX", false),
+        "16": ("neckCacheMaleCenterX", "neckCacheFemaleCenterX", false), "18": ("chestMaleCenterX", "chestFemaleCenterX", false)
+    ]
+
+    var isDraggable: Bool { MakeToolsStore.dragKeys[selectedID] != nil }
+
+    /// `y` là toạ độ dọc trong không gian của hình (viewBox).
+    func dragTo(y: Double) {
+        guard let d = MakeToolsStore.dragKeys[selectedID] else { return }
+        var x: Double
+        if d.2 {
+            x = (y - 190) / 384
+            x = Swift.max(-0.5, Swift.min(0.15, x))
+        } else {
+            x = (y - 95) / 628 + 0.005245
+            x = Swift.max(-0.03, Swift.min(0.2, x))
+        }
+        let key = gender == .male ? d.0 : d.1
+        values[key] = (x * 1_000_000).rounded() / 1_000_000
+    }
+}
