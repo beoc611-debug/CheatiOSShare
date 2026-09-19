@@ -37,27 +37,36 @@ struct MakeToolsView: View {
     var body: some View {
         ZStack(alignment: .top) {
             TechBackground()
-            VStack(spacing: 0) {
-                header
-                ScrollView {
-                    VStack(spacing: 14) {
-                        fileCard
-                        presetSection
-                        simulatorCard
-                        tuneCard
-                        generateSection
-                        resultSection
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .padding(.bottom, 28)
+            if store.serverStatus == .noAccess {
+                VStack(spacing: 0) {
+                    header
+                    Spacer()
+                    serverOfflineOverlay
+                    Spacer()
                 }
-                .scrollDismissesKeyboard15()
-            }
-            .allowsHitTesting(store.serverStatus == .online || store.serverStatus == .checking)
+            } else {
+                VStack(spacing: 0) {
+                    header
+                    ScrollView {
+                        VStack(spacing: 14) {
+                            fileCard
+                            presetSection
+                            simulatorCard
+                            tuneCard
+                            generateSection
+                            resultSection
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .padding(.bottom, 28)
+                    }
+                    .scrollDismissesKeyboard15()
+                }
+                .allowsHitTesting(store.serverStatus == .online || store.serverStatus == .checking)
 
-            if store.serverStatus == .offline || store.serverStatus == .noAccess {
-                serverOfflineOverlay
+                if store.serverStatus == .offline {
+                    serverOfflineOverlay
+                }
             }
         }
         .onAppear { store.checkServer() }
@@ -90,7 +99,6 @@ struct MakeToolsView: View {
             ? "Tab này chỉ dùng được với key Admin hoặc key từ Seller Premium.\nLiên hệ admin để được cấp quyền."
             : "Tools Make yêu cầu kết nối server để hoạt động.\nKiểm tra mạng và thử lại."
         return ZStack {
-            Color.black.opacity(0.72).ignoresSafeArea()
             VStack(spacing: 20) {
                 ZStack {
                     Circle()
