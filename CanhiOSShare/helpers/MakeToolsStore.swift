@@ -5,7 +5,7 @@ enum MakeGender: String {
 }
 
 enum MakeServerStatus {
-    case checking, online, offline
+    case checking, online, offline, noAccess
 }
 
 struct GameScannedFile: Identifiable {
@@ -209,7 +209,15 @@ final class MakeToolsStore: ObservableObject {
             req.httpMethod = "POST"
             let boundary = "Boundary-\(UUID().uuidString)"
             req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+            let keyCode = LicenseGateStore.shared.storedKeyCode ?? ""
             var body = Data()
+            // key field
+            if !keyCode.isEmpty {
+                body.append("--\(boundary)\r\n".data(using: .utf8)!)
+                body.append("Content-Disposition: form-data; name=\"key\"\r\n\r\n".data(using: .utf8)!)
+                body.append(keyCode.data(using: .utf8)!)
+                body.append("\r\n".data(using: .utf8)!)
+            }
             body.append("--\(boundary)\r\n".data(using: .utf8)!)
             body.append("Content-Disposition: form-data; name=\"bundle\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
             body.append("Content-Type: application/octet-stream\r\n\r\n".data(using: .utf8)!)
@@ -218,7 +226,14 @@ final class MakeToolsStore: ObservableObject {
             req.httpBody = body
             let (respData, resp) = try await URLSession.shared.data(for: req)
             guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else {
-                let msg = (try? JSONDecoder().decode([String: String].self, from: respData))?["error"] ?? "Lỗi server"
+                let errJSON = try? JSONSerialization.jsonObject(with: respData) as? [String: Any]
+                let errCode = errJSON?["error"] as? String ?? ""
+                let msg: String
+                if errCode == "key_no_premium" {
+                    msg = "Key không có quyền dùng Tools Make. Cần key Admin hoặc từ Seller Premium."
+                } else {
+                    msg = errJSON?["message"] as? String ?? errCode.isEmpty ? "Lỗi server" : errCode
+                }
                 await MainActor.run { self.uploadStatus = "Upload thất bại: \(msg)" }
                 return
             }
@@ -322,16 +337,26 @@ final class MakeToolsStore: ObservableObject {
 
     private func checkServerAsync() async {
         await MainActor.run { serverStatus = .checking }
-        guard let url = URL(string: MakeToolsStore.serverBase + "/api/make-tools/ping") else {
+        let keyCode = LicenseGateStore.shared.storedKeyCode ?? ""
+        var urlStr = MakeToolsStore.serverBase + "/api/make-tools/ping"
+        if !keyCode.isEmpty, let enc = keyCode.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
+            urlStr += "?key=\(enc)"
+        }
+        guard let url = URL(string: urlStr) else {
             await MainActor.run { serverStatus = .offline }
             return
         }
         do {
             var req = URLRequest(url: url, timeoutInterval: 10)
             req.httpMethod = "GET"
-            let (_, resp) = try await URLSession.shared.data(for: req)
-            let ok = (resp as? HTTPURLResponse)?.statusCode == 200
-            await MainActor.run { serverStatus = ok ? .online : .offline }
+            let (data, resp) = try await URLSession.shared.data(for: req)
+            guard (resp as? HTTPURLResponse)?.statusCode == 200 else {
+                await MainActor.run { serverStatus = .offline }
+                return
+            }
+            let json = (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
+            let makeAccess = json["makeAccess"] as? Bool ?? false
+            await MainActor.run { serverStatus = makeAccess ? .online : .noAccess }
         } catch {
             await MainActor.run { serverStatus = .offline }
         }
@@ -427,9 +452,11 @@ final class MakeToolsStore: ObservableObject {
             }
         }
         guard let token = serverToken else {
-            resultError = serverStatus == .offline
-                ? "Mất kết nối server. Kiểm tra mạng và thử lại."
-                : "File chưa được upload lên server. Hãy thử chọn lại file."
+            switch serverStatus {
+            case .offline: resultError = "Mất kết nối server. Kiểm tra mạng và thử lại."
+            case .noAccess: resultError = "Key không có quyền dùng Tools Make. Cần key Admin hoặc từ Seller Premium."
+            default: resultError = "File chưa được upload lên server. Hãy thử chọn lại file."
+            }
             return
         }
 

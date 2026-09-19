@@ -54,9 +54,9 @@ struct MakeToolsView: View {
                 }
                 .scrollDismissesKeyboard15()
             }
-            .allowsHitTesting(store.serverStatus != .offline)
+            .allowsHitTesting(store.serverStatus == .online || store.serverStatus == .checking)
 
-            if store.serverStatus == .offline {
+            if store.serverStatus == .offline || store.serverStatus == .noAccess {
                 serverOfflineOverlay
             }
         }
@@ -82,49 +82,58 @@ struct MakeToolsView: View {
     }
 
     private var serverOfflineOverlay: some View {
-        ZStack {
+        let isNoAccess = store.serverStatus == .noAccess
+        let iconName = isNoAccess ? "lock.shield" : "wifi.slash"
+        let iconColor = isNoAccess ? Color(red: 1.0, green: 0.60, blue: 0.10) : Color(red: 0.98, green: 0.27, blue: 0.35)
+        let title = isNoAccess ? "KHÔNG CÓ QUYỀN TRUY CẬP" : "KHÔNG CÓ SERVER"
+        let subtitle = isNoAccess
+            ? "Tab này chỉ dùng được với key Admin hoặc key từ Seller Premium.\nLiên hệ admin để được cấp quyền."
+            : "Tools Make yêu cầu kết nối server để hoạt động.\nKiểm tra mạng và thử lại."
+        return ZStack {
             Color.black.opacity(0.72).ignoresSafeArea()
             VStack(spacing: 20) {
                 ZStack {
                     Circle()
-                        .fill(Color(red: 0.98, green: 0.27, blue: 0.35).opacity(0.15))
+                        .fill(iconColor.opacity(0.15))
                         .frame(width: 80, height: 80)
-                    Image(systemName: "wifi.slash")
+                    Image(systemName: iconName)
                         .font(.system(size: 34, weight: .semibold))
-                        .foregroundStyle(Color(red: 0.98, green: 0.27, blue: 0.35))
+                        .foregroundStyle(iconColor)
                 }
                 VStack(spacing: 8) {
-                    Text("KHÔNG CÓ SERVER")
+                    Text(title)
                         .font(.system(size: 18, weight: .black))
                         .foregroundStyle(.white)
-                    Text("Tools Make yêu cầu kết nối server để hoạt động.\nKiểm tra mạng và thử lại.")
+                    Text(subtitle)
                         .font(.system(size: 13.5))
                         .foregroundStyle(Color(red: 0.60, green: 0.65, blue: 0.78))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
                 }
-                Button {
-                    store.checkServer()
-                } label: {
-                    HStack(spacing: 8) {
-                        if store.serverStatus == .checking {
-                            ProgressView().tint(.white).scaleEffect(0.8)
-                        } else {
-                            Image(systemName: "arrow.clockwise")
+                if !isNoAccess {
+                    Button {
+                        store.checkServer()
+                    } label: {
+                        HStack(spacing: 8) {
+                            if store.serverStatus == .checking {
+                                ProgressView().tint(.white).scaleEffect(0.8)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                            }
+                            Text(store.serverStatus == .checking ? "Đang kiểm tra…" : "Thử lại")
+                                .font(.system(size: 14, weight: .bold))
                         }
-                        Text(store.serverStatus == .checking ? "Đang kiểm tra…" : "Thử lại")
-                            .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 28).padding(.vertical, 12)
+                        .background(
+                            LinearGradient(colors: [AppTheme.neonCyan.opacity(0.8), AppTheme.neonPurple.opacity(0.8)],
+                                           startPoint: .leading, endPoint: .trailing),
+                            in: Capsule()
+                        )
                     }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 28).padding(.vertical, 12)
-                    .background(
-                        LinearGradient(colors: [AppTheme.neonCyan.opacity(0.8), AppTheme.neonPurple.opacity(0.8)],
-                                       startPoint: .leading, endPoint: .trailing),
-                        in: Capsule()
-                    )
+                    .buttonStyle(.plain)
+                    .disabled(store.serverStatus == .checking)
                 }
-                .buttonStyle(.plain)
-                .disabled(store.serverStatus == .checking)
             }
         }
     }
@@ -185,17 +194,19 @@ struct MakeToolsView: View {
 
     private var serverDotColor: Color {
         switch store.serverStatus {
-        case .checking: return MTStyle.muted
-        case .online:   return MTStyle.ok
-        case .offline:  return MTStyle.danger
+        case .checking:  return MTStyle.muted
+        case .online:    return MTStyle.ok
+        case .offline:   return MTStyle.danger
+        case .noAccess:  return MTStyle.warn
         }
     }
 
     private var serverDotLabel: String {
         switch store.serverStatus {
-        case .checking: return "CHECK"
-        case .online:   return "ONLINE"
-        case .offline:  return "OFFLINE"
+        case .checking:  return "CHECK"
+        case .online:    return "ONLINE"
+        case .offline:   return "OFFLINE"
+        case .noAccess:  return "NO ACCESS"
         }
     }
 
