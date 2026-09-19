@@ -958,6 +958,21 @@ private struct MakeBackupsSheet: View {
     @State private var toast: String?
     @State private var isRestoring = false
 
+    private func exportBackup(_ b: MakeBackup) {
+        let url = MakeToolsStore.backupDir.appendingPathComponent(b.localFile)
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            showToast("❌ File không còn tồn tại")
+            return
+        }
+        let ac = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        guard let scene = UIApplication.shared.connectedScenes
+            .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+              let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController else { return }
+        var presenter = root
+        while let next = presenter.presentedViewController { presenter = next }
+        presenter.present(ac, animated: true)
+    }
+
     private static let bg = Color(red: 0.04, green: 0.05, blue: 0.13)
     private static let df: DateFormatter = {
         let f = DateFormatter(); f.dateStyle = .short; f.timeStyle = .short; return f
@@ -1052,6 +1067,15 @@ private struct MakeBackupsSheet: View {
             }
             .buttonStyle(.plain)
             .disabled(isRestoring)
+
+            Button {
+                exportBackup(b)
+            } label: {
+                Image(systemName: "arrow.down.circle")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(AppTheme.neonCyan)
+            }
+            .buttonStyle(.plain)
 
             Button {
                 store.deleteBackup(b)
