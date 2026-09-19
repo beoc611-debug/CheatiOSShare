@@ -34,6 +34,7 @@ struct MakeToolsView: View {
     @State private var showShare = false
     @State private var shareURL: URL?
     @State private var showInfo = false
+    @State private var showPicker = false
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -59,20 +60,22 @@ struct MakeToolsView: View {
         .sheet(isPresented: $showShare) {
             if let url = shareURL { MakeToolsShareSheet(url: url) }
         }
-    }
-
-    /// Gọi thẳng UIDocumentPickerViewController từ UIKit (asCopy: true) — không lồng trong sheet của SwiftUI.
-    private func openPicker() {
-        MakeToolsPicker.shared.present { result in handlePicked(result) }
-    }
-
-    private func handlePicked(_ result: Result<[URL], Error>) {
-        switch result {
-        case .success(let urls):
-            if let u = urls.first { store.load(url: u) }
-        case .failure(let err):
-            store.loadError = err.localizedDescription
+        .fileImporter(
+            isPresented: $showPicker,
+            allowedContentTypes: [.item, .data],
+            allowsMultipleSelection: false
+        ) { result in
+            switch result {
+            case .success(let urls):
+                if let u = urls.first { store.load(url: u) }
+            case .failure(let err):
+                store.loadError = err.localizedDescription
+            }
         }
+    }
+
+    private func openPicker() {
+        showPicker = true
     }
 
     // MARK: Header
@@ -759,43 +762,3 @@ private struct MakeToolsShareSheet: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
-// MARK: - Chọn file bằng UIKit
-
-/// Bảng chọn file của hệ thống, hiện thẳng từ view controller trên cùng.
-/// `asCopy: true` để iOS sao chép file vào app — không cần quyền truy cập tại chỗ.
-final class MakeToolsPicker: NSObject, UIDocumentPickerDelegate {
-    static let shared = MakeToolsPicker()
-    private var onPick: ((Result<[URL], Error>) -> Void)?
-
-    func present(onPick: @escaping (Result<[URL], Error>) -> Void) {
-        self.onPick = onPick
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.item], asCopy: false)
-        picker.delegate = self
-        picker.allowsMultipleSelection = false
-        picker.shouldShowFileExtensions = true
-        guard let top = MakeToolsPicker.topController() else {
-            self.onPick = nil
-            onPick(.failure(MakeToolsError("Không mở được bảng chọn file.")))
-            return
-        }
-        top.present(picker, animated: true)
-    }
-
-    private static func topController() -> UIViewController? {
-        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-        let window = scenes.flatMap { $0.windows }.first { $0.isKeyWindow } ?? scenes.first?.windows.first
-        var vc = window?.rootViewController
-        while let presented = vc?.presentedViewController { vc = presented }
-        return vc
-    }
-
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        let cb = onPick
-        onPick = nil
-        cb?(.success(urls))
-    }
-
-    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-        onPick = nil
-    }
-}
