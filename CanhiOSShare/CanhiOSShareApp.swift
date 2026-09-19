@@ -1,5 +1,9 @@
 import SwiftUI
 
+extension Notification.Name {
+    static let openMakeToolsFile = Notification.Name("openMakeToolsFile")
+}
+
 @main
 struct CheatiOSShareApp: App {
     @StateObject private var appState = AppState()
@@ -20,6 +24,10 @@ struct CheatiOSShareApp: App {
                 .onAppear {
                     appState.detectSupport()
                     PatchProjectLibrary.migrateRemoveLegacyFiles()
+                }
+                .onOpenURL { url in
+                    MakeToolsStore.shared.load(url: url)
+                    NotificationCenter.default.post(name: .openMakeToolsFile, object: nil)
                 }
         }
     }

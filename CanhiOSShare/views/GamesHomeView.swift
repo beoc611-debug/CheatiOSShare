@@ -64,6 +64,9 @@ struct GamesHomeView: View {
             }
         }
         .animation(.easeInOut(duration: 0.22), value: showLanguagePicker)
+        .onReceive(NotificationCenter.default.publisher(for: .openMakeToolsFile)) { _ in
+            selectedTab = 3
+        }
         .task {
             if !hasPickedLanguage { showLanguagePicker = true }
         }
