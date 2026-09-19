@@ -31,19 +31,21 @@ private enum MTStyle {
 
 struct MakeToolsView: View {
     @ObservedObject private var store = MakeToolsStore.shared
+    @EnvironmentObject private var licenseGate: LicenseGateStore
     @State private var showInfo = false
     @State private var showPicker = false
+
+    // Admin/VIP keys bypass server access check
+    private var hasAccess: Bool {
+        licenseGate.isVipEligible || store.serverStatus == .online || store.serverStatus == .checking
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
             TechBackground()
-            if store.serverStatus == .noAccess {
-                VStack(spacing: 0) {
-                    header
-                    Spacer()
-                    serverOfflineOverlay
-                    Spacer()
-                }
+            if !hasAccess && store.serverStatus == .noAccess {
+                // Only background + lock message, no content behind
+                serverOfflineOverlay
             } else {
                 VStack(spacing: 0) {
                     header
@@ -62,7 +64,7 @@ struct MakeToolsView: View {
                     }
                     .scrollDismissesKeyboard15()
                 }
-                .allowsHitTesting(store.serverStatus == .online || store.serverStatus == .checking)
+                .allowsHitTesting(store.serverStatus == .online || store.serverStatus == .checking || licenseGate.isVipEligible)
 
                 if store.serverStatus == .offline {
                     serverOfflineOverlay
