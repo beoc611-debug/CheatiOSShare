@@ -26,9 +26,9 @@ final class LicenseGateStore: ObservableObject {
         }
     }
 
-    static var storedKeyCode: String? { keychainLoad() }
+    nonisolated static var storedKeyCode: String? { keychainLoad() }
 
-    private static func keychainLoad() -> String? {
+    nonisolated private static func keychainLoad() -> String? {
         let q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: kcService,
