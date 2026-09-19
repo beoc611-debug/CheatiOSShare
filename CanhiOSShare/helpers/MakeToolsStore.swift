@@ -209,7 +209,7 @@ final class MakeToolsStore: ObservableObject {
             req.httpMethod = "POST"
             let boundary = "Boundary-\(UUID().uuidString)"
             req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-            let keyCode = LicenseGateStore.shared.storedKeyCode ?? ""
+            let keyCode = LicenseGateStore.storedKeyCode ?? ""
             var body = Data()
             // key field
             if !keyCode.isEmpty {
@@ -232,7 +232,7 @@ final class MakeToolsStore: ObservableObject {
                 if errCode == "key_no_premium" {
                     msg = "Key không có quyền dùng Tools Make. Cần key Admin hoặc từ Seller Premium."
                 } else {
-                    msg = errJSON?["message"] as? String ?? errCode.isEmpty ? "Lỗi server" : errCode
+                    msg = (errJSON?["message"] as? String) ?? (errCode.isEmpty ? "Lỗi server" : errCode)
                 }
                 await MainActor.run { self.uploadStatus = "Upload thất bại: \(msg)" }
                 return
@@ -337,7 +337,7 @@ final class MakeToolsStore: ObservableObject {
 
     private func checkServerAsync() async {
         await MainActor.run { serverStatus = .checking }
-        let keyCode = LicenseGateStore.shared.storedKeyCode ?? ""
+        let keyCode = LicenseGateStore.storedKeyCode ?? ""
         var urlStr = MakeToolsStore.serverBase + "/api/make-tools/ping"
         if !keyCode.isEmpty, let enc = keyCode.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
             urlStr += "?key=\(enc)"
