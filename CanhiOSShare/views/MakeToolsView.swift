@@ -873,18 +873,33 @@ private struct MakeNumberField: View {
             Text(field.label)
                 .font(.system(size: 11)).foregroundStyle(MTStyle.muted)
                 .lineLimit(2).fixedSize(horizontal: false, vertical: true)
-            TextField("", text: $text)
-                .keyboardType(.numbersAndPunctuation)
-                .autocorrectionDisabled()
-                .focused($focused)
-                .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 10).padding(.vertical, 9)
-                .background(MTStyle.fieldFill, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .strokeBorder(focused ? accent : Color.white.opacity(0.12), lineWidth: 1))
+            ZStack(alignment: .leading) {
+                if !focused {
+                    Text("••••")
+                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Color.white.opacity(0.55))
+                        .padding(.horizontal, 10).padding(.vertical, 9)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                        .onTapGesture { focused = true }
+                } else {
+                    TextField("", text: $text)
+                        .keyboardType(.numbersAndPunctuation)
+                        .autocorrectionDisabled()
+                        .focused($focused)
+                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10).padding(.vertical, 9)
+                }
+            }
+            .background(MTStyle.fieldFill, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .strokeBorder(focused ? accent : Color.white.opacity(0.12), lineWidth: 1))
         }
         .onAppear { text = MTStyle.number(store.values[field.id] ?? field.num) }
+        .onChange(of: focused) { isFocused in
+            if isFocused { text = MTStyle.number(store.values[field.id] ?? field.num) }
+        }
         .onChange(of: text) { new in
             let norm = new.replacingOccurrences(of: ",", with: ".")
             if let d = Double(norm), store.values[field.id] != d { store.values[field.id] = d }

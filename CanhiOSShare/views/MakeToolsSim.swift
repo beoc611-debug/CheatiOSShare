@@ -253,8 +253,8 @@ enum MakeSimBuilder {
                 sc.note = "Mesh \(gname) đang tắt trong ô tinh chỉnh — file sẽ không sửa mesh này."
             }
             spec("Collider", "CapsuleCollider · bone_Head", wide: true)
-            spec("Center.x", sgn(cxv, 6), hl: true); spec("Radius", fmt(rad, 6), hl: true); spec("Vùng aim", zoneName(y), hl: true)
-            spec("Collider khác", off ? "34 cái bị triệt tiêu (r = h = 0)" : "35 cái giữ nguyên", hl: off)
+            spec("Center.x", "••••", hl: true); spec("Radius", "••••", hl: true); spec("Vùng aim", zoneName(y), hl: true)
+            spec("Collider khác", off ? "Đã xử lý ✓" : "Giữ nguyên", hl: off)
             spec("File", "63.056 byte")
             sc.legend = [MakeSimLegend(color: sc.accent, text: "Hitbox đầu (đã dời)"),
                          MakeSimLegend(color: ghostColor, text: "Vị trí đầu gốc"),
