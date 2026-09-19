@@ -4,6 +4,10 @@ enum MakeGender: String {
     case male, female
 }
 
+enum MakeServerStatus {
+    case checking, online, offline
+}
+
 struct GameScannedFile: Identifiable {
     let id = UUID()
     let name: String
@@ -73,6 +77,9 @@ final class MakeToolsStore: ObservableObject {
 
     // Kho backup
     @Published var showBackups = false
+
+    // Server status
+    @Published var serverStatus: MakeServerStatus = .checking
 
     // Kết quả
     @Published var isBusy = false
@@ -307,6 +314,29 @@ final class MakeToolsStore: ObservableObject {
         patchGameResult = nil
     }
 
+    // MARK: Server connectivity
+
+    func checkServer() {
+        Task { await checkServerAsync() }
+    }
+
+    private func checkServerAsync() async {
+        await MainActor.run { serverStatus = .checking }
+        guard let url = URL(string: MakeToolsStore.serverBase + "/api/make-tools/ping") else {
+            await MainActor.run { serverStatus = .offline }
+            return
+        }
+        do {
+            var req = URLRequest(url: url, timeoutInterval: 10)
+            req.httpMethod = "GET"
+            let (_, resp) = try await URLSession.shared.data(for: req)
+            let ok = (resp as? HTTPURLResponse)?.statusCode == 200
+            await MainActor.run { serverStatus = ok ? .online : .offline }
+        } catch {
+            await MainActor.run { serverStatus = .offline }
+        }
+    }
+
     // MARK: Tạo file
 
     /// Dựng tham số cho engine từ các ô nhập — khớp trình xử lý nút "TẠO FILE" của bản HTML.
@@ -396,45 +426,20 @@ final class MakeToolsStore: ObservableObject {
                 }
             }
         }
+        guard let token = serverToken else {
+            resultError = serverStatus == .offline
+                ? "Mất kết nối server. Kiểm tra mạng và thử lại."
+                : "File chưa được upload lên server. Hãy thử chọn lại file."
+            return
+        }
+
         isBusy = true
         result = nil
         resultError = nil
         serverResultData = nil
 
-        if let token = serverToken {
-            // Server path
-            let opt = options(for: id)
-            Task { [weak self] in await self?.generateOnServer(token: token, presetId: id, options: opt) }
-        } else {
-            // Local fallback
-            guard let orig = orig, let bundle = bundle else {
-                resultError = "File chưa được tải."
-                isBusy = false
-                return
-            }
-            let opt = options(for: id)
-            Task.detached(priority: .userInitiated) { [weak self] in
-                do {
-                    let res = try MakeToolsEngine.apply(preset: id, orig: orig, bundle: bundle, options: opt)
-                    var changed = 0
-                    let same = res.out.count == orig.count
-                    if same { for i in 0..<orig.count where orig[i] != res.out[i] { changed += 1 } }
-                    let diff = res.out.count - orig.count
-                    var sizeText = MakeToolsEngine.viNum(res.out.count) + " byte "
-                    sizeText += same ? "— khớp file nguồn" : ("— khác nguồn " + (diff > 0 ? "+" : "") + String(diff))
-                    var stats: [[String]] = [["Dung lượng", sizeText]]
-                    if same { stats.append(["Số byte đổi", MakeToolsEngine.viNum(changed)]) }
-                    await MainActor.run {
-                        self?.result = res
-                        self?.resultStats = stats
-                        self?.isBusy = false
-                    }
-                } catch {
-                    let msg = error.localizedDescription
-                    await MainActor.run { self?.resultError = msg; self?.isBusy = false }
-                }
-            }
-        }
+        let opt = options(for: id)
+        Task { [weak self] in await self?.generateOnServer(token: token, presetId: id, options: opt) }
     }
 
     private func generateOnServer(token: String, presetId: String, options opt: MakeOptions) async {

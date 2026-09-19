@@ -54,7 +54,13 @@ struct MakeToolsView: View {
                 }
                 .scrollDismissesKeyboard15()
             }
+            .allowsHitTesting(store.serverStatus != .offline)
+
+            if store.serverStatus == .offline {
+                serverOfflineOverlay
+            }
         }
+        .onAppear { store.checkServer() }
         .fileImporter(
             isPresented: $showPicker,
             allowedContentTypes: [.item, .data],
@@ -72,6 +78,54 @@ struct MakeToolsView: View {
         }
         .sheet(isPresented: Binding(get: { store.showBackups }, set: { store.showBackups = $0 })) {
             MakeBackupsSheet(store: store)
+        }
+    }
+
+    private var serverOfflineOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.72).ignoresSafeArea()
+            VStack(spacing: 20) {
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 0.98, green: 0.27, blue: 0.35).opacity(0.15))
+                        .frame(width: 80, height: 80)
+                    Image(systemName: "wifi.slash")
+                        .font(.system(size: 34, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.98, green: 0.27, blue: 0.35))
+                }
+                VStack(spacing: 8) {
+                    Text("KHÔNG CÓ SERVER")
+                        .font(.system(size: 18, weight: .black))
+                        .foregroundStyle(.white)
+                    Text("Tools Make yêu cầu kết nối server để hoạt động.\nKiểm tra mạng và thử lại.")
+                        .font(.system(size: 13.5))
+                        .foregroundStyle(Color(red: 0.60, green: 0.65, blue: 0.78))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                }
+                Button {
+                    store.checkServer()
+                } label: {
+                    HStack(spacing: 8) {
+                        if store.serverStatus == .checking {
+                            ProgressView().tint(.white).scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        Text(store.serverStatus == .checking ? "Đang kiểm tra…" : "Thử lại")
+                            .font(.system(size: 14, weight: .bold))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 28).padding(.vertical, 12)
+                    .background(
+                        LinearGradient(colors: [AppTheme.neonCyan.opacity(0.8), AppTheme.neonPurple.opacity(0.8)],
+                                       startPoint: .leading, endPoint: .trailing),
+                        in: Capsule()
+                    )
+                }
+                .buttonStyle(.plain)
+                .disabled(store.serverStatus == .checking)
+            }
         }
     }
 
@@ -104,10 +158,45 @@ struct MakeToolsView: View {
                     .foregroundStyle(MTStyle.muted)
             }
             Spacer()
+            serverDot
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 12)
         .background(Color(red: 0.04, green: 0.05, blue: 0.13))
+    }
+
+    private var serverDot: some View {
+        VStack(spacing: 3) {
+            ZStack {
+                Circle()
+                    .fill(serverDotColor.opacity(0.2))
+                    .frame(width: 28, height: 28)
+                if store.serverStatus == .checking {
+                    ProgressView().tint(serverDotColor).scaleEffect(0.65)
+                } else {
+                    Circle().fill(serverDotColor).frame(width: 8, height: 8)
+                }
+            }
+            Text(serverDotLabel)
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundStyle(serverDotColor)
+        }
+    }
+
+    private var serverDotColor: Color {
+        switch store.serverStatus {
+        case .checking: return MTStyle.muted
+        case .online:   return MTStyle.ok
+        case .offline:  return MTStyle.danger
+        }
+    }
+
+    private var serverDotLabel: String {
+        switch store.serverStatus {
+        case .checking: return "CHECK"
+        case .online:   return "ONLINE"
+        case .offline:  return "OFFLINE"
+        }
     }
 
     // MARK: File
