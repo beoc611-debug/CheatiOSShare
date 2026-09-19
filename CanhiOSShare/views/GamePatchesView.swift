@@ -1,23 +1,6 @@
 ﻿import SwiftUI
 import WebKit
 
-// Cat cheo goc tren-trai va duoi-phai, 2 goc con lai vuong goc
-private struct PatchCutShape: Shape {
-    var cut: CGFloat
-    func path(in rect: CGRect) -> Path {
-        let w = rect.width; let h = rect.height; let c = cut
-        var p = Path()
-        p.move(to: CGPoint(x: c, y: 0))
-        p.addLine(to: CGPoint(x: w, y: 0))
-        p.addLine(to: CGPoint(x: w, y: h - c))
-        p.addLine(to: CGPoint(x: w - c, y: h))
-        p.addLine(to: CGPoint(x: 0, y: h))
-        p.addLine(to: CGPoint(x: 0, y: c))
-        p.addLine(to: CGPoint(x: c, y: 0))
-        p.closeSubpath()
-        return p
-    }
-}
 
 struct GamePatchesView: View {
     @Environment(\.appLanguage) private var language
@@ -36,7 +19,7 @@ struct GamePatchesView: View {
     @State private var containersLoaded = false
     @State private var gameNotice: GameNotice?
     @State private var showVideoSheet = false
-    @State private var selectedFeatureTab = 0   // 0 = Tính năng nhanh, 1 = Thông tin
+    @State private var selectedFeatureTab = 0   // 0 = T�nh nang nhanh, 1 = Th�ng tin
     @State private var borderRotation: Double = 0
 
     private var currentContainerVideoUrl: String? {
@@ -209,9 +192,9 @@ struct GamePatchesView: View {
             ZStack(alignment: .topLeading) {
                 gameIconView
                     .frame(width: 58, height: 58)
-                    .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+                    .clipShape(CutShape(cut: 15))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 15, style: .continuous)
+                        CutShape(cut: 15)
                             .strokeBorder(
                                 LinearGradient(
                                     colors: [AppTheme.techGlow.opacity(0.70), AppTheme.neonPurple.opacity(0.55)],
@@ -279,9 +262,9 @@ struct GamePatchesView: View {
                 )
             }
         )
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .clipShape(CutShape(cut: 20))
         .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            CutShape(cut: 20)
                 .strokeBorder(
                     LinearGradient(
                         colors: [AppTheme.techGlow.opacity(0.50), AppTheme.neonPurple.opacity(0.35)],
@@ -325,10 +308,10 @@ struct GamePatchesView: View {
             .padding(5)
             .background(
                 Color(red: 0.04, green: 0.07, blue: 0.16).opacity(0.88),
-                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+                in: CutShape(cut: 20)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                CutShape(cut: 20)
                     .strokeBorder(
                         LinearGradient(
                             colors: [AppTheme.techGlow.opacity(0.40), AppTheme.neonPurple.opacity(0.30)],
@@ -359,7 +342,7 @@ struct GamePatchesView: View {
             .padding(.vertical, 10)
             .background {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    CutShape(cut: 15)
                         .fill(
                             LinearGradient(
                                 colors: [AppTheme.techGlow.opacity(0.26), AppTheme.neonPurple.opacity(0.22)],
@@ -367,7 +350,7 @@ struct GamePatchesView: View {
                             )
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 15, style: .continuous)
+                            CutShape(cut: 15)
                                 .strokeBorder(
                                     LinearGradient(
                                         colors: [AppTheme.techGlow, AppTheme.neonPurple],
@@ -388,7 +371,7 @@ struct GamePatchesView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Feature Tab Selector ("Tính năng nhanh" | "Thông tin")
+    // MARK: - Feature Tab Selector ("T�nh nang nhanh" | "Th�ng tin")
 
     private var featureTabSelector: some View {
         HStack(spacing: 0) {
@@ -398,10 +381,10 @@ struct GamePatchesView: View {
         .padding(4)
         .background(
             Color(red: 0.04, green: 0.06, blue: 0.15).opacity(0.92),
-            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+            in: CutShape(cut: 18)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            CutShape(cut: 18)
                 .strokeBorder(AppTheme.neonPurple.opacity(0.20), lineWidth: 1)
         )
     }
@@ -420,7 +403,7 @@ struct GamePatchesView: View {
                 .padding(.vertical, 10)
                 .background {
                     if isSelected {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        CutShape(cut: 14)
                             .fill(
                                 LinearGradient(
                                     colors: [AppTheme.neonPurple.opacity(0.70), AppTheme.techGlow.opacity(0.55)],
@@ -497,10 +480,10 @@ struct GamePatchesView: View {
                 HStack(alignment: .top) {
                     // Feature icon
                     ZStack {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        CutShape(cut: 12)
                             .fill(rowColor.opacity(isOn ? 0.22 : 0.10))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                CutShape(cut: 12)
                                     .strokeBorder(rowColor.opacity(isOn ? 0.65 : 0.30), lineWidth: 1)
                             )
                             .shadow(color: rowColor.opacity(isOn ? 0.35 : 0.0), radius: 8)
@@ -567,9 +550,9 @@ struct GamePatchesView: View {
                     }
                 }
             )
-            .clipShape(PatchCutShape(cut: 18))
+            .clipShape(CutShape(cut: 18))
             .overlay(
-                PatchCutShape(cut: 18)
+                CutShape(cut: 18)
                     .strokeBorder(
                         isOn
                             ? LinearGradient(colors: [rowColor.opacity(0.70), rowColor.opacity(0.35)], startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -578,7 +561,7 @@ struct GamePatchesView: View {
                     )
             )
             .overlay(
-                PatchCutShape(cut: 18)
+                CutShape(cut: 18)
                     .stroke(
                         AngularGradient(
                             colors: [
@@ -607,7 +590,7 @@ struct GamePatchesView: View {
 
     private var infoTab: some View {
         VStack(spacing: 0) {
-            infoRow(label: "Bundle ID", value: game.bundleID.isEmpty ? "—" : game.bundleID)
+            infoRow(label: "Bundle ID", value: game.bundleID.isEmpty ? "�" : game.bundleID)
             Divider().overlay(AppTheme.techGlow.opacity(0.15)).padding(.horizontal, 16)
             infoRow(label: "S\u{1ED1} t\u{00ED}nh n\u{0103}ng", value: "\(displayedItems.count)")
             if let gameType = game.type, !gameType.isEmpty {
@@ -616,9 +599,9 @@ struct GamePatchesView: View {
             }
         }
         .background(Color(red: 0.05, green: 0.07, blue: 0.16).opacity(0.90))
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .clipShape(CutShape(cut: 20))
         .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            CutShape(cut: 20)
                 .strokeBorder(
                     LinearGradient(
                         colors: [AppTheme.techGlow.opacity(0.35), AppTheme.neonPurple.opacity(0.22)],
@@ -665,7 +648,7 @@ struct GamePatchesView: View {
                     colors: [AppTheme.neonPurple, Color(red: 0.40, green: 0.18, blue: 0.85), AppTheme.techGlow.opacity(0.70)],
                     startPoint: .leading, endPoint: .trailing
                 ),
-                in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+                in: CutShape(cut: 18)
             )
             .shadow(color: AppTheme.neonPurple.opacity(0.55), radius: 16, x: -4, y: 8)
             .shadow(color: AppTheme.techGlow.opacity(0.35), radius: 16, x: 4, y: 8)
@@ -686,9 +669,9 @@ struct GamePatchesView: View {
             .foregroundStyle(AppTheme.techGlow)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 15)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(.ultraThinMaterial, in: CutShape(cut: 18))
             .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                CutShape(cut: 18)
                     .strokeBorder(AppTheme.techGlow.opacity(0.55), lineWidth: 1)
             )
             .shadow(color: AppTheme.techGlow.opacity(0.18), radius: 10, x: 0, y: 4)
@@ -908,7 +891,7 @@ struct GamePatchesView: View {
                     await MainActor.run {
                         togglingProjectID = nil
                         projectStates[item.id] = false
-                        toast = ToastMessage(text: "Xác thực key thất bại. Vui lòng thử lại.", style: .error)
+                        toast = ToastMessage(text: "X�c th?c key th?t b?i. Vui l�ng th? l?i.", style: .error)
                     }
                     return
                 }
@@ -967,7 +950,7 @@ private struct VideoWebSheet: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
-                        Button("Đóng") { dismiss() }
+                        Button("��ng") { dismiss() }
                             .foregroundStyle(AppTheme.neonPurple)
                     }
                 }

@@ -10,7 +10,7 @@ struct LicenseStatusBar: View {
 
             // Shield + lock icon
             ZStack {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                CutShape(cut: 16)
                     .fill(
                         LinearGradient(
                             colors: [AppTheme.neonPurple.opacity(0.28), AppTheme.techGlow.opacity(0.18)],
@@ -18,7 +18,7 @@ struct LicenseStatusBar: View {
                         )
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        CutShape(cut: 16)
                             .strokeBorder(AppTheme.neonPurple.opacity(0.55), lineWidth: 1)
                     )
                     .shadow(color: AppTheme.neonPurple.opacity(0.35), radius: 10)
@@ -79,7 +79,7 @@ struct LicenseStatusBar: View {
                             colors: [AppTheme.neonPurple, AppTheme.techGlow],
                             startPoint: .leading, endPoint: .trailing
                         ),
-                        in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        in: CutShape(cut: 16)
                     )
                     .shadow(color: AppTheme.neonPurple.opacity(0.60), radius: 12, y: 3)
             }
@@ -89,9 +89,9 @@ struct LicenseStatusBar: View {
         .padding(.vertical, 14)
         .background(Color(red: 0.028, green: 0.046, blue: 0.108).opacity(0.96))
         .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .clipShape(CutShape(cut: 24))
         .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            CutShape(cut: 24)
                 .strokeBorder(
                     LinearGradient(
                         colors: [AppTheme.neonPurple.opacity(0.65), AppTheme.techGlow.opacity(0.40)],

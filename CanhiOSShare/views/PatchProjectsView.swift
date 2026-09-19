@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
@@ -141,7 +141,7 @@ struct PatchProjectRow: View {
                 .font(.title3)
                 .foregroundStyle(AppTheme.accent)
                 .frame(width: 34, height: 34)
-                .background(AppTheme.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 9))
+                .background(AppTheme.accent.opacity(0.12), in: CutShape(cut: 9))
             VStack(alignment: .leading, spacing: 3) {
                 Text(item.project?.name ?? language.text("patch.locked_project"))
                     .font(.body.weight(.semibold))

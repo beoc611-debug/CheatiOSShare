@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.appLanguage) private var language
@@ -151,7 +151,7 @@ struct SettingsView: View {
     }
 
     private var neonAccentBar: some View {
-        RoundedRectangle(cornerRadius: 2, style: .continuous)
+        CutShape(cut: 2)
             .fill(LinearGradient(colors: [AppTheme.neonCyan, AppTheme.techGlow], startPoint: .top, endPoint: .bottom))
             .frame(width: 3, height: 17)
             .shadow(color: AppTheme.neonCyan.opacity(0.70), radius: 5)
@@ -203,10 +203,10 @@ struct SettingsView: View {
     private func deviceRow(icon: String, iconGradient: [Color], glowColor: Color, label: String, value: String) -> some View {
         HStack(spacing: 14) {
             ZStack {
-                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                CutShape(cut: 11)
                     .fill(LinearGradient(colors: iconGradient, startPoint: .topLeading, endPoint: .bottomTrailing))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        CutShape(cut: 11)
                             .strokeBorder(glowColor.opacity(0.40), lineWidth: 1)
                     )
                     .shadow(color: glowColor.opacity(0.28), radius: 8)
@@ -269,12 +269,12 @@ struct SettingsView: View {
         let tint  = isOK ? green : red
         return HStack(spacing: 14) {
             ZStack {
-                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                CutShape(cut: 11)
                     .fill(LinearGradient(
                         colors: [Color(red: 0.18, green: 0.52, blue: 1.00), Color(red: 0.10, green: 0.35, blue: 0.82)],
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     ))
-                    .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .overlay(CutShape(cut: 11)
                         .strokeBorder(AppTheme.techGlow.opacity(0.40), lineWidth: 1))
                     .shadow(color: AppTheme.techGlow.opacity(0.30), radius: 8)
                 Image(systemName: "speedometer")
@@ -309,9 +309,9 @@ struct SettingsView: View {
     private func versionRow(label: String, number: String, range: String, gradient: [Color], glow: Color) -> some View {
         HStack(spacing: 14) {
             ZStack {
-                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                CutShape(cut: 11)
                     .fill(LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .overlay(CutShape(cut: 11)
                         .strokeBorder(glow.opacity(0.40), lineWidth: 1))
                     .shadow(color: glow.opacity(0.28), radius: 8)
                 Text(number)
@@ -344,12 +344,12 @@ struct SettingsView: View {
             } label: {
                 HStack(spacing: 14) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        CutShape(cut: 11)
                             .fill(LinearGradient(
                                 colors: [Color(red: 0.45, green: 0.15, blue: 0.92), Color(red: 0.28, green: 0.10, blue: 0.72)],
                                 startPoint: .topLeading, endPoint: .bottomTrailing
                             ))
-                            .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous)
+                            .overlay(CutShape(cut: 11)
                                 .strokeBorder(AppTheme.neonPurple.opacity(0.45), lineWidth: 1))
                             .shadow(color: AppTheme.neonPurple.opacity(0.32), radius: 8)
                         Text("27")
@@ -410,9 +410,9 @@ struct SettingsView: View {
                         }
                     }
                     .background(Color(red: 0.022, green: 0.038, blue: 0.092).opacity(0.88))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .clipShape(CutShape(cut: 16))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        CutShape(cut: 16)
                             .strokeBorder(AppTheme.neonPurple.opacity(0.22), lineWidth: 1)
                     )
                     .padding(.horizontal, 14)
@@ -457,9 +457,9 @@ struct SettingsView: View {
         .padding(.vertical, 16)
         .background(Color(red: 0.030, green: 0.050, blue: 0.115).opacity(0.75))
         .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .clipShape(CutShape(cut: 20))
         .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            CutShape(cut: 20)
                 .strokeBorder(
                     LinearGradient(colors: [AppTheme.neonCyan.opacity(0.38), AppTheme.techGlow.opacity(0.22)], startPoint: .topLeading, endPoint: .bottomTrailing),
                     lineWidth: 1

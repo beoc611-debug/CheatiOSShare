@@ -18,24 +18,6 @@ private struct TabBarTopBorder: Shape {
     }
 }
 
-// Card cat cheo goc tren-trai va duoi-phai, 2 goc con lai vuong goc
-private struct CutCornerCardShape: Shape {
-    var cut: CGFloat
-
-    func path(in rect: CGRect) -> Path {
-        let w = rect.width; let h = rect.height; let c = cut
-        var p = Path()
-        p.move(to: CGPoint(x: c, y: 0))
-        p.addLine(to: CGPoint(x: w, y: 0))       // canh top -> goc tren-phai vuong
-        p.addLine(to: CGPoint(x: w, y: h - c))   // canh phai -> diem cat duoi-phai
-        p.addLine(to: CGPoint(x: w - c, y: h))   // cat cheo duoi-phai
-        p.addLine(to: CGPoint(x: 0, y: h))        // canh bottom -> goc duoi-trai vuong
-        p.addLine(to: CGPoint(x: 0, y: c))        // canh trai -> diem cat tren-trai
-        p.addLine(to: CGPoint(x: c, y: 0))        // cat cheo tren-trai
-        p.closeSubpath()
-        return p
-    }
-}
 
 // Chi bo goc tren — thay the UnevenRoundedRectangle (iOS 17+) de tuong thich iOS 16
 private struct TopRoundedShape: Shape {
@@ -240,11 +222,11 @@ struct GamesHomeView: View {
                 SettingsView()
             } label: {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    CutShape(cut: 13)
                         .fill(AppTheme.cyberBase.opacity(0.80))
                         .frame(width: 46, height: 46)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            CutShape(cut: 13)
                                 .strokeBorder(
                                     LinearGradient(
                                         colors: [AppTheme.neonPurple.opacity(0.80),
@@ -592,11 +574,8 @@ struct GamesHomeView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 13)
                 .foregroundStyle(.white)
-                .background(AppTheme.techCardFill, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .strokeBorder(AppTheme.techCardStroke, lineWidth: 1)
-                )
+                .background(AppTheme.techCardFill, in: CutShape(cut: 13))
+                .overlay(CutShape(cut: 13).strokeBorder(AppTheme.techCardStroke, lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
@@ -756,9 +735,9 @@ struct GameCardView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: cardHeight)
-        .clipShape(CutCornerCardShape(cut: cornerRadius))
+        .clipShape(CutShape(cut: cornerRadius))
         .overlay(
-            CutCornerCardShape(cut: cornerRadius)
+            CutShape(cut: cornerRadius)
                 .strokeBorder(
                     LinearGradient(
                         colors: [
@@ -773,7 +752,7 @@ struct GameCardView: View {
                 )
         )
         .overlay(
-            CutCornerCardShape(cut: cornerRadius)
+            CutShape(cut: cornerRadius)
                 .stroke(
                     AngularGradient(
                         colors: [

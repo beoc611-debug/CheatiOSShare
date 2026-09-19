@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct SplashScreenView: View {
     var onFinished: () -> Void
@@ -233,8 +233,8 @@ struct SplashScreenView: View {
                     }
                     .padding(.horizontal, 32)
                     .padding(.vertical, 10)
-                    .background(cyan.opacity(0.04), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .background(cyan.opacity(0.04), in: CutShape(cut: 8))
+                    .overlay(CutShape(cut: 8)
                         .strokeBorder(cyan.opacity(0.12), lineWidth: 1))
                     .opacity(techRowOp)
 

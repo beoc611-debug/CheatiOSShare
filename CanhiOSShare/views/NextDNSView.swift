@@ -1,4 +1,4 @@
-import AVKit
+﻿import AVKit
 import SafariServices
 import SwiftUI
 
@@ -208,9 +208,9 @@ struct NextDNSView: View {
                                 .frame(maxWidth: .infinity).padding(.vertical, 14)
                         }
                     }
-                    .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .background(CutShape(cut: 18)
                         .fill(Color(red: 0.06, green: 0.10, blue: 0.22))
-                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .overlay(CutShape(cut: 18)
                             .strokeBorder(accent.opacity(0.28), lineWidth: 1)))
                     .padding(.horizontal, 36)
                 }
@@ -223,11 +223,11 @@ struct NextDNSView: View {
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                CutShape(cut: 14)
                     .fill(LinearGradient(colors: [accent.opacity(0.25), green.opacity(0.12)],
                                         startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 48, height: 48)
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .overlay(CutShape(cut: 14)
                         .strokeBorder(accent.opacity(0.35), lineWidth: 1))
                 NextDNSShieldIcon(size: 26)
             }
@@ -254,7 +254,7 @@ struct NextDNSView: View {
         if vm.isLoading && vm.profiles.isEmpty {
             VStack(spacing: 10) {
                 ForEach(0..<3, id: \.self) { _ in
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    CutShape(cut: 16)
                         .fill(Color(red: 0.08, green: 0.12, blue: 0.20).opacity(0.60))
                         .frame(height: 90).redacted(reason: .placeholder)
                 }
@@ -294,8 +294,8 @@ struct NextDNSView: View {
                 .padding(.horizontal, 12).padding(.vertical, 8)
                 .background(
                     (dns.isEnabled ? green.opacity(0.06) : accent.opacity(0.05)),
-                    in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    in: CutShape(cut: 10))
+                .overlay(CutShape(cut: 10)
                     .strokeBorder((dns.isEnabled ? green : accent).opacity(0.18), lineWidth: 1))
                 .padding(.bottom, 4)
 
@@ -393,11 +393,11 @@ private struct DNSProfileCard: View {
             HStack(spacing: 14) {
                 // Icon
                 ZStack {
-                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    CutShape(cut: 13)
                         .fill(LinearGradient(colors: [accent.opacity(0.18), green.opacity(0.10)],
                                             startPoint: .topLeading, endPoint: .bottomTrailing))
                         .frame(width: 50, height: 50)
-                        .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .overlay(CutShape(cut: 13)
                             .strokeBorder((isActive ? green : accent).opacity(0.30), lineWidth: 1))
                     NextDNSShieldIcon(size: 26, isActive: isActive)
                 }
@@ -423,14 +423,14 @@ private struct DNSProfileCard: View {
                 // Bật / Tắt button
                 Button { isActive ? onDeactivate() : onActivate() } label: {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        CutShape(cut: 10)
                             .fill(isActive
                                 ? LinearGradient(colors: [red.opacity(0.22), red.opacity(0.10)],
                                                  startPoint: .topLeading, endPoint: .bottomTrailing)
                                 : LinearGradient(colors: [accent.opacity(0.22), green.opacity(0.14)],
                                                  startPoint: .topLeading, endPoint: .bottomTrailing))
                             .frame(width: 56, height: 40)
-                            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .overlay(CutShape(cut: 10)
                                 .strokeBorder((isActive ? red : accent).opacity(0.40), lineWidth: 1))
                         if isActivating {
                             ProgressView().tint(accent).scaleEffect(0.75)
@@ -471,9 +471,9 @@ private struct DNSProfileCard: View {
             }.buttonStyle(.plain)
         }
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            CutShape(cut: 16)
                 .fill(Color(red: 0.06, green: 0.09, blue: 0.16).opacity(0.92))
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .overlay(CutShape(cut: 16)
                     .strokeBorder(
                         LinearGradient(colors: isActive
                             ? [green.opacity(0.45), green.opacity(0.15)]
@@ -528,7 +528,7 @@ private struct DNSNoticeSheet: View {
                                     LinearGradient(
                                         colors: [AppTheme.neonPurple, AppTheme.techGlow.opacity(0.85)],
                                         startPoint: .leading, endPoint: .trailing),
-                                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                    in: CutShape(cut: 14))
                         }.buttonStyle(.plain)
                         Spacer(minLength: 20)
                     }

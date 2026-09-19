@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
@@ -340,10 +340,10 @@ struct AppDetailView: View {
             }
             .padding(32)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                CutShape(cut: 20)
                     .fill(Color(red: 0.068, green: 0.098, blue: 0.180))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        CutShape(cut: 20)
                             .strokeBorder(Color.white.opacity(0.10), lineWidth: 1)
                     )
                     .shadow(color: AppTheme.neonPurple.opacity(0.3), radius: 30)

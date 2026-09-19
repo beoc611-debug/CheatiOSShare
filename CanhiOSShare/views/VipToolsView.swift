@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 import UIKit
 
 // MARK: - ViewModel
@@ -106,12 +106,12 @@ struct VipToolsView: View {
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                CutShape(cut: 14)
                     .fill(LinearGradient(
                         colors: [AppTheme.neonPurple.opacity(0.28), AppTheme.techGlow.opacity(0.14)],
                         startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 48, height: 48)
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .overlay(CutShape(cut: 14)
                         .strokeBorder(AppTheme.neonPurple.opacity(0.40), lineWidth: 1))
                 Image(systemName: "wrench.and.screwdriver.fill")
                     .font(.system(size: 20, weight: .semibold))
@@ -184,9 +184,9 @@ struct VipToolsView: View {
         }
         .padding(24)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            CutShape(cut: 20)
                 .fill(Color(red: 0.06, green: 0.09, blue: 0.18).opacity(0.95))
-                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .overlay(CutShape(cut: 20)
                     .strokeBorder(
                         LinearGradient(
                             colors: [Color(red: 1.00, green: 0.38, blue: 0.32).opacity(0.35),
@@ -197,7 +197,7 @@ struct VipToolsView: View {
     }
 
     private var loadingCard: some View {
-        RoundedRectangle(cornerRadius: 20, style: .continuous)
+        CutShape(cut: 20)
             .fill(Color(red: 0.08, green: 0.12, blue: 0.20).opacity(0.70))
             .frame(height: 180)
             .redacted(reason: .placeholder)
@@ -242,15 +242,15 @@ struct VipToolsView: View {
                         colors: [Color(red: 0.15, green: 0.55, blue: 1.00),
                                  Color(red: 0.40, green: 0.30, blue: 0.95)],
                         startPoint: .leading, endPoint: .trailing),
-                    in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    in: CutShape(cut: 13))
             }
             .buttonStyle(.plain)
         }
         .padding(24)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            CutShape(cut: 20)
                 .fill(Color(red: 0.06, green: 0.09, blue: 0.18).opacity(0.95))
-                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .overlay(CutShape(cut: 20)
                     .strokeBorder(
                         LinearGradient(
                             colors: [Color(red: 0.26, green: 0.55, blue: 1.00).opacity(0.40),
@@ -298,7 +298,7 @@ struct VipToolsView: View {
                         colors: [Color(red: 0.15, green: 0.55, blue: 1.00),
                                  Color(red: 0.40, green: 0.30, blue: 0.95)],
                         startPoint: .leading, endPoint: .trailing),
-                    in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    in: CutShape(cut: 13))
             }
             .buttonStyle(.plain)
 
@@ -314,9 +314,9 @@ struct VipToolsView: View {
         }
         .padding(24)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            CutShape(cut: 20)
                 .fill(Color(red: 0.06, green: 0.09, blue: 0.18).opacity(0.95))
-                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .overlay(CutShape(cut: 20)
                     .strokeBorder(
                         LinearGradient(
                             colors: [Color(red: 0.26, green: 0.55, blue: 1.00).opacity(0.40),
@@ -372,7 +372,7 @@ struct VipToolsView: View {
                         colors: [Color(red: 0.15, green: 0.55, blue: 1.00),
                                  Color(red: 0.40, green: 0.30, blue: 0.95)],
                         startPoint: .leading, endPoint: .trailing),
-                    in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    in: CutShape(cut: 13))
             }
             .buttonStyle(.plain)
 
@@ -387,9 +387,9 @@ struct VipToolsView: View {
         }
         .padding(24)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            CutShape(cut: 20)
                 .fill(Color(red: 0.06, green: 0.09, blue: 0.18).opacity(0.95))
-                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .overlay(CutShape(cut: 20)
                     .strokeBorder(
                         LinearGradient(
                             colors: [Color(red: 0.18, green: 0.84, blue: 0.44).opacity(0.40),
@@ -511,7 +511,7 @@ struct VipToolsNoticeSheet: View {
                                     LinearGradient(
                                         colors: [AppTheme.neonPurple, AppTheme.techGlow.opacity(0.85)],
                                         startPoint: .leading, endPoint: .trailing),
-                                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                    in: CutShape(cut: 14))
                         }
                         .buttonStyle(.plain)
 

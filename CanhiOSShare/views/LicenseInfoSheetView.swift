@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct LicenseInfoSheetView: View {
     @EnvironmentObject private var licenseGate: LicenseGateStore
@@ -73,7 +73,7 @@ struct LicenseInfoSheetView: View {
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color(red: 0.05, green: 0.08, blue: 0.18), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .background(Color(red: 0.05, green: 0.08, blue: 0.18), in: CutShape(cut: 12))
                         }
                     }
 
@@ -140,7 +140,7 @@ struct LicenseInfoSheetView: View {
                                     colors: [AppTheme.neonPurple, AppTheme.techGlow],
                                     startPoint: .leading, endPoint: .trailing
                                 ),
-                                in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                in: CutShape(cut: 18)
                             )
                             .shadow(color: AppTheme.neonPurple.opacity(0.55), radius: 14, y: 4)
                     }
@@ -164,9 +164,9 @@ struct LicenseInfoSheetView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(red: 0.06, green: 0.09, blue: 0.20).opacity(0.90))
         .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .clipShape(CutShape(cut: 20))
         .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            CutShape(cut: 20)
                 .strokeBorder(
                     LinearGradient(
                         colors: [AppTheme.techGlow.opacity(0.30), AppTheme.neonPurple.opacity(0.22)],
@@ -207,7 +207,7 @@ struct LicenseInfoSheetView: View {
     private func deviceRow(index: Int, device: LicenseDeviceEntry) -> some View {
         HStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                CutShape(cut: 10)
                     .fill(AppTheme.techGlow.opacity(0.12))
                     .frame(width: 38, height: 38)
                 Image(systemName: "iphone")

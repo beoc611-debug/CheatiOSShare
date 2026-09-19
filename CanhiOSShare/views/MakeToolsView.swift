@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
@@ -147,11 +147,11 @@ struct MakeToolsView: View {
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                CutShape(cut: 13)
                     .fill(LinearGradient(colors: [AppTheme.neonCyan.opacity(0.28), AppTheme.neonPurple.opacity(0.18)],
                                          startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 46, height: 46)
-                    .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .overlay(CutShape(cut: 13)
                         .strokeBorder(AppTheme.neonCyan.opacity(0.45), lineWidth: 1))
                 Image(systemName: "wand.and.stars")
                     .font(.system(size: 19, weight: .semibold))
@@ -255,7 +255,7 @@ struct MakeToolsView: View {
                     }
                 }
                 .padding(12)
-                .background(MTStyle.fieldFill.opacity(0.7), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(MTStyle.fieldFill.opacity(0.7), in: CutShape(cut: 12))
             }
         }
         .padding(14)
@@ -266,11 +266,11 @@ struct MakeToolsView: View {
         Button { store.scanGameFiles() } label: {
             HStack(spacing: 14) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    CutShape(cut: 16)
                         .fill(LinearGradient(colors: [AppTheme.neonCyan.opacity(0.20), AppTheme.neonPurple.opacity(0.20)],
                                              startPoint: .topLeading, endPoint: .bottomTrailing))
                         .frame(width: 56, height: 56)
-                        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(AppTheme.neonCyan.opacity(0.4), lineWidth: 1))
+                        .overlay(CutShape(cut: 16).strokeBorder(AppTheme.neonCyan.opacity(0.4), lineWidth: 1))
                     if store.isScanning {
                         ProgressView().tint(AppTheme.neonCyan).scaleEffect(0.9)
                     } else {
@@ -291,7 +291,7 @@ struct MakeToolsView: View {
                 Image(systemName: "chevron.right").foregroundStyle(MTStyle.dimText)
             }
             .padding(12)
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .overlay(CutShape(cut: 16)
                 .strokeBorder(AppTheme.neonCyan.opacity(0.35), style: StrokeStyle(lineWidth: 1.2, dash: [6, 5])))
         }
         .buttonStyle(PressScaleButtonStyle())
@@ -311,8 +311,8 @@ struct MakeToolsView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
+                .background(Color.white.opacity(0.04), in: CutShape(cut: 12))
+                .overlay(CutShape(cut: 12).strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
             }
             .buttonStyle(.plain)
 
@@ -326,8 +326,8 @@ struct MakeToolsView: View {
                         .foregroundStyle(MTStyle.warn)
                 }
                 .padding(.vertical, 10).padding(.horizontal, 12)
-                .background(MTStyle.warn.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(MTStyle.warn.opacity(0.22), lineWidth: 1))
+                .background(MTStyle.warn.opacity(0.08), in: CutShape(cut: 12))
+                .overlay(CutShape(cut: 12).strokeBorder(MTStyle.warn.opacity(0.22), lineWidth: 1))
             }
             .buttonStyle(.plain)
         }
@@ -380,8 +380,8 @@ struct MakeToolsView: View {
             Text(text).font(.system(size: 12.5)).foregroundStyle(color).frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(11)
-        .background(color.opacity(0.09), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(color.opacity(0.35), lineWidth: 1))
+        .background(color.opacity(0.09), in: CutShape(cut: 12))
+        .overlay(CutShape(cut: 12).strokeBorder(color.opacity(0.35), lineWidth: 1))
     }
 
     // MARK: Chọn preset
@@ -454,7 +454,7 @@ struct MakeToolsView: View {
         } label: {
             VStack(alignment: .leading, spacing: 8) {
                 ZStack(alignment: .topLeading) {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    CutShape(cut: 12)
                         .fill(LinearGradient(colors: [Color(red: 0.04, green: 0.07, blue: 0.14), Color(red: 0.02, green: 0.04, blue: 0.09)],
                                              startPoint: .top, endPoint: .bottom))
                     MakeSimCanvas(scene: scene, mini: true)
@@ -463,7 +463,7 @@ struct MakeToolsView: View {
                         .font(.system(size: 11, weight: .heavy, design: .monospaced))
                         .foregroundStyle(selected ? Color.black : Color.white)
                         .padding(.horizontal, 7).padding(.vertical, 3)
-                        .background(selected ? accent : Color.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                        .background(selected ? accent : Color.black.opacity(0.55), in: CutShape(cut: 7))
                         .padding(6)
                 }
                 .frame(height: 96)
@@ -489,8 +489,8 @@ struct MakeToolsView: View {
             }
             .padding(9)
             .frame(width: 158)
-            .background(AppTheme.techCardFill.opacity(0.9), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .background(AppTheme.techCardFill.opacity(0.9), in: CutShape(cut: 16))
+            .overlay(CutShape(cut: 16)
                 .strokeBorder(selected ? accent : Color.white.opacity(0.08), lineWidth: selected ? 1.6 : 1))
             .shadow(color: selected ? accent.opacity(0.35) : .clear, radius: 10, y: 3)
             .opacity(ok || selected ? 1 : 0.72)
@@ -520,12 +520,12 @@ struct MakeToolsView: View {
             }
 
             ZStack {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                CutShape(cut: 18)
                     .fill(LinearGradient(colors: [Color(red: 0.03, green: 0.06, blue: 0.12), Color(red: 0.02, green: 0.03, blue: 0.08)],
                                          startPoint: .top, endPoint: .bottom))
                 stageGrid
                 MakeSimStage(store: store, scene: scene)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .clipShape(CutShape(cut: 18))
                 VStack {
                     HStack {
                         HStack(spacing: 7) {
@@ -533,8 +533,8 @@ struct MakeToolsView: View {
                             Text(scene.chip).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(.white)
                         }
                         .padding(.horizontal, 10).padding(.vertical, 6)
-                        .background(Color.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).strokeBorder(scene.accent.opacity(0.55), lineWidth: 1))
+                        .background(Color.black.opacity(0.6), in: CutShape(cut: 9))
+                        .overlay(CutShape(cut: 9).strokeBorder(scene.accent.opacity(0.55), lineWidth: 1))
                         Spacer()
                     }
                     Spacer()
@@ -545,7 +545,7 @@ struct MakeToolsView: View {
                             .multilineTextAlignment(.center)
                             .padding(8)
                             .frame(maxWidth: .infinity)
-                            .background(Color(red: 0.16, green: 0.10, blue: 0.02).opacity(0.85), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .background(Color(red: 0.16, green: 0.10, blue: 0.02).opacity(0.85), in: CutShape(cut: 10))
                     }
                     HStack {
                         Spacer()
@@ -560,7 +560,7 @@ struct MakeToolsView: View {
                 .allowsHitTesting(false)
             }
             .frame(height: 350)
-            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+            .overlay(CutShape(cut: 18).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
 
             Text(p.desc)
                 .font(.system(size: 13.5))
@@ -572,8 +572,8 @@ struct MakeToolsView: View {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 8, alignment: .leading)], alignment: .leading, spacing: 6) {
                 ForEach(scene.legend) { l in
                     HStack(spacing: 6) {
-                        RoundedRectangle(cornerRadius: 3).fill(l.color).frame(width: 10, height: 10)
-                            .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(Color.white.opacity(0.5), lineWidth: 1))
+                        CutShape(cut: 3).fill(l.color).frame(width: 10, height: 10)
+                            .overlay(CutShape(cut: 3).strokeBorder(Color.white.opacity(0.5), lineWidth: 1))
                         Text(l.text).font(.system(size: 11.5)).foregroundStyle(MTStyle.muted)
                     }
                 }
@@ -594,7 +594,7 @@ struct MakeToolsView: View {
             while y < size.height { p.move(to: CGPoint(x: 0, y: y)); p.addLine(to: CGPoint(x: size.width, y: y)); y += 25 }
             ctx.stroke(p, with: .color(Color.white.opacity(0.04)), lineWidth: 1)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .clipShape(CutShape(cut: 18))
         .allowsHitTesting(false)
     }
 
@@ -603,8 +603,8 @@ struct MakeToolsView: View {
             .font(.system(size: 10.5, weight: .semibold))
             .foregroundStyle(color)
             .padding(.horizontal, 9).padding(.vertical, 4)
-            .background(Color.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(color.opacity(0.45), lineWidth: 1))
+            .background(Color.black.opacity(0.7), in: CutShape(cut: 8))
+            .overlay(CutShape(cut: 8).strokeBorder(color.opacity(0.45), lineWidth: 1))
     }
 
     private func genderToggle(_ accent: Color) -> some View {
@@ -615,14 +615,14 @@ struct MakeToolsView: View {
                         .font(.system(size: 12.5, weight: .bold))
                         .foregroundStyle(store.gender == g ? Color.black : MTStyle.muted)
                         .padding(.horizontal, 13).padding(.vertical, 6)
-                        .background(store.gender == g ? accent : Color.clear, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .background(store.gender == g ? accent : Color.clear, in: CutShape(cut: 8))
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(3)
-        .background(Color.black.opacity(0.35), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+        .background(Color.black.opacity(0.35), in: CutShape(cut: 11))
+        .overlay(CutShape(cut: 11).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
     }
 
     private func specsGrid(_ scene: MakeSimScene) -> some View {
@@ -658,8 +658,8 @@ struct MakeToolsView: View {
         }
         .padding(.horizontal, 11).padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(Color.white.opacity(0.07), lineWidth: 1))
+        .background(Color.white.opacity(0.035), in: CutShape(cut: 11))
+        .overlay(CutShape(cut: 11).strokeBorder(Color.white.opacity(0.07), lineWidth: 1))
     }
 
     // MARK: Tùy chỉnh
@@ -730,8 +730,8 @@ struct MakeToolsView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(LinearGradient(colors: [AppTheme.neonCyan, AppTheme.techGlow, AppTheme.neonPurple], startPoint: .leading, endPoint: .trailing),
-                            in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
+                            in: CutShape(cut: 16))
+                .overlay(CutShape(cut: 16).strokeBorder(Color.white.opacity(0.35), lineWidth: 1))
                 .shadow(color: AppTheme.neonCyan.opacity(0.35), radius: 14, y: 4)
                 .opacity(can ? 1 : 0.4)
             }
@@ -771,7 +771,7 @@ struct MakeToolsView: View {
                 Text(store.fileName ?? "")
                     .font(.system(size: 12, design: .monospaced)).foregroundStyle(.white)
                     .padding(10).frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.black.opacity(0.4), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .background(Color.black.opacity(0.4), in: CutShape(cut: 10))
 
                 // Patch vào game ngay
                 if store.canPatchGame || store.isPatchingGame || store.patchGameResult != nil {
@@ -785,8 +785,8 @@ struct MakeToolsView: View {
                     }
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity).padding(.vertical, 13)
-                    .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
+                    .background(Color.white.opacity(0.08), in: CutShape(cut: 14))
+                    .overlay(CutShape(cut: 14).strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
                 }
                 .buttonStyle(PressScaleButtonStyle())
             }
@@ -829,7 +829,7 @@ struct MakeToolsView: View {
                     isOk
                     ? LinearGradient(colors: [MTStyle.ok, Color(red: 0.02, green: 0.59, blue: 0.41)], startPoint: .leading, endPoint: .trailing)
                     : LinearGradient(colors: [AppTheme.neonCyan, AppTheme.techGlow, AppTheme.neonPurple], startPoint: .leading, endPoint: .trailing),
-                    in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    in: CutShape(cut: 14)
                 )
                 .shadow(color: (isOk ? MTStyle.ok : AppTheme.neonCyan).opacity(0.35), radius: 12, y: 4)
                 .opacity(store.canPatchGame || store.isPatchingGame || isOk ? 1 : 0.5)
@@ -892,8 +892,8 @@ private struct MakeNumberField: View {
                         .padding(.horizontal, 10).padding(.vertical, 9)
                 }
             }
-            .background(MTStyle.fieldFill, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
+            .background(MTStyle.fieldFill, in: CutShape(cut: 9))
+            .overlay(CutShape(cut: 9)
                 .strokeBorder(focused ? accent : Color.white.opacity(0.12), lineWidth: 1))
         }
         .onAppear { text = MTStyle.number(store.values[field.id] ?? field.num) }
@@ -954,8 +954,8 @@ private struct MakeColorField: View {
                     .font(.system(size: 14, weight: .semibold, design: .monospaced))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 10).padding(.vertical, 9)
-                    .background(MTStyle.fieldFill, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .background(MTStyle.fieldFill, in: CutShape(cut: 9))
+                    .overlay(CutShape(cut: 9)
                         .strokeBorder(Color(hex: hexValue) == nil ? MTStyle.danger : Color.white.opacity(0.12), lineWidth: 1))
             }
         }
@@ -1011,7 +1011,7 @@ private struct GameFileScanSheet: View {
                     } label: {
                         HStack(spacing: 14) {
                             ZStack {
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                CutShape(cut: 10)
                                     .fill(hintColor(file.hint).opacity(0.15))
                                     .frame(width: 42, height: 42)
                                 Image(systemName: hintIcon(file.hint))
@@ -1035,8 +1035,8 @@ private struct GameFileScanSheet: View {
                             Image(systemName: "chevron.right").font(.system(size: 12)).foregroundStyle(MTStyle.dimText)
                         }
                         .padding(12)
-                        .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+                        .background(Color.white.opacity(0.04), in: CutShape(cut: 14))
+                        .overlay(CutShape(cut: 14).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
                     }
                     .buttonStyle(PressScaleButtonStyle(scale: 0.98))
                 }
@@ -1144,7 +1144,7 @@ private struct MakeBackupsSheet: View {
     private func backupRow(_ b: MakeBackup) -> some View {
         HStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                CutShape(cut: 10)
                     .fill(hintColor(b.hint).opacity(0.14))
                     .frame(width: 42, height: 42)
                 Image(systemName: "clock.arrow.circlepath")
@@ -1201,8 +1201,8 @@ private struct MakeBackupsSheet: View {
             .buttonStyle(.plain)
         }
         .padding(12)
-        .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+        .background(Color.white.opacity(0.04), in: CutShape(cut: 14))
+        .overlay(CutShape(cut: 14).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
     }
 
     private func showToast(_ msg: String) {

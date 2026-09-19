@@ -73,6 +73,31 @@ extension Color {
     }
 }
 
+// MARK: - CutShape (góc trên phải + dưới trái cắt, 2 góc còn lại vuông)
+
+struct CutShape: InsettableShape {
+    var cut: CGFloat
+    var insetAmount: CGFloat = 0
+
+    func path(in rect: CGRect) -> Path {
+        let r = rect.insetBy(dx: insetAmount, dy: insetAmount)
+        let c = max(cut - insetAmount, 2)
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX, y: r.minY))
+        p.addLine(to: CGPoint(x: r.maxX - c, y: r.minY))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.minY + c))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.maxY))
+        p.addLine(to: CGPoint(x: r.minX + c, y: r.maxY))
+        p.addLine(to: CGPoint(x: r.minX, y: r.maxY - c))
+        p.closeSubpath()
+        return p
+    }
+
+    func inset(by amount: CGFloat) -> CutShape {
+        var copy = self; copy.insetAmount += amount; return copy
+    }
+}
+
 // MARK: - TechBackground
 
 struct TechBackground: View {
@@ -92,24 +117,21 @@ struct TechBackground: View {
 // MARK: - TechCard modifier
 
 struct TechCardModifier: ViewModifier {
-    var cornerRadius: CGFloat = 20
+    var cut: CGFloat = 20
 
     func body(content: Content) -> some View {
         content
             .background(AppTheme.techCardFill)
             .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(AppTheme.techCardStroke, lineWidth: 1)
-            )
+            .clipShape(CutShape(cut: cut))
+            .overlay(CutShape(cut: cut).strokeBorder(AppTheme.techCardStroke, lineWidth: 1))
             .shadow(color: AppTheme.techGlow.opacity(0.10), radius: 18, y: 5)
     }
 }
 
 extension View {
-    func techCard(_ cornerRadius: CGFloat = 20) -> some View {
-        modifier(TechCardModifier(cornerRadius: cornerRadius))
+    func techCard(_ cut: CGFloat = 20) -> some View {
+        modifier(TechCardModifier(cut: cut))
     }
 }
 
@@ -200,12 +222,12 @@ private struct ToastOverlay: ViewModifier {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 13)
                     .background(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        CutShape(cut: 20)
                             .fill(Color(red: 0.04, green: 0.06, blue: 0.12).opacity(0.92))
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            .background(.ultraThinMaterial, in: CutShape(cut: 20))
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        CutShape(cut: 20)
                             .strokeBorder(
                                 LinearGradient(
                                     colors: [toast.style.color.opacity(0.70), toast.style.color.opacity(0.20)],
@@ -325,7 +347,7 @@ struct AppSearchField: View {
         .frame(minHeight: 36)
         .background(
             Color(uiColor: .secondarySystemFill),
-            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+            in: CutShape(cut: 10)
         )
         .padding(.horizontal, AppTheme.pageInset)
         .padding(.vertical, 8)

@@ -35,10 +35,9 @@ struct KeyEntryView: View {
                             .textInputAutocapitalization(.characters)
                             .autocorrectionDisabled()
                             .padding(14)
-                            .background(AppTheme.techCardFill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .background(AppTheme.techCardFill, in: CutShape(cut: 14))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .strokeBorder(AppTheme.techCardStroke, lineWidth: 1)
+                                CutShape(cut: 14).strokeBorder(AppTheme.techCardStroke, lineWidth: 1)
                             )
                             .focused($isFocused)
                             .submitLabel(.go)
@@ -64,7 +63,7 @@ struct KeyEntryView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                     }
-                    .background(AppTheme.techGlow, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .background(AppTheme.techGlow, in: CutShape(cut: 14))
                     .foregroundStyle(Color.black)
                     .padding(.horizontal, 28)
                     .disabled(isSubmitting || code.trimmingCharacters(in: .whitespaces).isEmpty)
