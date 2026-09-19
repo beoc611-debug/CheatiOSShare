@@ -31,8 +31,6 @@ private enum MTStyle {
 
 struct MakeToolsView: View {
     @ObservedObject private var store = MakeToolsStore.shared
-    @State private var showShare = false
-    @State private var shareURL: URL?
     @State private var showInfo = false
     @State private var showPicker = false
 
@@ -57,9 +55,6 @@ struct MakeToolsView: View {
                 .scrollDismissesKeyboard15()
             }
         }
-        .sheet(isPresented: $showShare) {
-            if let url = shareURL { MakeToolsShareSheet(url: url) }
-        }
         .fileImporter(
             isPresented: $showPicker,
             allowedContentTypes: [.item, .data],
@@ -71,6 +66,12 @@ struct MakeToolsView: View {
             case .failure(let err):
                 store.loadError = err.localizedDescription
             }
+        }
+        .sheet(isPresented: Binding(get: { store.showScanResults }, set: { store.showScanResults = $0 })) {
+            GameFileScanSheet(store: store)
+        }
+        .sheet(isPresented: Binding(get: { store.showBackups }, set: { store.showBackups = $0 })) {
+            MakeBackupsSheet(store: store)
         }
     }
 
@@ -118,6 +119,7 @@ struct MakeToolsView: View {
             } else {
                 pickButton
             }
+            scanRow
 
             if store.isLoading {
                 HStack(spacing: 8) {
@@ -189,6 +191,46 @@ struct MakeToolsView: View {
                 .strokeBorder(AppTheme.neonCyan.opacity(0.35), style: StrokeStyle(lineWidth: 1.2, dash: [6, 5])))
         }
         .buttonStyle(PressScaleButtonStyle())
+    }
+
+    private var scanRow: some View {
+        HStack(spacing: 8) {
+            Button { store.scanGameFiles() } label: {
+                HStack(spacing: 8) {
+                    if store.isScanning {
+                        ProgressView().tint(AppTheme.neonCyan).scaleEffect(0.75)
+                    } else {
+                        Image(systemName: "magnifyingglass.circle.fill")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(AppTheme.neonCyan)
+                    }
+                    Text(store.isScanning ? "Đang dò…" : "Dò file từ game")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(store.isScanning ? MTStyle.muted : AppTheme.neonCyan)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(AppTheme.neonCyan.opacity(0.07), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(AppTheme.neonCyan.opacity(0.22), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .disabled(store.isScanning)
+
+            Button { store.showBackups = true } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "archivebox.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(MTStyle.warn)
+                    Text("Kho gốc")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(MTStyle.warn)
+                }
+                .padding(.vertical, 10).padding(.horizontal, 12)
+                .background(MTStyle.warn.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(MTStyle.warn.opacity(0.22), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     private var loadedFileRow: some View {
@@ -268,9 +310,21 @@ struct MakeToolsView: View {
     private var filterChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                chip("Tất cả", color: .white, on: store.filter == nil) { store.filter = nil }
+                chip("Tất cả", color: .white, on: store.filter == nil && !store.showCompatibleOnly) {
+                    store.filter = nil
+                    store.showCompatibleOnly = false
+                }
+                if store.hasFile && store.detection?.kind != nil {
+                    chip("✓ Dùng được", color: MTStyle.ok, on: store.showCompatibleOnly) {
+                        store.showCompatibleOnly.toggle()
+                        if store.showCompatibleOnly { store.filter = nil }
+                    }
+                }
                 ForEach(MakeCategory.allCases) { c in
-                    chip(c.title, color: c.color, on: store.filter == c) { store.filter = c }
+                    chip(c.title, color: c.color, on: store.filter == c) {
+                        store.filter = c
+                        store.showCompatibleOnly = false
+                    }
                 }
             }
         }
@@ -604,11 +658,6 @@ struct MakeToolsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 banner(res.note, color: MTStyle.ok, icon: "checkmark.circle.fill")
 
-                Text("THAY ĐỔI").font(.system(size: 11, weight: .bold, design: .monospaced)).tracking15(1.2).foregroundStyle(AppTheme.neonCyan)
-                VStack(spacing: 8) {
-                    ForEach(Array(res.rows.enumerated()), id: \.offset) { _, r in changeRow(r) }
-                }
-
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(Array(store.resultStats.enumerated()), id: \.offset) { _, s in
                         HStack(alignment: .top) {
@@ -617,26 +666,27 @@ struct MakeToolsView: View {
                         }
                     }
                 }
-                Text("File tải về giữ nguyên tên gốc, chép đè thẳng lên file cũ:")
+                Text("Chép đè thẳng lên file cũ:")
                     .font(.system(size: 11.5)).foregroundStyle(MTStyle.muted)
                 Text(store.fileName ?? "")
                     .font(.system(size: 12, design: .monospaced)).foregroundStyle(.white)
                     .padding(10).frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.black.opacity(0.4), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-                Button {
-                    if let u = store.writeResultFile() { shareURL = u; showShare = true }
-                } label: {
+                // Patch vào game ngay
+                if store.canPatchGame || store.isPatchingGame || store.patchGameResult != nil {
+                    patchGameButton
+                }
+
+                Button { presentShare() } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "square.and.arrow.up.fill")
-                        Text("LƯU / CHIA SẺ FILE ĐÃ SỬA").font(.system(size: 15, weight: .heavy))
+                        Text("LƯU / CHIA SẺ FILE ĐÃ SỬA").font(.system(size: 13.5, weight: .heavy))
                     }
                     .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity).padding(.vertical, 14)
-                    .background(LinearGradient(colors: [Color(red: 0.06, green: 0.73, blue: 0.51), Color(red: 0.02, green: 0.59, blue: 0.41)],
-                                               startPoint: .leading, endPoint: .trailing),
-                                in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .shadow(color: MTStyle.ok.opacity(0.4), radius: 10, y: 3)
+                    .frame(maxWidth: .infinity).padding(.vertical, 13)
+                    .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
                 }
                 .buttonStyle(PressScaleButtonStyle())
             }
@@ -645,20 +695,67 @@ struct MakeToolsView: View {
         }
     }
 
-    private func changeRow(_ r: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(r[0].isEmpty ? r[1] : r[0] + " · " + r[1])
-                .font(.system(size: 11.5, weight: .semibold)).foregroundStyle(MTStyle.muted)
-            HStack(alignment: .top, spacing: 6) {
-                Text(r[2]).font(.system(size: 11.5, design: .monospaced)).foregroundStyle(MTStyle.danger)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "arrow.right").font(.system(size: 10, weight: .bold)).foregroundStyle(MTStyle.dimText).padding(.top, 2)
-                Text(r[3]).font(.system(size: 11.5, weight: .semibold, design: .monospaced)).foregroundStyle(MTStyle.ok)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+    @ViewBuilder
+    private var patchGameButton: some View {
+        let isOk = store.patchGameResult == "ok"
+        let isErr = store.patchGameResult?.hasPrefix("err:") == true
+        let errMsg = store.patchGameResult.flatMap { $0.hasPrefix("err:") ? String($0.dropFirst(4)) : nil }
+
+        VStack(spacing: 8) {
+            Button { store.patchGameFile() } label: {
+                HStack(spacing: 10) {
+                    if store.isPatchingGame {
+                        ProgressView().tint(.black)
+                    } else if isOk {
+                        Image(systemName: "checkmark.circle.fill")
+                    } else {
+                        Image(systemName: "gamecontroller.fill")
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(store.isPatchingGame ? "ĐANG GHI VÀO GAME…" : isOk ? "ĐÃ PATCH THÀNH CÔNG" : "PATCH VÀO GAME NGAY")
+                            .font(.system(size: 15, weight: .black)).tracking15(0.5)
+                        if let gn = store.sourceGameName {
+                            Text(gn + (store.sourceGameHint.map { " · " + $0 } ?? ""))
+                                .font(.system(size: 11, weight: .semibold))
+                                .opacity(0.75)
+                        }
+                    }
+                    Spacer()
+                }
+                .foregroundStyle(isOk ? Color.black : Color(red: 0.01, green: 0.06, blue: 0.10))
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 16).padding(.vertical, 14)
+                .background(
+                    isOk
+                    ? LinearGradient(colors: [MTStyle.ok, Color(red: 0.02, green: 0.59, blue: 0.41)], startPoint: .leading, endPoint: .trailing)
+                    : LinearGradient(colors: [AppTheme.neonCyan, AppTheme.techGlow, AppTheme.neonPurple], startPoint: .leading, endPoint: .trailing),
+                    in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                )
+                .shadow(color: (isOk ? MTStyle.ok : AppTheme.neonCyan).opacity(0.35), radius: 12, y: 4)
+                .opacity(store.canPatchGame || store.isPatchingGame || isOk ? 1 : 0.5)
+            }
+            .buttonStyle(PressScaleButtonStyle())
+            .disabled(!store.canPatchGame)
+
+            if isErr, let msg = errMsg {
+                banner(msg, color: MTStyle.danger, icon: "xmark.octagon.fill")
+            }
+            if isOk {
+                Text("File đã được ghi đè vào game. Mở game để thấy hiệu lực.")
+                    .font(.system(size: 11.5)).foregroundStyle(MTStyle.ok).multilineTextAlignment(.center)
             }
         }
-        .padding(10)
-        .background(Color.white.opacity(0.03), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private func presentShare() {
+        guard let url = store.writeResultFile() else { return }
+        let ac = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        guard let scene = UIApplication.shared.connectedScenes
+            .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+              let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController else { return }
+        var presenter = root
+        while let next = presenter.presentedViewController { presenter = next }
+        presenter.present(ac, animated: true)
     }
 }
 
@@ -750,15 +847,235 @@ private struct MakeColorField: View {
     }
 }
 
-// MARK: - Share sheet
+// MARK: - Scan sheet
 
-private struct MakeToolsShareSheet: UIViewControllerRepresentable {
-    let url: URL
+private struct GameFileScanSheet: View {
+    @ObservedObject var store: MakeToolsStore
+    @Environment(\.dismiss) private var dismiss
 
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: [url], applicationActivities: nil)
+    private static let bg = Color(red: 0.04, green: 0.05, blue: 0.13)
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Self.bg.ignoresSafeArea()
+                if store.scannedFiles.isEmpty {
+                    emptyState
+                } else {
+                    fileList
+                }
+            }
+            .navigationTitle("File tìm thấy (\(store.scannedFiles.count))")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Đóng") { dismiss() }.foregroundStyle(AppTheme.neonCyan)
+                }
+            }
+        }
     }
 
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "magnifyingglass").font(.system(size: 44)).foregroundStyle(MTStyle.muted)
+            Text("Không tìm thấy file Unity").font(.title3.bold()).foregroundStyle(.white)
+            Text("Đảm bảo Free Fire hoặc Free Fire Max đã được cài và tải đủ dữ liệu game (vào game 1 lần để game tải về).")
+                .font(.system(size: 13.5)).foregroundStyle(MTStyle.muted)
+                .multilineTextAlignment(.center).padding(.horizontal, 24)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var fileList: some View {
+        ScrollView {
+            VStack(spacing: 8) {
+                ForEach(store.scannedFiles) { file in
+                    Button {
+                        store.loadFromScanned(file)
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 14) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(hintColor(file.hint).opacity(0.15))
+                                    .frame(width: 42, height: 42)
+                                Image(systemName: hintIcon(file.hint))
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(hintColor(file.hint))
+                            }
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(file.name)
+                                    .font(.system(size: 12.5, weight: .bold, design: .monospaced))
+                                    .foregroundStyle(.white).lineLimit(2)
+                                HStack(spacing: 6) {
+                                    Text(file.gameName).font(.system(size: 11)).foregroundStyle(AppTheme.neonCyan)
+                                    Text("·").foregroundStyle(MTStyle.dimText)
+                                    Text(file.hint).font(.system(size: 11, weight: .semibold)).foregroundStyle(hintColor(file.hint))
+                                    Text("·").foregroundStyle(MTStyle.dimText)
+                                    Text(MakeToolsEngine.viNum(Int(file.size)) + " byte")
+                                        .font(.system(size: 11)).foregroundStyle(MTStyle.muted)
+                                }
+                            }
+                            Spacer(minLength: 4)
+                            Image(systemName: "chevron.right").font(.system(size: 12)).foregroundStyle(MTStyle.dimText)
+                        }
+                        .padding(12)
+                        .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+                    }
+                    .buttonStyle(PressScaleButtonStyle(scale: 0.98))
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            .padding(.bottom, 28)
+        }
+    }
+
+    private func hintColor(_ hint: String) -> Color {
+        switch hint {
+        case "Hitbox": return MTStyle.ok
+        case "UMA / Aim": return AppTheme.neonCyan
+        default: return AppTheme.neonPurple
+        }
+    }
+
+    private func hintIcon(_ hint: String) -> String {
+        switch hint {
+        case "Hitbox": return "person.crop.circle.fill.badge.checkmark"
+        case "UMA / Aim": return "scope"
+        default: return "paintpalette.fill"
+        }
+    }
 }
 
+// MARK: - Kho file gốc
+
+private struct MakeBackupsSheet: View {
+    @ObservedObject var store: MakeToolsStore
+    @Environment(\.dismiss) private var dismiss
+    @State private var backups: [MakeBackup] = []
+    @State private var toast: String?
+    @State private var isRestoring = false
+
+    private static let bg = Color(red: 0.04, green: 0.05, blue: 0.13)
+    private static let df: DateFormatter = {
+        let f = DateFormatter(); f.dateStyle = .short; f.timeStyle = .short; return f
+    }()
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Self.bg.ignoresSafeArea()
+                if backups.isEmpty {
+                    VStack(spacing: 14) {
+                        Image(systemName: "archivebox").font(.system(size: 44)).foregroundStyle(MTStyle.muted)
+                        Text("Chưa có file gốc nào").font(.title3.bold()).foregroundStyle(.white)
+                        Text("Khi bạn dò file từ game và load lên, app tự lưu file gốc vào đây để bạn khôi phục bất cứ lúc nào.")
+                            .font(.system(size: 13.5)).foregroundStyle(MTStyle.muted)
+                            .multilineTextAlignment(.center).padding(.horizontal, 24)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        VStack(spacing: 8) {
+                            ForEach(backups) { backup in
+                                backupRow(backup)
+                            }
+                        }
+                        .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 28)
+                    }
+                }
+                if let msg = toast {
+                    VStack {
+                        Spacer()
+                        Text(msg)
+                            .font(.system(size: 13.5, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 16).padding(.vertical, 10)
+                            .background(Color.black.opacity(0.85), in: Capsule())
+                            .padding(.bottom, 40)
+                    }
+                    .transition(.opacity)
+                    .allowsHitTesting(false)
+                }
+            }
+            .navigationTitle("Kho file gốc (\(backups.count))")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Đóng") { dismiss() }.foregroundStyle(AppTheme.neonCyan)
+                }
+            }
+        }
+        .onAppear { backups = store.loadBackupIndex() }
+    }
+
+    private func backupRow(_ b: MakeBackup) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(hintColor(b.hint).opacity(0.14))
+                    .frame(width: 42, height: 42)
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(hintColor(b.hint))
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(b.fileName)
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .foregroundStyle(.white).lineLimit(2)
+                HStack(spacing: 6) {
+                    Text(b.gameName).font(.system(size: 11)).foregroundStyle(AppTheme.neonCyan)
+                    Text("·").foregroundStyle(MTStyle.dimText)
+                    Text(b.hint).font(.system(size: 11)).foregroundStyle(hintColor(b.hint))
+                    Text("·").foregroundStyle(MTStyle.dimText)
+                    Text(MakeToolsEngine.viNum(b.fileSize) + " B").font(.system(size: 11)).foregroundStyle(MTStyle.muted)
+                }
+                Text(Self.df.string(from: b.backupDate))
+                    .font(.system(size: 10.5, design: .monospaced)).foregroundStyle(MTStyle.dimText)
+            }
+            Spacer(minLength: 4)
+            Button {
+                isRestoring = true
+                store.restoreBackup(b) { ok, msg in
+                    isRestoring = false
+                    showToast(ok ? "✓ " + msg : "❌ " + msg)
+                }
+            } label: {
+                Text(isRestoring ? "…" : "Khôi phục")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10).padding(.vertical, 6)
+                    .background(MTStyle.warn.opacity(0.18), in: Capsule())
+                    .overlay(Capsule().strokeBorder(MTStyle.warn.opacity(0.4), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .disabled(isRestoring)
+
+            Button {
+                store.deleteBackup(b)
+                withAnimation { backups = store.loadBackupIndex() }
+            } label: {
+                Image(systemName: "trash").font(.system(size: 14)).foregroundStyle(MTStyle.danger)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(12)
+        .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+    }
+
+    private func showToast(_ msg: String) {
+        withAnimation { toast = msg }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { withAnimation { toast = nil } }
+    }
+
+    private func hintColor(_ hint: String) -> Color {
+        switch hint {
+        case "Hitbox": return MTStyle.ok
+        case "UMA / Aim": return AppTheme.neonCyan
+        default: return AppTheme.neonPurple
+        }
+    }
+}

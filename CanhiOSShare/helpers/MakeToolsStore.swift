@@ -4,6 +4,29 @@ enum MakeGender: String {
     case male, female
 }
 
+struct GameScannedFile: Identifiable {
+    let id = UUID()
+    let name: String
+    let path: String
+    let gameName: String
+    let bundleID: String
+    let size: Int64
+    let hint: String
+}
+
+struct MakeBackup: Identifiable, Codable {
+    var id: UUID = UUID()
+    var fileName: String
+    var gameName: String
+    var bundleID: String
+    var originalFullPath: String       // full path in container (UUID may change on reinstall)
+    var relativePathInContainer: String // e.g. Documents/contentcache/...
+    var hint: String
+    var backupDate: Date
+    var fileSize: Int
+    var localFile: String              // UUID.bundle in MakeBackups dir
+}
+
 /// Trạng thái của tab "Tools Make": file đang mở, preset đang chọn, mọi giá trị tùy chỉnh.
 /// Là singleton để chuyển tab không làm mất file/thông số.
 final class MakeToolsStore: ObservableObject {
@@ -26,11 +49,30 @@ final class MakeToolsStore: ObservableObject {
     @Published var selectedID = "12"
     @Published var gender: MakeGender = .male
     @Published var filter: MakeCategory?
+    @Published var showCompatibleOnly: Bool = false
 
     // Giá trị tùy chỉnh (khoá giống id ô nhập của bản HTML)
     @Published var values: [String: Double] = [:]
     @Published var flags: [String: Bool] = [:]
     @Published var hexes: [String: String] = [:]
+
+    // Scan game
+    @Published var isScanning = false
+    @Published var scannedFiles: [GameScannedFile] = []
+    @Published var showScanResults = false
+
+    // Nguồn từ game (set khi load từ scan)
+    @Published var sourceGamePath: String?
+    @Published var sourceGameBundleID: String?
+    @Published var sourceGameName: String?
+    @Published var sourceGameHint: String?
+
+    // Patch vào game
+    @Published var isPatchingGame = false
+    @Published var patchGameResult: String?   // "ok" | "err:..." | nil
+
+    // Kho backup
+    @Published var showBackups = false
 
     // Kết quả
     @Published var isBusy = false
@@ -99,10 +141,19 @@ final class MakeToolsStore: ObservableObject {
     }
 
     var canGenerate: Bool { hasFile && isCompatible(selected) && !isBusy }
+    var canPatchGame: Bool { result != nil && sourceGamePath != nil && sourceGameBundleID != nil && !isBusy && !isPatchingGame }
 
     var visiblePresets: [MakePreset] {
-        guard let f = filter else { return MakeToolsCatalog.all }
-        return MakeToolsCatalog.all.filter { $0.category == f }
+        var pool: [MakePreset]
+        if let f = filter {
+            pool = MakeToolsCatalog.all.filter { $0.category == f }
+        } else {
+            pool = MakeToolsCatalog.all
+        }
+        if showCompatibleOnly {
+            pool = pool.filter { isCompatible($0) }
+        }
+        return pool
     }
 
     // MARK: Nạp file
@@ -229,6 +280,9 @@ final class MakeToolsStore: ObservableObject {
         if !isCompatible(selected), let first = MakeToolsCatalog.all.first(where: { isCompatible($0) }) {
             selectedID = first.id
         }
+        // Auto-filter chỉ hiện preset dùng được ngay sau khi load
+        filter = nil
+        showCompatibleOnly = (det.kind != nil)
     }
 
     func clearFile() {
@@ -245,6 +299,12 @@ final class MakeToolsStore: ObservableObject {
         resultError = nil
         serverToken = nil
         serverResultData = nil
+        showCompatibleOnly = false
+        sourceGamePath = nil
+        sourceGameBundleID = nil
+        sourceGameName = nil
+        sourceGameHint = nil
+        patchGameResult = nil
     }
 
     // MARK: Tạo file
@@ -480,6 +540,213 @@ final class MakeToolsStore: ObservableObject {
     ]
 
     var isDraggable: Bool { MakeToolsStore.dragKeys[selectedID] != nil }
+
+    // MARK: Dò file từ game
+
+    func scanGameFiles() {
+        guard !isScanning else { return }
+        isScanning = true
+        scannedFiles = []
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let targets: [(String, String)] = [
+                ("com.dts.freefireth", "Free Fire"),
+                ("com.dts.freefiremax", "Free Fire Max")
+            ]
+            var found: [GameScannedFile] = []
+            let fm = FileManager.default
+            for (bid, gameName) in targets {
+                guard let containerPath = ContainerStore.resolveAppContainerPath(bundleID: bid) else { continue }
+                let searchDirs = [
+                    containerPath + "/Documents/contentcache/Compulsory/ios/gameassetbundles",
+                    containerPath + "/Documents/contentcache/Compulsory/ios/gameassetbundles/avatar",
+                    containerPath + "/Documents/contentcache/Optional/ios/gameassetbundles",
+                    containerPath + "/Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles",
+                ]
+                for dir in searchDirs {
+                    guard let entries = try? fm.contentsOfDirectory(atPath: dir) else { continue }
+                    for entry in entries {
+                        let fullPath = dir + "/" + entry
+                        var isDir = ObjCBool(false)
+                        guard fm.fileExists(atPath: fullPath, isDirectory: &isDir), !isDir.boolValue else { continue }
+                        let lower = entry.lowercased()
+                        let hint: String
+                        if lower.hasPrefix("cache_res") { hint = "Hitbox" }
+                        else if lower.hasPrefix("assetindexer") { hint = "UMA / Aim" }
+                        else if lower.hasPrefix("shaders") || lower.contains("_shader") { hint = "Shaders" }
+                        else { continue }
+                        let attrs = try? fm.attributesOfItem(atPath: fullPath)
+                        let size = (attrs?[.size] as? Int64) ?? 0
+                        found.append(GameScannedFile(name: entry, path: fullPath, gameName: gameName, bundleID: bid, size: size, hint: hint))
+                    }
+                }
+            }
+            await MainActor.run {
+                self?.scannedFiles = found
+                self?.isScanning = false
+                self?.showScanResults = true
+            }
+        }
+    }
+
+    // MARK: Patch vào game
+
+    func patchGameFile() {
+        guard let res = result, let gamePath = sourceGamePath, let bid = sourceGameBundleID else { return }
+        isPatchingGame = true
+        patchGameResult = nil
+        let data = serverResultData ?? Data(res.out)
+        Task.detached(priority: .userInitiated) { [weak self] in
+            // Re-resolve để làm mới sandbox extension token
+            guard ContainerStore.resolveAppContainerPath(bundleID: bid) != nil else {
+                await MainActor.run {
+                    self?.patchGameResult = "err:Không tìm được container game. Đảm bảo game đã cài."
+                    self?.isPatchingGame = false
+                }
+                return
+            }
+            do {
+                try data.write(to: URL(fileURLWithPath: gamePath), options: .atomic)
+                await MainActor.run { self?.patchGameResult = "ok"; self?.isPatchingGame = false }
+            } catch {
+                await MainActor.run {
+                    self?.patchGameResult = "err:\(error.localizedDescription)"
+                    self?.isPatchingGame = false
+                }
+            }
+        }
+    }
+
+    // MARK: Backup file gốc
+
+    static var backupDir: URL {
+        (try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true))?
+            .appendingPathComponent("MakeBackups", isDirectory: true)
+            ?? URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("MakeBackups")
+    }
+
+    private static func relPath(from fullPath: String, bundleID: String) -> String {
+        // Extract relative path from container root.
+        // Full path: /var/mobile/Containers/Data/Application/<UUID>/Documents/...
+        // We look for /Documents/, /Library/, etc.
+        for prefix in ["/Documents/", "/Library/", "/tmp/"] {
+            if let r = fullPath.range(of: prefix) {
+                return String(prefix.dropFirst()) + String(fullPath[r.upperBound...])
+            }
+        }
+        return (fullPath as NSString).lastPathComponent
+    }
+
+    func saveBackupIfNew(data: Data, file: GameScannedFile) {
+        var index = loadBackupIndex()
+        // Skip if we already have a backup of this exact file (same path + size)
+        let alreadyBacked = index.contains { $0.originalFullPath == file.path && $0.fileSize == Int(file.size) }
+        guard !alreadyBacked else { return }
+
+        let dir = MakeToolsStore.backupDir
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+
+        let backupID = UUID()
+        let localFile = backupID.uuidString + ".bundle"
+        guard (try? data.write(to: dir.appendingPathComponent(localFile))) != nil else { return }
+
+        let backup = MakeBackup(
+            id: backupID,
+            fileName: file.name,
+            gameName: file.gameName,
+            bundleID: file.bundleID,
+            originalFullPath: file.path,
+            relativePathInContainer: MakeToolsStore.relPath(from: file.path, bundleID: file.bundleID),
+            hint: file.hint,
+            backupDate: Date(),
+            fileSize: Int(file.size),
+            localFile: localFile
+        )
+        index.insert(backup, at: 0)
+        if index.count > 30 { index = Array(index.prefix(30)) }
+        if let encoded = try? JSONEncoder().encode(index) {
+            try? encoded.write(to: dir.appendingPathComponent("index.json"))
+        }
+    }
+
+    func loadBackupIndex() -> [MakeBackup] {
+        let url = MakeToolsStore.backupDir.appendingPathComponent("index.json")
+        guard let data = try? Data(contentsOf: url),
+              let list = try? JSONDecoder().decode([MakeBackup].self, from: data) else { return [] }
+        return list
+    }
+
+    func deleteBackup(_ backup: MakeBackup) {
+        let dir = MakeToolsStore.backupDir
+        try? FileManager.default.removeItem(at: dir.appendingPathComponent(backup.localFile))
+        var index = loadBackupIndex()
+        index.removeAll { $0.id == backup.id }
+        if let encoded = try? JSONEncoder().encode(index) {
+            try? encoded.write(to: dir.appendingPathComponent("index.json"))
+        }
+    }
+
+    func restoreBackup(_ backup: MakeBackup, completion: @escaping (Bool, String) -> Void) {
+        let localURL = MakeToolsStore.backupDir.appendingPathComponent(backup.localFile)
+        guard let data = try? Data(contentsOf: localURL) else {
+            completion(false, "Không đọc được file backup."); return
+        }
+        Task.detached(priority: .userInitiated) {
+            // Try direct path first, fallback to re-resolve + relative path
+            var targetPath = backup.originalFullPath
+            if !FileManager.default.fileExists(atPath: (backup.originalFullPath as NSString).deletingLastPathComponent) {
+                // Container UUID may have changed — re-resolve
+                if let newContainer = ContainerStore.resolveAppContainerPath(bundleID: backup.bundleID) {
+                    targetPath = (newContainer as NSString).appendingPathComponent(backup.relativePathInContainer)
+                } else {
+                    await MainActor.run { completion(false, "Không tìm được container game.") }
+                    return
+                }
+            } else {
+                _ = ContainerStore.resolveAppContainerPath(bundleID: backup.bundleID)
+            }
+            do {
+                try data.write(to: URL(fileURLWithPath: targetPath), options: .atomic)
+                await MainActor.run { completion(true, "Đã khôi phục \(backup.fileName)") }
+            } catch {
+                await MainActor.run { completion(false, error.localizedDescription) }
+            }
+        }
+    }
+
+    func loadFromScanned(_ file: GameScannedFile) {
+        showScanResults = false
+        isLoading = true
+        isUploading = false
+        loadError = nil
+        loadWarning = nil
+        uploadStatus = nil
+        result = nil
+        resultError = nil
+        serverToken = nil
+        serverResultData = nil
+        patchGameResult = nil
+        sourceGamePath = file.path
+        sourceGameBundleID = file.bundleID
+        sourceGameName = file.gameName
+        sourceGameHint = file.hint
+        let name = file.name
+        Task.detached(priority: .userInitiated) { [weak self] in
+            do {
+                let data = try Data(contentsOf: URL(fileURLWithPath: file.path))
+                // Auto-backup file gốc nếu chưa có
+                self?.saveBackupIfNew(data: data, file: file)
+                let bytes = Bytes(data)
+                let b = try UnityBundle.parse(bytes)
+                let det = MakeToolsEngine.detect(bytes, b)
+                let nowHash = MakeToolsEngine.cdnHash(bytes)
+                await MainActor.run { self?.finishLoad(name: name, bytes: bytes, bundle: b, detection: det, nowHash: nowHash) }
+                await self?.uploadToServer(data: data, fileName: name)
+            } catch {
+                let msg = error.localizedDescription
+                await MainActor.run { self?.failLoad(name: name, message: msg) }
+            }
+        }
+    }
 
     /// `y` là toạ độ dọc trong không gian của hình (viewBox).
     func dragTo(y: Double) {

@@ -452,7 +452,7 @@ struct MakeSimCanvas: View {
                 render(&ctx, size, t: 0)
             }
         } else {
-            TimelineView(.animation) { tl in
+            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { tl in
                 Canvas { ctx, size in
                     render(&ctx, size, t: tl.date.timeIntervalSinceReferenceDate)
                 }
