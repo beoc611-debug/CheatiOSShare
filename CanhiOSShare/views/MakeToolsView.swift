@@ -769,7 +769,7 @@ final class MakeToolsPicker: NSObject, UIDocumentPickerDelegate {
 
     func present(onPick: @escaping (Result<[URL], Error>) -> Void) {
         self.onPick = onPick
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.item], asCopy: true)
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.item], asCopy: false)
         picker.delegate = self
         picker.allowsMultipleSelection = false
         picker.shouldShowFileExtensions = true
