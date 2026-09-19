@@ -105,7 +105,6 @@
 		D0400B /* DisplayIdentity.m in Sources */ = {isa = PBXBuildFile; fileRef = C04006 /* DisplayIdentity.m */; };
 		D0400C /* wallpaper_zip.c in Sources */ = {isa = PBXBuildFile; fileRef = C04008 /* wallpaper_zip.c */; };
 		E05001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = E05002 /* Localizable.strings */; };
-		MK0001 /* MakeFileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MK0002 /* MakeFileView.swift */; };
 		MT0102 /* UnityBundleKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = MT0101 /* UnityBundleKit.swift */; };
 		MT0112 /* MakeToolsEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = MT0111 /* MakeToolsEngine.swift */; };
 		MT0122 /* MakeToolsBlobs.swift in Sources */ = {isa = PBXBuildFile; fileRef = MT0121 /* MakeToolsBlobs.swift */; };
@@ -130,7 +129,6 @@
 		CA10CAFEDEADBEEF0000F009 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		DEADBEEF0000000000SPLASH2 /* SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashScreenView.swift; sourceTree = "<group>"; };
 		DEADBEEF000000000DNS00002 /* NextDNSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextDNSView.swift; sourceTree = "<group>"; };
-		MK0002 /* MakeFileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MakeFileView.swift; sourceTree = "<group>"; };
 		MT0101 /* UnityBundleKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnityBundleKit.swift; sourceTree = "<group>"; };
 		MT0111 /* MakeToolsEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MakeToolsEngine.swift; sourceTree = "<group>"; };
 		MT0121 /* MakeToolsBlobs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MakeToolsBlobs.swift; sourceTree = "<group>"; };
@@ -341,7 +339,6 @@
 				F04032 /* AppManagerView.swift */,
 				DEADBEEF0000000000SPLASH2 /* SplashScreenView.swift */,
 			DEADBEEF000000000DNS00002 /* NextDNSView.swift */,
-				MK0002 /* MakeFileView.swift */,
 				MT0151 /* MakeToolsSim.swift */,
 				MT0161 /* MakeToolsView.swift */,
 			);
@@ -623,7 +620,6 @@
 					CA10CAFEDEADBEEF0000B009 /* SettingsView.swift in Sources */,
 					DEADBEEF00000000000SPLASH /* SplashScreenView.swift in Sources */,
 				DEADBEEF000000000DNS00001 /* NextDNSView.swift in Sources */,
-				MK0001 /* MakeFileView.swift in Sources */,
 				MT0102 /* UnityBundleKit.swift in Sources */,
 				MT0112 /* MakeToolsEngine.swift in Sources */,
 				MT0122 /* MakeToolsBlobs.swift in Sources */,
