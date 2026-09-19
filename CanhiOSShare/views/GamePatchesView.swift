@@ -1,6 +1,24 @@
 ﻿import SwiftUI
 import WebKit
 
+// Cat cheo goc tren-trai va duoi-phai, 2 goc con lai vuong goc
+private struct PatchCutShape: Shape {
+    var cut: CGFloat
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width; let h = rect.height; let c = cut
+        var p = Path()
+        p.move(to: CGPoint(x: c, y: 0))
+        p.addLine(to: CGPoint(x: w, y: 0))
+        p.addLine(to: CGPoint(x: w, y: h - c))
+        p.addLine(to: CGPoint(x: w - c, y: h))
+        p.addLine(to: CGPoint(x: 0, y: h))
+        p.addLine(to: CGPoint(x: 0, y: c))
+        p.addLine(to: CGPoint(x: c, y: 0))
+        p.closeSubpath()
+        return p
+    }
+}
+
 struct GamePatchesView: View {
     @Environment(\.appLanguage) private var language
     @Environment(\.dismiss) private var dismiss
@@ -549,9 +567,9 @@ struct GamePatchesView: View {
                     }
                 }
             )
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .clipShape(PatchCutShape(cut: 18))
             .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                PatchCutShape(cut: 18)
                     .strokeBorder(
                         isOn
                             ? LinearGradient(colors: [rowColor.opacity(0.70), rowColor.opacity(0.35)], startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -560,7 +578,7 @@ struct GamePatchesView: View {
                     )
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                PatchCutShape(cut: 18)
                     .stroke(
                         AngularGradient(
                             colors: [
