@@ -18,6 +18,38 @@ private struct TabBarTopBorder: Shape {
     }
 }
 
+// Card co cat cheo goc tren-trai va duoi-phai, rounded 2 goc con lai
+private struct CutCornerCardShape: Shape {
+    var cut: CGFloat   // do lon cat cheo
+    var radius: CGFloat // rounded 2 goc khong cat
+
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width; let h = rect.height
+        let c = cut; let r = radius
+        var p = Path()
+        // bat dau tu sau goc cat tren-trai (di sang phai tren canh top)
+        p.move(to: CGPoint(x: c, y: 0))
+        // canh top -> goc tren-phai (rounded)
+        p.addLine(to: CGPoint(x: w - r, y: 0))
+        p.addArc(center: CGPoint(x: w - r, y: r), radius: r,
+                 startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false)
+        // canh phai -> truoc goc cat duoi-phai
+        p.addLine(to: CGPoint(x: w, y: h - c))
+        // cat cheo duoi-phai
+        p.addLine(to: CGPoint(x: w - c, y: h))
+        // canh bottom -> goc duoi-trai (rounded)
+        p.addLine(to: CGPoint(x: r, y: h))
+        p.addArc(center: CGPoint(x: r, y: h - r), radius: r,
+                 startAngle: .degrees(90), endAngle: .degrees(180), clockwise: false)
+        // canh trai -> truoc goc cat tren-trai
+        p.addLine(to: CGPoint(x: 0, y: c))
+        // cat cheo tren-trai
+        p.addLine(to: CGPoint(x: c, y: 0))
+        p.closeSubpath()
+        return p
+    }
+}
+
 // Chi bo goc tren — thay the UnevenRoundedRectangle (iOS 17+) de tuong thich iOS 16
 private struct TopRoundedShape: Shape {
     var radius: CGFloat
@@ -737,9 +769,9 @@ struct GameCardView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: cardHeight)
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .clipShape(CutCornerCardShape(cut: cornerRadius, radius: cornerRadius * 0.72))
         .overlay(
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            CutCornerCardShape(cut: cornerRadius, radius: cornerRadius * 0.72)
                 .strokeBorder(
                     LinearGradient(
                         colors: [
@@ -754,7 +786,7 @@ struct GameCardView: View {
                 )
         )
         .overlay(
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            CutCornerCardShape(cut: cornerRadius, radius: cornerRadius * 0.72)
                 .stroke(
                     AngularGradient(
                         colors: [
