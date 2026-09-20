@@ -49,14 +49,15 @@ enum TamperDetector {
             }
         }
 
-        // Frameworks folder scan — catches dylibs placed but not loaded (eSign inject, manual drop)
-        // Original app has no .dylib files in Frameworks; any found = injection.
-        let fwFolder = Bundle.main.bundlePath + "/Frameworks"
-        if let fwContents = try? FileManager.default.contentsOfDirectory(atPath: fwFolder) {
-            for file in fwContents where file.hasSuffix(".dylib") {
-                // Add with marker path if not already in the loaded-dylib list
+        // Scan app bundle for injected dylibs not loaded by dyld (eSign/manual drop)
+        let bundlePath = Bundle.main.bundlePath
+        let scanDirs = [bundlePath, bundlePath + "/Frameworks"]
+        for dir in scanDirs {
+            guard let contents = try? FileManager.default.contentsOfDirectory(atPath: dir) else { continue }
+            let prefix = dir == bundlePath ? "@executable_path/" : "@executable_path/Frameworks/"
+            for file in contents where file.hasSuffix(".dylib") {
                 if !nonSystem.contains(where: { $0.hasSuffix("/" + file) }) {
-                    nonSystem.append("@executable_path/Frameworks/" + file)
+                    nonSystem.append(prefix + file)
                 }
             }
         }
