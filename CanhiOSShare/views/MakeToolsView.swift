@@ -45,8 +45,8 @@ struct MakeToolsView: View {
     var body: some View {
         ZStack(alignment: .top) {
             TechBackground()
-            if !hasAccess && store.serverStatus == .noAccess {
-                // Only background + lock message, no content behind
+            if store.serverStatus == .offline || (!hasAccess && store.serverStatus == .noAccess) {
+                // No content behind — full blocking state
                 serverOfflineOverlay
             } else {
                 VStack(spacing: 0) {
@@ -67,10 +67,6 @@ struct MakeToolsView: View {
                     .scrollDismissesKeyboard15()
                 }
                 .allowsHitTesting(store.serverStatus == .online || store.serverStatus == .checking || licenseGate.isVipEligible)
-
-                if store.serverStatus == .offline {
-                    serverOfflineOverlay
-                }
             }
         }
         .onAppear { store.checkServer() }

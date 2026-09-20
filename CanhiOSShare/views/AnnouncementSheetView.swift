@@ -28,10 +28,27 @@ struct AnnouncementSheetView: View {
                     .multilineTextAlignment(.center)
             }
 
-            if !announcement.linkLabel.isEmpty, !announcement.linkURL.isEmpty, let url = URL(string: announcement.linkURL) {
-                Link(announcement.linkLabel, destination: url)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.blue)
+            VStack(spacing: 10) {
+                if !announcement.linkLabel.isEmpty, !announcement.linkURL.isEmpty, let url = URL(string: announcement.linkURL) {
+                    Link(destination: url) {
+                        Text(announcement.linkLabel)
+                            .font(.body.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 13)
+                            .background(Color.cyan, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .foregroundStyle(.black)
+                    }
+                }
+                if !announcement.link2Label.isEmpty, !announcement.link2URL.isEmpty, let url2 = URL(string: announcement.link2URL) {
+                    Link(destination: url2) {
+                        Text(announcement.link2Label)
+                            .font(.body.weight(.medium))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 13)
+                            .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .foregroundStyle(.white)
+                    }
+                }
             }
 
             Button {

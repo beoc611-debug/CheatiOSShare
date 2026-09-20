@@ -28,6 +28,31 @@ struct MaintenanceView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
 
+                VStack(spacing: 12) {
+                    if !notice.link1Label.isEmpty, !notice.link1URL.isEmpty, let url1 = URL(string: notice.link1URL) {
+                        Link(destination: url1) {
+                            Text(notice.link1Label)
+                                .font(.body.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.cyan, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .foregroundStyle(.black)
+                        }
+                    }
+                    if !notice.link2Label.isEmpty, !notice.link2URL.isEmpty, let url2 = URL(string: notice.link2URL) {
+                        Link(destination: url2) {
+                            Text(notice.link2Label)
+                                .font(.body.weight(.medium))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                }
+                .padding(.horizontal, 32)
+                .padding(.top, 8)
+
                 Spacer()
             }
         }

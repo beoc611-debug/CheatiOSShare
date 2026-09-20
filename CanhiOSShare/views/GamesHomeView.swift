@@ -151,9 +151,6 @@ struct GamesHomeView: View {
                 }
             }
             .toast($licenseGate.activationToast)
-            .sheet(item: $announcement) { item in
-                AnnouncementSheetView(announcement: item)
-            }
             .sheet(item: $draftCoordinator.request) { request in
                 PatchProjectEditorView(
                     existingProject: nil,
@@ -484,39 +481,86 @@ struct GamesHomeView: View {
 
     private var emptyGamesView: some View {
         VStack(spacing: 14) {
-            Image(systemName: "wifi.exclamationmark")
-                .font(.system(size: 28, weight: .light))
-                .foregroundStyle(AppTheme.techGlow.opacity(0.6))
+            if let ann = announcement {
+                Image(systemName: "arrow.down.circle")
+                    .font(.system(size: 32, weight: .light))
+                    .foregroundStyle(AppTheme.techGlow.opacity(0.7))
 
-            Text("App \u{0111}ang ti\u{1EBF}n h\u{00E0}nh n\u{00E2}ng c\u{1EA5}p m\u{1EDB}i, truy c\u{1EAD}p ngay Telegram \u{0111}\u{1EC3} nh\u{1EAD}n th\u{00F4}ng b\u{00E1}o m\u{1EDB}i")
-                .font(.subheadline)
-                .foregroundStyle(Color(red: 0.45, green: 0.58, blue: 0.80))
-                .multilineTextAlignment(.center)
+                if !ann.title.isEmpty {
+                    Text(ann.title)
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                }
+
+                if !ann.message.isEmpty {
+                    Text(ann.message)
+                        .font(.subheadline)
+                        .foregroundStyle(Color(red: 0.45, green: 0.58, blue: 0.80))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                }
+
+                VStack(spacing: 10) {
+                    if !ann.linkLabel.isEmpty, !ann.linkURL.isEmpty, let url = URL(string: ann.linkURL) {
+                        Link(destination: url) {
+                            Text(ann.linkLabel)
+                                .font(.body.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 13)
+                                .background(Color.cyan, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .foregroundStyle(.black)
+                        }
+                    }
+                    if !ann.link2Label.isEmpty, !ann.link2URL.isEmpty, let url2 = URL(string: ann.link2URL) {
+                        Link(destination: url2) {
+                            Text(ann.link2Label)
+                                .font(.body.weight(.medium))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 13)
+                                .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                }
                 .padding(.horizontal, 32)
+                .padding(.top, 4)
+            } else {
+                Image(systemName: "wifi.exclamationmark")
+                    .font(.system(size: 28, weight: .light))
+                    .foregroundStyle(AppTheme.techGlow.opacity(0.6))
 
-            Button {
-                if let url = contactURL {
-                    UIApplication.shared.open(url)
+                Text("App \u{0111}ang ti\u{1EBF}n h\u{00E0}nh n\u{00E2}ng c\u{1EA5}p m\u{1EDB}i, truy c\u{1EAD}p ngay Telegram \u{0111}\u{1EC3} nh\u{1EAD}n th\u{00F4}ng b\u{00E1}o m\u{1EDB}i")
+                    .font(.subheadline)
+                    .foregroundStyle(Color(red: 0.45, green: 0.58, blue: 0.80))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+
+                Button {
+                    if let url = contactURL {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "paperplane.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("V\u{00E0}o ngay")
+                            .font(.subheadline.weight(.bold))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 10)
+                    .background(
+                        LinearGradient(
+                            colors: [AppTheme.neonPurple, AppTheme.techGlow],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        in: Capsule()
+                    )
+                    .shadow(color: AppTheme.neonPurple.opacity(0.45), radius: 10, y: 3)
                 }
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "paperplane.fill")
-                        .font(.system(size: 12, weight: .semibold))
-                    Text("V\u{00E0}o ngay")
-                        .font(.subheadline.weight(.bold))
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 10)
-                .background(
-                    LinearGradient(
-                        colors: [AppTheme.neonPurple, AppTheme.techGlow],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    in: Capsule()
-                )
-                .shadow(color: AppTheme.neonPurple.opacity(0.45), radius: 10, y: 3)
             }
         }
     }
@@ -609,8 +653,6 @@ struct GameCardView: View {
     let systemIconName: String
     var actionLabel: String = "M\u{1EDE} GAME"
     var isFeatured: Bool = false
-
-    @State private var borderRotation: Double = 0
 
     private var cornerBadge: (text: String, color: Color)? {
         let n = title.lowercased()
@@ -751,33 +793,8 @@ struct GameCardView: View {
                     lineWidth: 1.5
                 )
         )
-        .overlay(
-            CutShape(cut: cornerRadius)
-                .stroke(
-                    AngularGradient(
-                        colors: [
-                            .clear,
-                            AppTheme.techGlow.opacity(0.0),
-                            AppTheme.techGlow.opacity(0.85),
-                            AppTheme.neonPurple.opacity(0.90),
-                            AppTheme.techGlow.opacity(0.85),
-                            AppTheme.techGlow.opacity(0.0),
-                            .clear
-                        ],
-                        center: .center,
-                        startAngle: .degrees(borderRotation),
-                        endAngle: .degrees(borderRotation + 360)
-                    ),
-                    lineWidth: 1.5
-                )
-        )
         .shadow(color: bannerColor.opacity(0.45), radius: isFeatured ? 20 : 16, x: 0, y: isFeatured ? 8 : 6)
         .shadow(color: .black.opacity(0.55), radius: 6, x: 0, y: 4)
-        .onAppear {
-            withAnimation(.linear(duration: 3).repeatForever(autoreverses: false)) {
-                borderRotation = 360
-            }
-        }
     }
 
     @ViewBuilder

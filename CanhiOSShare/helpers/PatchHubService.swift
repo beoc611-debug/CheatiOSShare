@@ -102,25 +102,26 @@ enum PatchHubService {
         0x38, 0x65, 0x28, 0x23, 0x2E, 0x2A, 0x3F, 0x22, 0x24, 0x38, 0x3D, 0x22, 0x3B, 0x65,
         0x25, 0x2E, 0x3F
     ]
-    // CLIENT_TOKEN: WMD3_v26xZak0GGZu413AUAIdynS8C6gv
+    // CLIENT_TOKEN: VCP_kE8z3mN7wQ2xB5rT9hF4jL0yG6sD1
     private static let _t: [UInt8] = [
-        0x1C, 0x06, 0x0F, 0x78, 0x14, 0x3D, 0x79, 0x7D, 0x33, 0x11, 0x2A, 0x20, 0x7B, 0x0C,
-        0x0C, 0x11, 0x3E, 0x7F, 0x7A, 0x78, 0x0A, 0x1E, 0x0A, 0x02, 0x2F, 0x32, 0x25, 0x18,
-        0x73, 0x08, 0x7D, 0x2C, 0x3D
+        0x1D, 0x08, 0x1B, 0x14, 0x20, 0x0E, 0x73, 0x31, 0x78, 0x26, 0x05, 0x7C, 0x3C, 0x1A,
+        0x79, 0x33, 0x09, 0x7E, 0x39, 0x1F, 0x72, 0x23, 0x0D, 0x7F, 0x21, 0x07, 0x7B, 0x32,
+        0x0C, 0x7D, 0x38, 0x0F, 0x7A
     ]
     // API paths (obfuscated)
-    private static let _g:  [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x2C]                                                                       // wmd3/sg
-    private static let _p:  [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x3B]                                                                       // wmd3/sp
-    private static let _c:  [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x28]                                                                       // wmd3/sc
-    private static let _n:  [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x25]                                                                       // wmd3/sn
-    private static let _a:  [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x2A]                                                                       // wmd3/sa
-    private static let _dv: [UInt8] = [0x28, 0x3D, 0x64, 0x2F, 0x3D]                                                                                   // cv/dv (kept, graceful 404)
-    private static let _cl: [UInt8] = [0x28, 0x3D, 0x64, 0x28, 0x27]                                                                                   // cv/cl (kept, graceful 404)
-    private static let _px: [UInt8] = [0x28, 0x3D, 0x64, 0x3B, 0x33]                                                                                   // cv/px
-    private static let _bl: [UInt8] = [0x28, 0x3D, 0x64, 0x29, 0x27]                                                                                   // cv/bl
-    private static let _bls: [UInt8] = [0x28, 0x3D, 0x64, 0x29, 0x27, 0x38]                                                                            // cv/bls
-    private static let _vt:  [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x3F]                                                                       // wmd3/st
-    private static let _dns: [UInt8] = [0x3C, 0x26, 0x2F, 0x78, 0x64, 0x38, 0x2F, 0x25, 0x38]                                                           // wmd3/sdns
+    private static let _g:  [UInt8] = [0x3D, 0x7F, 0x33, 0x64, 0x38, 0x2C]                                                                             // v4x/sg
+    private static let _p:  [UInt8] = [0x3D, 0x7F, 0x33, 0x64, 0x38, 0x3B]                                                                             // v4x/sp
+    private static let _c:  [UInt8] = [0x3D, 0x7F, 0x33, 0x64, 0x38, 0x28]                                                                             // v4x/sc
+    private static let _n:  [UInt8] = [0x3D, 0x7F, 0x33, 0x64, 0x38, 0x25]                                                                             // v4x/sn
+    private static let _a:  [UInt8] = [0x3D, 0x7F, 0x33, 0x64, 0x38, 0x2A]                                                                             // v4x/sa
+    private static let _dv: [UInt8] = [0x3D, 0x7F, 0x33, 0x64, 0x2F, 0x3D]                                                                             // v4x/dv
+    private static let _cl: [UInt8] = [0x3D, 0x7F, 0x33, 0x64, 0x28, 0x27]                                                                             // v4x/cl
+    private static let _px: [UInt8] = [0x3D, 0x7F, 0x33, 0x64, 0x3B, 0x33]                                                                             // v4x/px
+    private static let _bl: [UInt8] = [0x3D, 0x7F, 0x33, 0x64, 0x29, 0x27]                                                                             // v4x/bl
+    private static let _bls: [UInt8] = [0x3D, 0x7F, 0x33, 0x64, 0x29, 0x27, 0x38]                                                                      // v4x/bls
+    private static let _vt:  [UInt8] = [0x3D, 0x7F, 0x33, 0x64, 0x38, 0x3F]                                                                            // v4x/st
+    private static let _dns: [UInt8] = [0x3D, 0x7F, 0x33, 0x64, 0x38, 0x2F, 0x25, 0x38]                                                               // v4x/sdns
+    private static let _sec: [UInt8] = [0x3D, 0x7F, 0x33, 0x64, 0x38, 0x2E, 0x28]                                                                    // v4x/sec
     private static let _gn: [UInt8] = [0x64, 0x2A, 0x3B, 0x22, 0x64, 0x2C, 0x2A, 0x26, 0x2E, 0x66, 0x25, 0x24, 0x3F, 0x22, 0x28, 0x2E, 0x38]       // api/game-notices
     private static let _r:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x39, 0x2E, 0x2F, 0x2E, 0x2E, 0x26]                   // api/keys/redeem
     private static let _s:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x38, 0x3F, 0x2A, 0x3F, 0x3E, 0x38]                   // api/keys/status
@@ -158,6 +159,7 @@ enum PatchHubService {
     static var pathBotLink: String     { d(_bl) }
     static var pathBotLinkStatus: String { d(_bls) }
     static var pathDNS: String         { d(_dns) }
+    static var pathSecurity: String    { d(_sec) }
     static var pathRedeem: String      { d(_r) }
     static var pathStatus: String      { d(_s) }
     static var pathGameNotices: String { d(_gn) }

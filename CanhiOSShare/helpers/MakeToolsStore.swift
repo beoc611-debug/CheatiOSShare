@@ -209,6 +209,7 @@ final class MakeToolsStore: ObservableObject {
             req.httpMethod = "POST"
             let boundary = "Boundary-\(UUID().uuidString)"
             req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+            req.setValue(PatchHubService.clientToken, forHTTPHeaderField: "X-App-Token")
             let keyCode = LicenseGateStore.storedKeyCode ?? ""
             var body = Data()
             // key field
@@ -349,6 +350,7 @@ final class MakeToolsStore: ObservableObject {
         do {
             var req = URLRequest(url: url, timeoutInterval: 10)
             req.httpMethod = "GET"
+            req.setValue(PatchHubService.clientToken, forHTTPHeaderField: "X-App-Token")
             let (data, resp) = try await URLSession.shared.data(for: req)
             guard (resp as? HTTPURLResponse)?.statusCode == 200 else {
                 await MainActor.run { serverStatus = .offline }
@@ -500,6 +502,7 @@ final class MakeToolsStore: ObservableObject {
             var genReq = URLRequest(url: genURL, timeoutInterval: 180)
             genReq.httpMethod = "POST"
             genReq.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            genReq.setValue(PatchHubService.clientToken, forHTTPHeaderField: "X-App-Token")
             genReq.httpBody = try JSONSerialization.data(withJSONObject: body)
             let (genData, genResp) = try await URLSession.shared.data(for: genReq)
             if let http = genResp as? HTTPURLResponse, http.statusCode != 200 {
@@ -517,7 +520,9 @@ final class MakeToolsStore: ObservableObject {
 
             // Download result file
             guard let dlURL = URL(string: MakeToolsStore.serverBase + "/api/make-tools/download/\(token)") else { throw URLError(.badURL) }
-            let (fileData, dlResp) = try await URLSession.shared.data(from: dlURL)
+            var dlReq = URLRequest(url: dlURL, timeoutInterval: 120)
+            dlReq.setValue(PatchHubService.clientToken, forHTTPHeaderField: "X-App-Token")
+            let (fileData, dlResp) = try await URLSession.shared.data(for: dlReq)
             if let http = dlResp as? HTTPURLResponse, http.statusCode != 200 {
                 await MainActor.run { self.resultError = "Không tải được file kết quả."; self.isBusy = false }
                 return

@@ -6,11 +6,17 @@ struct Announcement: Decodable, Identifiable, Equatable {
     let message: String
     let linkLabel: String
     let linkURL: String
+    let link2Label: String
+    let link2URL: String
 }
 
 struct MaintenanceNotice: Equatable {
     let title: String
     let message: String
+    let link1Label: String
+    let link1URL: String
+    let link2Label: String
+    let link2URL: String
 }
 
 enum RemoteNoticeState: Equatable {
@@ -29,6 +35,10 @@ private struct AnnouncementResponse: Decodable {
     let linkURL: String?
     let maintenanceTitle: String?
     let maintenanceMessage: String?
+    let maintenanceLink1Label: String?
+    let maintenanceLink1URL: String?
+    let maintenanceLink2Label: String?
+    let maintenanceLink2URL: String?
 }
 
 enum AnnouncementService {
@@ -51,7 +61,14 @@ enum AnnouncementService {
 
         if decoded.maintenance == true {
             return .maintenance(
-                MaintenanceNotice(title: decoded.maintenanceTitle ?? "", message: decoded.maintenanceMessage ?? "")
+                MaintenanceNotice(
+                    title: decoded.maintenanceTitle ?? "",
+                    message: decoded.maintenanceMessage ?? "",
+                    link1Label: decoded.maintenanceLink1Label ?? "",
+                    link1URL: decoded.maintenanceLink1URL ?? "",
+                    link2Label: decoded.maintenanceLink2Label ?? "",
+                    link2URL: decoded.maintenanceLink2URL ?? ""
+                )
             )
         }
         guard decoded.enabled, let id = decoded.id else { return .none }
@@ -61,7 +78,9 @@ enum AnnouncementService {
                 title: decoded.title ?? "",
                 message: decoded.message ?? "",
                 linkLabel: decoded.linkLabel ?? "",
-                linkURL: decoded.linkURL ?? ""
+                linkURL: decoded.linkURL ?? "",
+                link2Label: decoded.maintenanceLink2Label ?? "",
+                link2URL: decoded.maintenanceLink2URL ?? ""
             )
         )
     }

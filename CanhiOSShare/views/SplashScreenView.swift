@@ -51,7 +51,7 @@ struct SplashScreenView: View {
                                    startRadius: 0, endRadius: 220).ignoresSafeArea()
                 }
 
-                StarFieldView(particles: particles, size: geo.size)
+                StarFieldView(particles: particles)
 
                 // ── Scan beam ──
                 Rectangle()
@@ -389,21 +389,25 @@ struct SplashParticle: Identifiable {
 
 private struct StarFieldView: View {
     let particles: [SplashParticle]
-    let size: CGSize
-    @State private var phase = false
 
     var body: some View {
-        ZStack {
-            ForEach(particles) { p in
-                Circle()
-                    .fill(Color.white.opacity(phase ? p.opacity : p.opacity * 0.25))
-                    .frame(width: p.size, height: p.size)
-                    .position(x: p.x * size.width, y: p.y * size.height)
-                    .animation(.easeInOut(duration: p.speed).repeatForever(autoreverses: true)
-                        .delay(Double.random(in: 0...2.5)), value: phase)
+        TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { timeline in
+            Canvas { ctx, canvasSize in
+                let t = timeline.date.timeIntervalSinceReferenceDate
+                for p in particles {
+                    let pulse = (sin(t / p.speed + p.x * 6.28) + 1) / 2
+                    let alpha = p.opacity * 0.25 + p.opacity * 0.75 * pulse
+                    let x = p.x * canvasSize.width
+                    let y = p.y * canvasSize.height
+                    let r = p.size / 2
+                    ctx.fill(
+                        Path(ellipseIn: CGRect(x: x - r, y: y - r, width: p.size, height: p.size)),
+                        with: .color(.white.opacity(alpha))
+                    )
+                }
             }
         }
-        .onAppear { phase = true }
+        .allowsHitTesting(false)
     }
 }
 
