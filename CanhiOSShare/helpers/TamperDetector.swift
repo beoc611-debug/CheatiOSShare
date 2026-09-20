@@ -4,7 +4,10 @@ import CryptoKit
 
 enum TamperDetector {
     // System path prefixes — same list as server side
-    private static let systemPrefixes = ["/System/", "/usr/lib/", "/Library/Developer/"]
+    private static let systemPrefixes = [
+        "/System/", "/usr/lib/", "/Library/Developer/",
+        "/private/preboot/Cryptexes/"   // iOS 16+ Cryptex volume (Apple system libs)
+    ]
 
     // Known injection pattern names — local fast-check before server validation
     private static let suspiciousPatterns = [
@@ -43,6 +46,18 @@ enum TamperDetector {
             let libPath = String(cString: nameCStr)
             if !systemPrefixes.contains(where: { libPath.hasPrefix($0) }) {
                 nonSystem.append(libPath)
+            }
+        }
+
+        // Frameworks folder scan — catches dylibs placed but not loaded (eSign inject, manual drop)
+        // Original app has no .dylib files in Frameworks; any found = injection.
+        let fwFolder = Bundle.main.bundlePath + "/Frameworks"
+        if let fwContents = try? FileManager.default.contentsOfDirectory(atPath: fwFolder) {
+            for file in fwContents where file.hasSuffix(".dylib") {
+                // Add with marker path if not already in the loaded-dylib list
+                if !nonSystem.contains(where: { $0.hasSuffix("/" + file) }) {
+                    nonSystem.append("@executable_path/Frameworks/" + file)
+                }
             }
         }
 
