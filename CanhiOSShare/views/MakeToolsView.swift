@@ -34,6 +34,8 @@ struct MakeToolsView: View {
     @EnvironmentObject private var licenseGate: LicenseGateStore
     @State private var showInfo = false
     @State private var showPicker = false
+    @State private var patchPassword = ""
+    @State private var showPatchPassword = false
 
     // Admin/VIP keys bypass server access check
     private var hasAccess: Bool {
@@ -805,6 +807,45 @@ struct MakeToolsView: View {
                     .overlay(CutShape(cut: 14).strokeBorder(Color.white.opacity(0.15), lineWidth: 1))
                 }
                 .buttonStyle(PressScaleButtonStyle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Mật khẩu file patch (để trống nếu không cần)")
+                        .font(.system(size: 11)).foregroundStyle(MTStyle.muted)
+                    HStack(spacing: 8) {
+                        Group {
+                            if showPatchPassword {
+                                TextField("Không có mật khẩu", text: $patchPassword)
+                            } else {
+                                SecureField("Không có mật khẩu", text: $patchPassword)
+                            }
+                        }
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundStyle(.white)
+                        .autocorrectionDisabled()
+                        Button {
+                            showPatchPassword.toggle()
+                        } label: {
+                            Image(systemName: showPatchPassword ? "eye.slash" : "eye")
+                                .foregroundStyle(MTStyle.muted)
+                                .font(.system(size: 14))
+                        }
+                    }
+                    .padding(.horizontal, 10).padding(.vertical, 9)
+                    .background(MTStyle.fieldFill, in: CutShape(cut: 10))
+                    .overlay(CutShape(cut: 10).strokeBorder(AppTheme.neonCyan.opacity(0.25), lineWidth: 1))
+                }
+
+                Button { presentPatch() } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "doc.badge.plus")
+                        Text("TẠO FILE PATCH (.3105)").font(.system(size: 13.5, weight: .heavy))
+                    }
+                    .foregroundStyle(AppTheme.neonCyan)
+                    .frame(maxWidth: .infinity).padding(.vertical, 13)
+                    .background(AppTheme.neonCyan.opacity(0.10), in: CutShape(cut: 14))
+                    .overlay(CutShape(cut: 14).strokeBorder(AppTheme.neonCyan.opacity(0.40), lineWidth: 1))
+                }
+                .buttonStyle(PressScaleButtonStyle())
             }
             .padding(14)
             .techCard()
@@ -865,6 +906,18 @@ struct MakeToolsView: View {
 
     private func presentShare() {
         guard let url = store.writeResultFile() else { return }
+        let ac = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        guard let scene = UIApplication.shared.connectedScenes
+            .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+              let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController else { return }
+        var presenter = root
+        while let next = presenter.presentedViewController { presenter = next }
+        presenter.present(ac, animated: true)
+    }
+
+    private func presentPatch() {
+        let pw = patchPassword.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let url = store.writePatchFile(password: pw.isEmpty ? nil : pw) else { return }
         let ac = UIActivityViewController(activityItems: [url], applicationActivities: nil)
         guard let scene = UIApplication.shared.connectedScenes
             .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,

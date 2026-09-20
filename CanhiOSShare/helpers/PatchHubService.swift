@@ -213,7 +213,7 @@ enum PatchHubService {
         request.setValue(ts,    forHTTPHeaderField: d(_hts))
         request.setValue(nonce, forHTTPHeaderField: d(_hn))
         request.setValue(sig,   forHTTPHeaderField: d(_hsg))
-        guard let (data, response) = try? await URLSession.shared.data(for: request),
+        guard let (data, response) = try? await PinnedSession.shared.data(for: request),
               let http = response as? HTTPURLResponse,
               (200...299).contains(http.statusCode),
               verifyResponse(data: data, httpResponse: response) else { return false }

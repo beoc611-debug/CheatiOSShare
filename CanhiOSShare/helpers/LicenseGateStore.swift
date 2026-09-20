@@ -3,7 +3,33 @@ import Security
 
 @MainActor
 final class LicenseGateStore: ObservableObject {
-    @Published private(set) var isUnlocked = false
+    // Backing store: XOR'd bytes + parity check so a simple bool-flip or hook
+    // has to understand the encoding to produce a valid unlocked state.
+    // Layout: [b0, b1, b2, b3] where bN = (unlocked ? (0xA5 ^ salt[N]) : salt[N])
+    // Parity byte b3 = b0 ^ b1 ^ b2 ^ 0xC3 (must match or treated as locked).
+    private static let _salt: [UInt8] = [0x37, 0x8E, 0x5D, 0x1A]
+    private var _unlockBuf: [UInt8] = LicenseGateStore._lockedBuf()
+    private static func _lockedBuf() -> [UInt8] {
+        let s = _salt; return [s[0], s[1], s[2], s[0] ^ s[1] ^ s[2] ^ 0xC3]
+    }
+    private static func _unlockedBuf() -> [UInt8] {
+        let s = _salt
+        let b0: UInt8 = 0xA5 ^ s[0]; let b1: UInt8 = 0xA5 ^ s[1]; let b2: UInt8 = 0xA5 ^ s[2]
+        return [b0, b1, b2, b0 ^ b1 ^ b2 ^ 0xC3]
+    }
+
+    @Published private(set) var isUnlocked: Bool = false {
+        didSet { _unlockBuf = isUnlocked ? Self._unlockedBuf() : Self._lockedBuf() }
+    }
+    // Call this in views instead of reading isUnlocked directly for extra verification.
+    var isReallyUnlocked: Bool {
+        let s = Self._salt
+        guard _unlockBuf.count == 4 else { return false }
+        let parity = _unlockBuf[0] ^ _unlockBuf[1] ^ _unlockBuf[2] ^ 0xC3
+        guard parity == _unlockBuf[3] else { return false }  // tampered
+        return _unlockBuf[0] == (0xA5 ^ s[0])
+    }
+
     @Published private(set) var isChecking = true
     @Published private(set) var expiresAt: Date?
     @Published private(set) var licenseDevices: [LicenseDeviceEntry] = []

@@ -42,7 +42,7 @@ struct ContentView: View {
                 .preferredColorScheme(.dark)
             } else if let maintenanceNotice {
                 MaintenanceView(notice: maintenanceNotice)
-            } else if licenseGate.isUnlocked {
+            } else if licenseGate.isUnlocked && licenseGate.isReallyUnlocked {
                 GamesHomeView()
             } else {
                 KeyEntryView()

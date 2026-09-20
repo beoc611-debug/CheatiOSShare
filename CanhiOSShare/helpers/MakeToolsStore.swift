@@ -560,6 +560,41 @@ final class MakeToolsStore: ObservableObject {
         }
     }
 
+    /// Đóng gói file đã sửa thành file .3105 để chia sẻ / lưu.
+    func writePatchFile(password: String? = nil) -> URL? {
+        guard let res = result, let name = fileName else { return nil }
+        guard let bundleID = sourceGameBundleID else {
+            resultError = "Cần tải file từ game để tạo file patch."
+            return nil
+        }
+        let relPath: String
+        if let path = sourceGamePath {
+            relPath = MakeToolsStore.relPath(from: path, bundleID: bundleID)
+        } else {
+            relPath = "Documents/" + name
+        }
+        let rule = PatchRule(
+            bundleID: bundleID,
+            relativePath: relPath,
+            replacementFilename: name,
+            replacementData: Data(res.out)
+        )
+        let project = PatchProject(
+            name: "Make Tools: \(name)",
+            rules: [rule]
+        )
+        do {
+            let encoded = try PatchPackageCodec.encodeNew(project: project, password: password)
+            let patchName = (name as NSString).deletingPathExtension + ".3105"
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(patchName)
+            try encoded.data.write(to: url, options: .atomic)
+            return url
+        } catch {
+            resultError = "Không tạo được file patch: \(error.localizedDescription)"
+            return nil
+        }
+    }
+
     // MARK: Kéo trên hình để đổi vị trí hitbox
 
     /// (khoá nam, khoá nữ, hệ toạ độ: true = UMA position.x, false = cache_res Center.x)
