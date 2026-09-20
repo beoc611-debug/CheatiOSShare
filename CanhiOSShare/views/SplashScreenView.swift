@@ -23,7 +23,6 @@ struct SplashScreenView: View {
     @State private var successOp:    Double  = 0
     @State private var screenOpacity:Double  = 1
     @State private var glowPulse:    Bool    = false
-    @State private var cornersOp:    Double  = 0
     @State private var scanY:        CGFloat = -160
     @State private var scanOp:       Double  = 0
     @State private var particles:    [SplashParticle] = SplashParticle.spawn(80)
@@ -63,9 +62,6 @@ struct SplashScreenView: View {
                     .position(x: geo.size.width / 2, y: scanY)
                     .opacity(scanOp)
                     .allowsHitTesting(false)
-
-                // ── Corner brackets ──
-                cornerBrackets(geo: geo).opacity(cornersOp)
 
                 // ── Burst ──
                 if burstActive {
@@ -269,63 +265,69 @@ struct SplashScreenView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private func cornerBrackets(geo: GeometryProxy) -> some View {
-        let pad: CGFloat = 30; let len: CGFloat = 24; let th: CGFloat = 2
-        let col = cyan.opacity(0.50)
-        return ZStack {
-            Path { p in
-                p.move(to: CGPoint(x: pad, y: pad + len))
-                p.addLine(to: CGPoint(x: pad, y: pad))
-                p.addLine(to: CGPoint(x: pad + len, y: pad))
-            }.stroke(col, style: StrokeStyle(lineWidth: th, lineCap: .round))
-            Path { p in
-                p.move(to: CGPoint(x: geo.size.width - pad - len, y: pad))
-                p.addLine(to: CGPoint(x: geo.size.width - pad, y: pad))
-                p.addLine(to: CGPoint(x: geo.size.width - pad, y: pad + len))
-            }.stroke(col, style: StrokeStyle(lineWidth: th, lineCap: .round))
-            Path { p in
-                p.move(to: CGPoint(x: pad, y: geo.size.height - pad - len))
-                p.addLine(to: CGPoint(x: pad, y: geo.size.height - pad))
-                p.addLine(to: CGPoint(x: pad + len, y: geo.size.height - pad))
-            }.stroke(col, style: StrokeStyle(lineWidth: th, lineCap: .round))
-            Path { p in
-                p.move(to: CGPoint(x: geo.size.width - pad - len, y: geo.size.height - pad))
-                p.addLine(to: CGPoint(x: geo.size.width - pad, y: geo.size.height - pad))
-                p.addLine(to: CGPoint(x: geo.size.width - pad, y: geo.size.height - pad - len))
-            }.stroke(col, style: StrokeStyle(lineWidth: th, lineCap: .round))
-        }.ignoresSafeArea()
-    }
-
-    @ViewBuilder
     private var appIconView: some View {
-        Group {
-            if let icon = UIImage(named: "AppIcon60x60") ?? UIImage(named: "AppIcon") {
-                Image(uiImage: icon).resizable().scaledToFill()
-            } else {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(LinearGradient(colors: [cyan, purple], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    Image(systemName: "shield.fill")
-                        .font(.system(size: 50, weight: .bold)).foregroundStyle(.white)
-                }
+        ZStack {
+            // Ambient glow layers
+            Circle()
+                .fill(RadialGradient(
+                    colors: [purple.opacity(0.55), blue.opacity(0.25), .clear],
+                    center: .center, startRadius: 0, endRadius: 58))
+                .frame(width: 116, height: 116)
+            Circle()
+                .fill(RadialGradient(
+                    colors: [cyan.opacity(0.18), .clear],
+                    center: .center, startRadius: 0, endRadius: 52))
+                .frame(width: 104, height: 104)
+
+            // Outer octagon frame — two overlapping squares
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(
+                    LinearGradient(colors: [cyan.opacity(0.80), purple.opacity(0.55)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing),
+                    lineWidth: 1.8)
+                .frame(width: 76, height: 76)
+                .rotationEffect(.degrees(45))
+
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(
+                    LinearGradient(colors: [purple.opacity(0.55), cyan.opacity(0.35)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing),
+                    lineWidth: 1.2)
+                .frame(width: 76, height: 76)
+
+            // Small tick marks at cardinal points
+            ForEach([0.0, 90.0, 180.0, 270.0], id: \.self) { angle in
+                Capsule()
+                    .fill(cyan.opacity(0.60))
+                    .frame(width: 2, height: 6)
+                    .offset(y: -46)
+                    .rotationEffect(.degrees(angle))
+            }
+
+            // Center: DSW brand text
+            VStack(spacing: 1) {
+                Text("DSW")
+                    .font(.system(size: 26, weight: .black, design: .monospaced))
+                    .tracking(5)
+                    .foregroundStyle(LinearGradient(
+                        colors: [cyan, blue, purple],
+                        startPoint: .leading, endPoint: .trailing))
+                    .shadow(color: cyan.opacity(0.85), radius: 14)
+                    .shadow(color: purple.opacity(0.50), radius: 24)
+                Text("CheatiOS")
+                    .font(.system(size: 8.5, weight: .bold, design: .monospaced))
+                    .tracking(2.0)
+                    .foregroundStyle(.white.opacity(0.38))
             }
         }
         .frame(width: 120, height: 120)
-        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous)
-            .strokeBorder(
-                LinearGradient(colors: [cyan.opacity(0.9), purple.opacity(0.5)],
-                               startPoint: .topLeading, endPoint: .bottomTrailing),
-                lineWidth: 2))
-        .shadow(color: cyan.opacity(0.70), radius: 28)
-        .shadow(color: purple.opacity(0.50), radius: 52)
-        .shadow(color: cyan.opacity(0.22), radius: 80)
+        .shadow(color: cyan.opacity(0.45), radius: 28)
+        .shadow(color: purple.opacity(0.35), radius: 52)
     }
 
     // ── Animation sequence ──
 
     private func runSequence() {
-        withAnimation(.easeOut(duration: 0.35).delay(0.05)) { cornersOp = 1 }
         withAnimation(.spring(response: 0.62, dampingFraction: 0.56).delay(0.15)) {
             logoScale = 1.0; logoOpacity = 1.0
         }

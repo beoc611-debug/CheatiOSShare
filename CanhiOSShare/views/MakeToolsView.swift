@@ -203,6 +203,7 @@ struct MakeToolsView: View {
     }
 
     private var serverDotColor: Color {
+        if licenseGate.isVipEligible && store.serverStatus == .noAccess { return MTStyle.ok }
         switch store.serverStatus {
         case .checking:  return MTStyle.muted
         case .online:    return MTStyle.ok
@@ -212,6 +213,7 @@ struct MakeToolsView: View {
     }
 
     private var serverDotLabel: String {
+        if licenseGate.isVipEligible && store.serverStatus == .noAccess { return "ADMIN" }
         switch store.serverStatus {
         case .checking:  return "CHECK"
         case .online:    return "ONLINE"
@@ -244,7 +246,7 @@ struct MakeToolsView: View {
                     ProgressView().tint(AppTheme.neonPurple)
                     Text("Đang tải lên server…").font(.system(size: 12)).foregroundStyle(MTStyle.muted)
                 }.transition(.opacity)
-            } else if let st = store.uploadStatus {
+            } else if let st = store.uploadStatus, !st.contains("thất bại") || !licenseGate.isVipEligible {
                 HStack(spacing: 6) {
                     Image(systemName: st.contains("✓") ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
                         .foregroundStyle(st.contains("✓") ? MTStyle.ok : MTStyle.warn)
@@ -373,14 +375,20 @@ struct MakeToolsView: View {
                 }
                 .buttonStyle(.plain)
             }
-            Button { openPicker() } label: {
-                Text("Đổi file")
-                    .font(.system(size: 12.5, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12).padding(.vertical, 8)
-                    .background(LinearGradient(colors: [AppTheme.neonPurple, AppTheme.techGlow], startPoint: .leading, endPoint: .trailing), in: Capsule())
+            Button { store.scanGameFiles() } label: {
+                HStack(spacing: 5) {
+                    if store.isScanning {
+                        ProgressView().tint(.white).scaleEffect(0.7)
+                    }
+                    Text(store.isScanning ? "Đang dò…" : "Đổi file")
+                        .font(.system(size: 12.5, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .background(LinearGradient(colors: [AppTheme.neonPurple, AppTheme.techGlow], startPoint: .leading, endPoint: .trailing), in: Capsule())
             }
             .buttonStyle(PressScaleButtonStyle())
+            .disabled(store.isScanning)
         }
     }
 
@@ -576,8 +584,6 @@ struct MakeToolsView: View {
                 .font(.system(size: 13.5))
                 .foregroundStyle(Color(red: 0.73, green: 0.78, blue: 0.86))
                 .fixedSize(horizontal: false, vertical: true)
-
-            specsGrid(scene)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 8, alignment: .leading)], alignment: .leading, spacing: 6) {
                 ForEach(scene.legend) { l in
