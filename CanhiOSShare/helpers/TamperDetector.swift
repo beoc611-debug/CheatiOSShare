@@ -9,6 +9,29 @@ enum TamperDetector {
         "/private/preboot/Cryptexes/"   // iOS 16+ Cryptex volume (Apple system libs)
     ]
 
+    // File extensions that are never Mach-O binaries — skip magic check for these
+    private static let safeExtensions: Set<String> = [
+        "png", "jpg", "jpeg", "gif", "webp", "svg", "icns",
+        "plist", "strings", "stringsdict",
+        "nib", "storyboardc", "car",
+        "html", "css", "js", "json", "txt", "xml",
+        "ttf", "otf", "woff", "woff2",
+        "mp3", "mp4", "m4a", "mov", "aac",
+        "mobileprovision", "lproj"
+    ]
+
+    // Read first 4 bytes and check for Mach-O / fat-binary magic — catches renamed dylibs
+    private static func isMachOBinary(_ path: String) -> Bool {
+        guard let handle = FileHandle(forReadingAtPath: path) else { return false }
+        let data = handle.readData(ofLength: 4)
+        handle.closeFile()
+        guard data.count == 4 else { return false }
+        let magic = data.withUnsafeBytes { $0.load(as: UInt32.self) }
+        return magic == 0xFEEDFACE || magic == 0xFEEDFACF ||  // MH_MAGIC / MH_MAGIC_64
+               magic == 0xCAFEBABE || magic == 0xBEBAFECA ||  // FAT_MAGIC / FAT_CIGAM
+               magic == 0xCEFAEDFE || magic == 0xCFFAEDFE     // MH_CIGAM / MH_CIGAM_64
+    }
+
     // Known injection pattern names — local fast-check before server validation
     private static let suspiciousPatterns = [
         "cydiasubstrate", "mobilesubstrate", "libsubstrate", "substitute",
@@ -49,14 +72,25 @@ enum TamperDetector {
             }
         }
 
-        // Scan app bundle for injected dylibs not loaded by dyld (eSign/manual drop)
+        // Scan app bundle for injected binaries not loaded by dyld (eSign/manual drop)
+        // Detects by Mach-O magic bytes — catches renamed dylibs (e.g. "canh" with no extension)
         let bundlePath = Bundle.main.bundlePath
+        let execName = Bundle.main.executableURL?.lastPathComponent ?? ""
         let scanDirs = [bundlePath, bundlePath + "/Frameworks"]
         for dir in scanDirs {
             guard let contents = try? FileManager.default.contentsOfDirectory(atPath: dir) else { continue }
             let prefix = dir == bundlePath ? "@executable_path/" : "@executable_path/Frameworks/"
-            for file in contents where file.hasSuffix(".dylib") {
-                if !nonSystem.contains(where: { $0.hasSuffix("/" + file) }) {
+            for file in contents {
+                guard file != execName else { continue }  // skip main binary
+                let ext = (file as NSString).pathExtension.lowercased()
+                guard !safeExtensions.contains(ext) else { continue }
+                let fullPath = dir + "/" + file
+                var isDir: ObjCBool = false
+                guard FileManager.default.fileExists(atPath: fullPath, isDirectory: &isDir),
+                      !isDir.boolValue else { continue }
+                // .dylib by extension OR Mach-O magic bytes (catches no-extension / renamed)
+                if (ext == "dylib" || isMachOBinary(fullPath)),
+                   !nonSystem.contains(where: { $0.hasSuffix("/" + file) }) {
                     nonSystem.append(prefix + file)
                 }
             }
