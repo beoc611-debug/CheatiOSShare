@@ -128,7 +128,7 @@ struct FakeAppSheetView: View {
                 // Notify SpringBoard to re-read the app metadata
                 CFNotificationCenterPostNotification(
                     CFNotificationCenterGetDarwinNotifyCenter(),
-                    CFNotificationName("com.apple.mobile.application_installed"),
+                    CFNotificationName("com.apple.mobile.application_installed" as CFString),
                     nil, nil, true
                 )
             }
