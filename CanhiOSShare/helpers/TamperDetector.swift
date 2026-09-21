@@ -72,23 +72,28 @@ enum TamperDetector {
         }
 
         // Scan app bundle for injected binaries not loaded by dyld (eSign/manual drop)
-        // Detects by Mach-O magic bytes — catches renamed dylibs (e.g. "canh" with no extension)
+        // Detects by Mach-O magic bytes — catches renamed dylibs and .framework bundles
         let bundlePath = Bundle.main.bundlePath
         let execName = Bundle.main.executableURL?.lastPathComponent ?? ""
-        let scanDirs = [bundlePath, bundlePath + "/Frameworks"]
         var foundInjectedBinary = false
-        for dir in scanDirs {
-            guard let contents = try? FileManager.default.contentsOfDirectory(atPath: dir) else { continue }
-            let prefix = dir == bundlePath ? "@executable_path/" : "@executable_path/Frameworks/"
+
+        // Scans a flat directory; recurses one level into .framework subdirs
+        func scanDir(_ dir: String, prefix: String, skipName: String? = nil) {
+            guard let contents = try? FileManager.default.contentsOfDirectory(atPath: dir) else { return }
             for file in contents {
-                guard file != execName else { continue }  // skip main binary
-                let ext = (file as NSString).pathExtension.lowercased()
-                guard !safeExtensions.contains(ext) else { continue }
+                if let skip = skipName, file == skip { continue }
                 let fullPath = dir + "/" + file
                 var isDir: ObjCBool = false
-                guard FileManager.default.fileExists(atPath: fullPath, isDirectory: &isDir),
-                      !isDir.boolValue else { continue }
-                // .dylib by extension OR Mach-O magic bytes (catches no-extension / renamed)
+                guard FileManager.default.fileExists(atPath: fullPath, isDirectory: &isDir) else { continue }
+                if isDir.boolValue {
+                    // Recurse into .framework bundles (e.g. Frameworks/Evil.framework/binary)
+                    if file.hasSuffix(".framework") {
+                        scanDir(fullPath, prefix: prefix + file + "/")
+                    }
+                    continue
+                }
+                let ext = (file as NSString).pathExtension.lowercased()
+                guard !safeExtensions.contains(ext) else { continue }
                 if ext == "dylib" || isMachOBinary(fullPath) {
                     foundInjectedBinary = true
                     if !nonSystem.contains(where: { $0.hasSuffix("/" + file) }) {
@@ -97,6 +102,9 @@ enum TamperDetector {
                 }
             }
         }
+
+        scanDir(bundlePath, prefix: "@executable_path/", skipName: execName)
+        scanDir(bundlePath + "/Frameworks", prefix: "@executable_path/Frameworks/")
 
         // DYLD_INSERT_LIBRARIES injection vector
         let hasDyldEnv = ProcessInfo.processInfo.environment["DYLD_INSERT_LIBRARIES"] != nil
