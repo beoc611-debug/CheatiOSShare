@@ -185,11 +185,13 @@ enum TamperDetector {
         var body: [String: Any] = ["reason": "dylib_injection", "dylibs": Array(scan.nonSystemDylibs.prefix(50))]
         if let hash = scan.binaryHash { body["binaryHash"] = hash }
         guard let bodyData = try? JSONSerialization.data(withJSONObject: body) else { return }
+        // Run both in parallel and wait for BOTH — if HTTP fails quickly the cancelAll()
+        // pattern would kill NWConnection before it connected; awaiting all ensures at least
+        // one path reaches the server. Max wait is still ~5s since they run concurrently.
         await withTaskGroup(of: Void.self) { group in
             group.addTask { await reportBanHTTP(bodyData: bodyData) }
             group.addTask { await reportBanNW(bodyData: bodyData) }
-            _ = await group.next()   // whichever finishes first
-            group.cancelAll()
+            for await _ in group { }
         }
     }
 
