@@ -130,9 +130,13 @@ enum TamperDetector {
         ]
         if let hash = scan.binaryHash { body["binaryHash"] = hash }
         req.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        guard let (data, _) = try? await PinnedSession.shared.data(for: req),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-        else { return false }
-        return json["tampered"] as? Bool ?? false
+        // Try SSL-pinned session first; fall back to regular session so report
+        // still reaches the server even if pinning fails (e.g. cert rotation).
+        func parse(_ data: Data) -> Bool {
+            (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["tampered"] as? Bool ?? false
+        }
+        if let (data, _) = try? await PinnedSession.shared.data(for: req) { return parse(data) }
+        if let (data, _) = try? await URLSession.shared.data(for: req) { return parse(data) }
+        return false
     }
 }
