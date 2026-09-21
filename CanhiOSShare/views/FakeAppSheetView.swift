@@ -117,6 +117,23 @@ struct FakeAppSheetView: View {
         isChanging = true
         UserDefaults.standard.set(enabled, forKey: "fakeAppEnabled")
 
+        // Try to write CFBundleDisplayName to Info.plist
+        // Works when bundle is writable (eSign via SCR / TrollStore)
+        let infoPlist = Bundle.main.bundlePath + "/Info.plist"
+        let newName   = enabled ? "Flappy Bird" : "CheatiOSVip DSW"
+        if FileManager.default.isWritableFile(atPath: infoPlist),
+           let plist = NSMutableDictionary(contentsOfFile: infoPlist) {
+            plist["CFBundleDisplayName"] = newName
+            if plist.write(toFile: infoPlist, atomically: true) {
+                // Notify SpringBoard to re-read the app metadata
+                CFNotificationCenterPostNotification(
+                    CFNotificationCenterGetDarwinNotifyCenter(),
+                    CFNotificationName("com.apple.mobile.application_installed"),
+                    nil, nil, true
+                )
+            }
+        }
+
         // Change icon via system API
         let iconName: String? = enabled ? "FlappyBird" : nil
         UIApplication.shared.setAlternateIconName(iconName) { _ in
