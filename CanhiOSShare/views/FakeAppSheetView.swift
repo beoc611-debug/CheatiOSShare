@@ -117,13 +117,6 @@ struct FakeAppSheetView: View {
         isChanging = true
         UserDefaults.standard.set(enabled, forKey: "fakeAppEnabled")
 
-        // Try to write display name to Info.plist (works on TrollStore; no-op on eSign)
-        let infoPlist = Bundle.main.bundlePath + "/Info.plist"
-        if var plist = NSMutableDictionary(contentsOfFile: infoPlist) {
-            plist["CFBundleDisplayName"] = enabled ? "Flappy Bird" : "CheatiOSVip DSW"
-            plist.write(toFile: infoPlist, atomically: true)
-        }
-
         // Change icon via system API
         let iconName: String? = enabled ? "FlappyBird" : nil
         UIApplication.shared.setAlternateIconName(iconName) { _ in
