@@ -66,9 +66,14 @@ struct ContentView: View {
             // Tamper scan: collect all non-system dylibs and send to server.
             // Server compares against IPA baseline — bans device if extra dylibs found.
             let scan = TamperDetector.scan()
-            let reason = scan.hasLocalSuspicion ? "dylib_injection" : "startup_check"
-            let serverSaysTampered = await TamperDetector.report(scan: scan, reason: reason)
-            if scan.hasLocalSuspicion || serverSaysTampered {
+            // Block immediately if unknown binary found in bundle — don't wait for server
+            if scan.hasLocalSuspicion || scan.hasInjectedBinary {
+                isTampered = true
+                Task { await TamperDetector.report(scan: scan, reason: "dylib_injection") }
+                return
+            }
+            let serverSaysTampered = await TamperDetector.report(scan: scan, reason: "startup_check")
+            if serverSaysTampered {
                 isTampered = true
                 return
             }

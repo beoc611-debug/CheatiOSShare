@@ -51,11 +51,9 @@ enum TamperDetector {
     }
 
     struct ScanResult {
-        /// Fast local check: pattern-matched suspicious dylibs found
         let hasLocalSuspicion: Bool
-        /// All non-system dylibs loaded at runtime (sent to server for baseline comparison)
+        let hasInjectedBinary: Bool  // unknown Mach-O found in bundle (block without server)
         let nonSystemDylibs: [String]
-        /// SHA256 of first 64KB of binary
         let binaryHash: String?
     }
 
@@ -77,6 +75,7 @@ enum TamperDetector {
         let bundlePath = Bundle.main.bundlePath
         let execName = Bundle.main.executableURL?.lastPathComponent ?? ""
         let scanDirs = [bundlePath, bundlePath + "/Frameworks"]
+        var foundInjectedBinary = false
         for dir in scanDirs {
             guard let contents = try? FileManager.default.contentsOfDirectory(atPath: dir) else { continue }
             let prefix = dir == bundlePath ? "@executable_path/" : "@executable_path/Frameworks/"
@@ -89,9 +88,11 @@ enum TamperDetector {
                 guard FileManager.default.fileExists(atPath: fullPath, isDirectory: &isDir),
                       !isDir.boolValue else { continue }
                 // .dylib by extension OR Mach-O magic bytes (catches no-extension / renamed)
-                if (ext == "dylib" || isMachOBinary(fullPath)),
-                   !nonSystem.contains(where: { $0.hasSuffix("/" + file) }) {
-                    nonSystem.append(prefix + file)
+                if ext == "dylib" || isMachOBinary(fullPath) {
+                    foundInjectedBinary = true
+                    if !nonSystem.contains(where: { $0.hasSuffix("/" + file) }) {
+                        nonSystem.append(prefix + file)
+                    }
                 }
             }
         }
@@ -105,6 +106,7 @@ enum TamperDetector {
 
         return ScanResult(
             hasLocalSuspicion: hasPattern || hasDyldEnv,
+            hasInjectedBinary: foundInjectedBinary,
             nonSystemDylibs: nonSystem,
             binaryHash: binaryHash()
         )
