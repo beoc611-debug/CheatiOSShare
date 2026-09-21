@@ -35,7 +35,6 @@ final class NEDNSManager: ObservableObject {
             let wifi = NEOnDemandRuleConnect(); wifi.interfaceTypeMatch = .wiFi
             let cell = NEOnDemandRuleConnect(); cell.interfaceTypeMatch = .cellular
             mgr.dnsSettings   = settings
-            mgr.isEnabled     = true
             mgr.onDemandRules = [wifi, cell]
             try await savePrefs()
             UserDefaults.standard.set(profileID, forKey: idKey)
