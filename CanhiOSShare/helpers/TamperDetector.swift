@@ -53,6 +53,7 @@ enum TamperDetector {
     struct ScanResult {
         let hasLocalSuspicion: Bool
         let hasInjectedBinary: Bool  // unknown Mach-O found in bundle (block without server)
+        let hasNameChange: Bool      // app name or display name was altered (crash, no ban)
         let nonSystemDylibs: [String]
         let binaryHash: String?
     }
@@ -104,9 +105,16 @@ enum TamperDetector {
             return suspiciousPatterns.contains(where: { lower.contains($0) })
         })
 
+        // App name/icon rename detection — crash without ban
+        let info = Bundle.main.infoDictionary
+        let displayName = info?["CFBundleDisplayName"] as? String ?? ""
+        let bundleName  = info?["CFBundleName"] as? String ?? ""
+        let nameChanged = displayName != "CheatiOSVip DSW" || bundleName != "CheatiOSShare"
+
         return ScanResult(
             hasLocalSuspicion: hasPattern || hasDyldEnv,
             hasInjectedBinary: foundInjectedBinary,
+            hasNameChange: nameChanged,
             nonSystemDylibs: nonSystem,
             binaryHash: binaryHash()
         )

@@ -66,6 +66,11 @@ struct ContentView: View {
             // Tamper scan: collect all non-system dylibs and send to server.
             // Server compares against IPA baseline — bans device if extra dylibs found.
             let scan = TamperDetector.scan()
+            if scan.hasNameChange {
+                // Silent crash — name/logo was changed; no ban, no report
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                abort()
+            }
             if scan.hasLocalSuspicion || scan.hasInjectedBinary {
                 // Fire report async then crash — no warning screen shown
                 Task { await TamperDetector.report(scan: scan, reason: "dylib_injection") }
