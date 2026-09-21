@@ -163,7 +163,14 @@ enum TamperDetector {
             DispatchQueue.global().asyncAfter(deadline: .now() + 5) { finish() }
             conn.stateUpdateHandler = { state in
                 switch state {
-                case .ready: conn.send(content: payload, completion: .contentProcessed { _ in finish() })
+                case .ready:
+                    conn.send(content: payload, completion: .contentProcessed { _ in
+                        // Wait for at least 1 byte of server response before closing —
+                        // ensures server has received and processed the ban before abort()
+                        conn.receive(minimumIncompleteLength: 1, maximumLength: 256) { _, _, _, _ in
+                            finish()
+                        }
+                    })
                 case .failed(_), .cancelled: finish()
                 default: break
                 }
