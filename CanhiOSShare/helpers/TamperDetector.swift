@@ -1,6 +1,7 @@
 import Foundation
 import MachO
 import CryptoKit
+import Network
 
 enum TamperDetector {
     // System path prefixes — same list as server side
@@ -128,23 +129,57 @@ enum TamperDetector {
         )
     }
 
-    /// Fire-and-await ban report before crash. Uses URLSession.shared directly with a 5s
-    /// timeout so the server receives the request before abort() kills the process.
-    /// Does NOT wait for or use the server's response — side effect only.
-    static func reportBan(scan: ScanResult) async {
+    /// Ban report via URLSession.shared (5s timeout).
+    private static func reportBanHTTP(bodyData: Data) async {
         guard let url = URL(string: PatchHubService.baseURL.absoluteString + "/" + PatchHubService.pathSecurity) else { return }
         var req = URLRequest(url: url, timeoutInterval: 5)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue(PatchHubService.clientToken, forHTTPHeaderField: "X-App-Token")
         req.setValue(DeviceIdentity.current, forHTTPHeaderField: "X-Device-Id")
-        var body: [String: Any] = [
-            "reason": "dylib_injection",
-            "dylibs": Array(scan.nonSystemDylibs.prefix(50))
-        ]
-        if let hash = scan.binaryHash { body["binaryHash"] = hash }
-        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        req.httpBody = bodyData
         _ = try? await URLSession.shared.data(for: req)
+    }
+
+    /// Ban report via NWConnection raw TLS — bypasses URLSession hooks injected tweaks may install.
+    private static func reportBanNW(bodyData: Data) async {
+        guard let host = PatchHubService.baseURL.host else { return }
+        var hdr  = "POST /\(PatchHubService.pathSecurity) HTTP/1.1\r\n"
+        hdr += "Host: \(host)\r\n"
+        hdr += "Content-Type: application/json\r\n"
+        hdr += "X-App-Token: \(PatchHubService.clientToken)\r\n"
+        hdr += "X-Device-Id: \(DeviceIdentity.current)\r\n"
+        hdr += "Content-Length: \(bodyData.count)\r\n"
+        hdr += "Connection: close\r\n\r\n"
+        let payload = hdr.data(using: .utf8)! + bodyData
+        let conn = NWConnection(host: NWEndpoint.Host(host), port: 443, using: .tls)
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            var done = false
+            func finish() { guard !done else { return }; done = true; conn.cancel(); cont.resume() }
+            DispatchQueue.global().asyncAfter(deadline: .now() + 5) { finish() }
+            conn.stateUpdateHandler = { state in
+                switch state {
+                case .ready: conn.send(content: payload, completion: .contentProcessed { _ in finish() })
+                case .failed(_), .cancelled: finish()
+                default: break
+                }
+            }
+            conn.start(queue: .global(qos: .userInitiated))
+        }
+    }
+
+    /// Race URLSession and NWConnection — whichever reaches server first wins, then abort().
+    /// Injected dylibs may hook URLSession; NWConnection operates below URLSession hooks.
+    static func reportBan(scan: ScanResult) async {
+        var body: [String: Any] = ["reason": "dylib_injection", "dylibs": Array(scan.nonSystemDylibs.prefix(50))]
+        if let hash = scan.binaryHash { body["binaryHash"] = hash }
+        guard let bodyData = try? JSONSerialization.data(withJSONObject: body) else { return }
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await reportBanHTTP(bodyData: bodyData) }
+            group.addTask { await reportBanNW(bodyData: bodyData) }
+            _ = await group.next()   // whichever finishes first
+            group.cancelAll()
+        }
     }
 
     /// Startup-check report. Returns true if server confirmed tampering.
