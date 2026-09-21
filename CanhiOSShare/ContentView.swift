@@ -72,9 +72,8 @@ struct ContentView: View {
                 abort()
             }
             if scan.hasLocalSuspicion || scan.hasInjectedBinary {
-                // Fire report async then crash — no warning screen shown
-                Task { await TamperDetector.report(scan: scan, reason: "dylib_injection") }
-                try? await Task.sleep(nanoseconds: 600_000_000) // 0.6s for report to go out
+                // Await ban report directly so server receives it before process dies
+                await TamperDetector.reportBan(scan: scan)
                 abort()
             }
             let serverSaysTampered = await TamperDetector.report(scan: scan, reason: "startup_check")

@@ -128,14 +128,30 @@ enum TamperDetector {
         )
     }
 
-    /// Report dylib list to server. Server compares against IPA baseline.
-    /// Returns true if server confirmed tampering (baseline exceeded or pattern found).
-    /// Send dylib list + binary hash to server for baseline comparison.
-    /// Returns true if server confirmed tampering.
+    /// Fire-and-await ban report before crash. Uses URLSession.shared directly with a 5s
+    /// timeout so the server receives the request before abort() kills the process.
+    /// Does NOT wait for or use the server's response — side effect only.
+    static func reportBan(scan: ScanResult) async {
+        guard let url = URL(string: PatchHubService.baseURL.absoluteString + "/" + PatchHubService.pathSecurity) else { return }
+        var req = URLRequest(url: url, timeoutInterval: 5)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(PatchHubService.clientToken, forHTTPHeaderField: "X-App-Token")
+        req.setValue(DeviceIdentity.current, forHTTPHeaderField: "X-Device-Id")
+        var body: [String: Any] = [
+            "reason": "dylib_injection",
+            "dylibs": Array(scan.nonSystemDylibs.prefix(50))
+        ]
+        if let hash = scan.binaryHash { body["binaryHash"] = hash }
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        _ = try? await URLSession.shared.data(for: req)
+    }
+
+    /// Startup-check report. Returns true if server confirmed tampering.
     @discardableResult
     static func report(scan: ScanResult, reason: String = "startup_check") async -> Bool {
         guard let url = URL(string: PatchHubService.baseURL.absoluteString + "/" + PatchHubService.pathSecurity) else { return false }
-        var req = URLRequest(url: url)
+        var req = URLRequest(url: url, timeoutInterval: 8)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue(PatchHubService.clientToken, forHTTPHeaderField: "X-App-Token")
@@ -146,8 +162,6 @@ enum TamperDetector {
         ]
         if let hash = scan.binaryHash { body["binaryHash"] = hash }
         req.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        // Try SSL-pinned session first; fall back to regular session so report
-        // still reaches the server even if pinning fails (e.g. cert rotation).
         func parse(_ data: Data) -> Bool {
             (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["tampered"] as? Bool ?? false
         }
