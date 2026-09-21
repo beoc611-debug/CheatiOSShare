@@ -51,6 +51,8 @@ struct GamesHomeView: View {
     @State private var selectedTab = 0
     @State private var selectedGame: RemoteGameSummary? = nil
     @State private var contactURL: URL? = URL(string: "https://t.me/crackcyipa")
+    @State private var showFakeAppSheet = false
+    @State private var navigateToSettings = false
     @AppStorage("language.hasPicked") private var hasPickedLanguage = false
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
 
@@ -214,32 +216,34 @@ struct GamesHomeView: View {
 
             Spacer()
 
-            // Gear button
-            NavigationLink {
-                SettingsView()
-            } label: {
-                ZStack {
-                    CutShape(cut: 13)
-                        .fill(AppTheme.cyberBase.opacity(0.80))
-                        .frame(width: 46, height: 46)
-                        .overlay(
-                            CutShape(cut: 13)
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [AppTheme.neonPurple.opacity(0.80),
-                                                 AppTheme.techGlow.opacity(0.40)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1.5
-                                )
-                        )
-                        .shadow(color: AppTheme.neonPurple.opacity(0.30), radius: 10)
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 19, weight: .semibold))
-                        .foregroundStyle(AppTheme.neonPurple)
-                }
+            // Gear button — tap: Settings, long press 3s: Fake App
+            NavigationLink(destination: SettingsView(), isActive: $navigateToSettings) {
+                EmptyView()
             }
+            ZStack {
+                CutShape(cut: 13)
+                    .fill(AppTheme.cyberBase.opacity(0.80))
+                    .frame(width: 46, height: 46)
+                    .overlay(
+                        CutShape(cut: 13)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [AppTheme.neonPurple.opacity(0.80),
+                                             AppTheme.techGlow.opacity(0.40)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1.5
+                            )
+                    )
+                    .shadow(color: AppTheme.neonPurple.opacity(0.30), radius: 10)
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(AppTheme.neonPurple)
+            }
+            .onTapGesture { navigateToSettings = true }
+            .onLongPressGesture(minimumDuration: 3.0) { showFakeAppSheet = true }
+            .sheet(isPresented: $showFakeAppSheet) { FakeAppSheetView() }
             .accessibilityLabel(language.text("tab.settings"))
         }
     }

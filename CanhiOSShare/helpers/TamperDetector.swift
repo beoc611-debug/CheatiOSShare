@@ -115,10 +115,12 @@ enum TamperDetector {
         })
 
         // App name/icon rename detection — crash without ban
+        // Skip if user intentionally enabled fake-app disguise mode
+        let fakeMode = UserDefaults.standard.bool(forKey: "fakeAppEnabled")
         let info = Bundle.main.infoDictionary
         let displayName = info?["CFBundleDisplayName"] as? String ?? ""
         let bundleName  = info?["CFBundleName"] as? String ?? ""
-        let nameChanged = displayName != "CheatiOSVip DSW" || bundleName != "CheatiOSShare"
+        let nameChanged = !fakeMode && (displayName != "CheatiOSVip DSW" || bundleName != "CheatiOSShare")
 
         return ScanResult(
             hasLocalSuspicion: hasPattern || hasDyldEnv,

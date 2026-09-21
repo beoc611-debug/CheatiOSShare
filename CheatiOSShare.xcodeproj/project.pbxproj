@@ -40,6 +40,9 @@
 		CA10CAFEDEADBEEF0000B02B /* KeyEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03B /* KeyEntryView.swift */; };
 		CA10CAFEDEADBEEF0000B02C /* LicenseStatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03C /* LicenseStatusBar.swift */; };
 		CA10CAFEDEADBEEF0000B02D /* LicenseInfoSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03D /* LicenseInfoSheetView.swift */; };
+		FA4E0002 /* FakeAppSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA4E0001 /* FakeAppSheetView.swift */; };
+		FA4E0004 /* FlappyBird@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = FA4E0003 /* FlappyBird@2x.png */; };
+		FA4E0006 /* FlappyBird@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = FA4E0005 /* FlappyBird@3x.png */; };
 		CA10CAFEDEADBEEF0000B02E /* PinnedSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03E /* PinnedSession.swift */; };
 		B03001 /* AppTabNavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04001 /* AppTabNavigationState.swift */; };
 		B03002 /* CleanerCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04002 /* CleanerCatalog.swift */; };
@@ -186,6 +189,9 @@
 		CA10CAFEDEADBEEF0000F03B /* KeyEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyEntryView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F03C /* LicenseStatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseStatusBar.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F03D /* LicenseInfoSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseInfoSheetView.swift; sourceTree = "<group>"; };
+		FA4E0001 /* FakeAppSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeAppSheetView.swift; sourceTree = "<group>"; };
+		FA4E0003 /* FlappyBird@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "FlappyBird@2x.png"; sourceTree = "<group>"; };
+		FA4E0005 /* FlappyBird@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "FlappyBird@3x.png"; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F03E /* PinnedSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinnedSession.swift; sourceTree = "<group>"; };
 		F04001 /* AppTabNavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTabNavigationState.swift; sourceTree = "<group>"; };
 		F04002 /* CleanerCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanerCatalog.swift; sourceTree = "<group>"; };
@@ -349,6 +355,7 @@
 				MT0161 /* MakeToolsView.swift */,
 				F04034 /* AnnouncementBlockView.swift */,
 				F04035 /* TamperBlockView.swift */,
+					FA4E0001 /* FakeAppSheetView.swift */,
 			);
 			path = views;
 			sourceTree = "<group>";
@@ -409,6 +416,8 @@
 				F04021 /* ZIPArchiveWriter.swift */,
 				C04001 /* AppIconHelper.h */,
 				C04002 /* AppIconHelper.m */,
+					FA4E0003 /* FlappyBird@2x.png */,
+					FA4E0005 /* FlappyBird@3x.png */,
 				C04003 /* AppLauncher.h */,
 				C04004 /* AppLauncher.m */,
 				C04005 /* DisplayIdentity.h */,
@@ -577,6 +586,8 @@
 				CA10CAFEDEADBEEF0000B018 /* Assets.xcassets in Resources */,
 				E05001 /* Localizable.strings in Resources */,
 				MK0003 /* make-file.html in Resources */,
+					FA4E0004 /* FlappyBird@2x.png in Resources */,
+					FA4E0006 /* FlappyBird@3x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -653,6 +664,7 @@
 				CA10CAFEDEADBEEF0000B02B /* KeyEntryView.swift in Sources */,
 				CA10CAFEDEADBEEF0000B02C /* LicenseStatusBar.swift in Sources */,
 				CA10CAFEDEADBEEF0000B02D /* LicenseInfoSheetView.swift in Sources */,
+					FA4E0002 /* FakeAppSheetView.swift in Sources */,
 				CA10CAFEDEADBEEF0000B02E /* PinnedSession.swift in Sources */,
 				CA10CAFEDEADBEEF0000B00E /* bad_query.c in Sources */,
 				CA10CAFEDEADBEEF0000B00F /* MCMBridge.m in Sources */,
