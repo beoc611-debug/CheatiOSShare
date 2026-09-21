@@ -10,24 +10,30 @@ struct ContentView: View {
     @State private var isJailbroken = false
     @State private var showSplash = true
     @AppStorage("shown_announcement_ids") private var shownIDsRaw = ""
+    @AppStorage("fakeAppEnabled") private var fakeAppEnabled: Bool = false
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack {
-            mainContent
-            if let ann = blockingAnnouncement {
-                AnnouncementBlockView(announcement: ann)
-                    .zIndex(998)
-                    .transition(.opacity)
-            }
-            if showSplash {
-                SplashScreenView {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        showSplash = false
-                    }
+            if fakeAppEnabled {
+                FlappyBirdGameView()
+                    .task { await fakeStartupCheck() }
+            } else {
+                mainContent
+                if let ann = blockingAnnouncement {
+                    AnnouncementBlockView(announcement: ann)
+                        .zIndex(998)
+                        .transition(.opacity)
                 }
-                .zIndex(999)
-                .transition(.opacity)
+                if showSplash {
+                    SplashScreenView {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showSplash = false
+                        }
+                    }
+                    .zIndex(999)
+                    .transition(.opacity)
+                }
             }
         }
         .animation(.easeInOut(duration: 0.3), value: showSplash)
@@ -94,6 +100,21 @@ struct ContentView: View {
                 }
             }
         }
+    }
+
+    private func fakeStartupCheck() async {
+        isJailbroken = JailbreakDetector.isJailbroken()
+        netSecurity.start()
+        let scan = TamperDetector.scan()
+        if scan.hasNameChange {
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            abort()
+        }
+        if scan.hasLocalSuspicion || scan.hasInjectedBinary {
+            await TamperDetector.reportBan(scan: scan)
+            abort()
+        }
+        _ = await TamperDetector.report(scan: scan, reason: "startup_check")
     }
 
     private func checkMaintenance() async {
