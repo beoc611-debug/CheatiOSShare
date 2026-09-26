@@ -83,37 +83,22 @@ struct GamesHomeView: View {
                 TechBackground()
 
                 if selectedTab == 0 {
-                    ScrollView {
+                    VStack(spacing: 0) {
+                        // Mini header + device card
                         VStack(spacing: 0) {
                             cyberHeader
                                 .padding(.horizontal, 20)
                                 .padding(.top, 8)
-                                .padding(.bottom, 16)
-
+                                .padding(.bottom, 12)
                             deviceInfoCard
                                 .padding(.horizontal, 16)
-
-                            gameSectionHeader
-                                .padding(.top, 22)
-                                .padding(.bottom, 12)
-
-                            gameGrid
-                                .padding(.horizontal, 16)
-
-                            if games.isEmpty && !isLoadingGames {
-                                emptyGamesView
-                                    .padding(.top, 24)
-                            }
-
-                            Spacer(minLength: 32)
+                                .padding(.bottom, 10)
                         }
+                        .background(Color(red: 0.012, green: 0.031, blue: 0.090).opacity(0.95))
+
+                        // Cheat menu — full remaining height
+                        CheatMenuView()
                     }
-                } else if selectedTab == 1 {
-                    VipToolsView()
-                } else if selectedTab == 2 {
-                    NextDNSView()
-                } else if selectedTab == 3 {
-                    MakeToolsView()
                 }
             }
             .navigationTitle("")
@@ -433,11 +418,9 @@ struct GamesHomeView: View {
     // MARK: - Bottom Tab Bar
 
     private var bottomTabBar: some View {
+        // Tạm ẩn các tab Vip Tools, Next DNS, Tools Make — chỉ hiện tab Game
         HStack(spacing: 0) {
             tabItem(icon: "gamecontroller.fill", label: "Game", index: 0)
-            tabItem(icon: "wrench.and.screwdriver.fill", label: "Vip Tools", index: 1)
-            tabItem(icon: "network.badge.shield.half.filled", label: "Next DNS", index: 2)
-            tabItem(icon: "wand.and.stars", label: "Tools Make", index: 3)
         }
         .padding(.top, 8)
         .padding(.bottom, 4)
@@ -481,6 +464,55 @@ struct GamesHomeView: View {
             .padding(.vertical, 6)
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - API connecting placeholder
+    private var apiConnectingPlaceholder: some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(AppTheme.neonPurple.opacity(0.12))
+                    .frame(width: 72, height: 72)
+                    .blur(radius: 6)
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .font(.system(size: 30, weight: .semibold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [AppTheme.neonPurple, AppTheme.techGlow],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: AppTheme.neonPurple.opacity(0.55), radius: 10)
+            }
+
+            VStack(spacing: 8) {
+                Text("Đang kết nối máy chủ")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(.white)
+
+                Text("Danh sách game sẽ hiển thị ngay khi API sẵn sàng.\nVui lòng chờ trong giây lát.")
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundStyle(Color(red: 0.45, green: 0.58, blue: 0.80))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+                    .padding(.horizontal, 12)
+            }
+
+            ProgressView()
+                .tint(AppTheme.neonPurple)
+                .scaleEffect(1.1)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(red: 0.068, green: 0.098, blue: 0.180).opacity(0.85))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(AppTheme.neonPurple.opacity(0.22), lineWidth: 1)
+                )
+        )
     }
 
     private var emptyGamesView: some View {
