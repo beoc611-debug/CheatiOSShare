@@ -44,7 +44,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # Push
 Write-Host "Dang push len beoc611-debug/CheatiOSShare..."
-git push beoc HEAD:main --force
+git push beoc HEAD:master --force
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""

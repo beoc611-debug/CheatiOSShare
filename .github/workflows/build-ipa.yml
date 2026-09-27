@@ -2,7 +2,7 @@ name: Build IPA
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ master, main ]
   workflow_dispatch:
 
 jobs:
@@ -16,7 +16,10 @@ jobs:
       - name: Select Xcode 15
         run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
 
-      - name: Build (no signing)
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build
         run: |
           xcodebuild \
             -project CheatiOSShare.xcodeproj \
@@ -26,19 +29,26 @@ jobs:
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            | xcpretty || true
+            CODE_SIGN_IDENTITY=""
+
+      - name: Find .app
+        run: |
+          find build/Build/Products -name "*.app" -type d
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -name "*.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: .app not found"
+            exit 1
+          fi
+          echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
 
       - name: Package IPA
         run: |
-          APP_PATH=$(find build/Build/Products/Release-iphoneos -name "*.app" | head -1)
-          echo "App path: $APP_PATH"
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
           zip -r CheatiOSShare.ipa Payload
           ls -lh CheatiOSShare.ipa
 
-      - name: Upload IPA artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: CheatiOSShare-IPA
