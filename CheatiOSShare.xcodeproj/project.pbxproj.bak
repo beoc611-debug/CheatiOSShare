@@ -7,9 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CA10CAFEDEADBEEF0000F04C /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F041 /* KeyboardViewController.swift */; };
-		CA10CAFEDEADBEEF0000F04D /* DSWToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F042 /* DSWToolsView.swift */; };
-		
 		CA10CAFEDEADBEEF0000B001 /* CanhiOSShareApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F001 /* CanhiOSShareApp.swift */; };
 		CA10CAFEDEADBEEF0000B002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F002 /* ContentView.swift */; };
 		CA10CAFEDEADBEEF0000B003 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F003 /* DesignSystem.swift */; };
@@ -40,10 +37,6 @@
 		CA10CAFEDEADBEEF0000B02B /* KeyEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03B /* KeyEntryView.swift */; };
 		CA10CAFEDEADBEEF0000B02C /* LicenseStatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03C /* LicenseStatusBar.swift */; };
 		CA10CAFEDEADBEEF0000B02D /* LicenseInfoSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03D /* LicenseInfoSheetView.swift */; };
-		FA4E0002 /* FakeAppSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA4E0001 /* FakeAppSheetView.swift */; };
-		FB4E0008 /* FlappyBirdGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4E0007 /* FlappyBirdGameView.swift */; };
-		FA4E0004 /* FlappyBird@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = FA4E0003 /* FlappyBird@2x.png */; };
-		FA4E0006 /* FlappyBird@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = FA4E0005 /* FlappyBird@3x.png */; };
 		CA10CAFEDEADBEEF0000B02E /* PinnedSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F03E /* PinnedSession.swift */; };
 		B03001 /* AppTabNavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04001 /* AppTabNavigationState.swift */; };
 		B03002 /* CleanerCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04002 /* CleanerCatalog.swift */; };
@@ -96,9 +89,6 @@
 		B03030 /* AppDataBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04030 /* AppDataBrowserView.swift */; };
 		B03031 /* AppDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04031 /* AppDetailView.swift */; };
 		B03032 /* AppManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04032 /* AppManagerView.swift */; };
-		B03033 /* TamperDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04033 /* TamperDetector.swift */; };
-		B03034 /* AnnouncementBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04034 /* AnnouncementBlockView.swift */; };
-		B03035 /* TamperBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04035 /* TamperBlockView.swift */; };
 		D04001 /* mcm_bridge.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F015 /* mcm_bridge.m */; };
 		D04002 /* kexploit_opa334.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F017 /* kexploit_opa334.m */; };
 		D04003 /* krw.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F019 /* krw.m */; };
@@ -112,26 +102,9 @@
 		D0400B /* DisplayIdentity.m in Sources */ = {isa = PBXBuildFile; fileRef = C04006 /* DisplayIdentity.m */; };
 		D0400C /* wallpaper_zip.c in Sources */ = {isa = PBXBuildFile; fileRef = C04008 /* wallpaper_zip.c */; };
 		E05001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = E05002 /* Localizable.strings */; };
-		MT0102 /* UnityBundleKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = MT0101 /* UnityBundleKit.swift */; };
-		MT0112 /* MakeToolsEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = MT0111 /* MakeToolsEngine.swift */; };
-		MT0122 /* MakeToolsBlobs.swift in Sources */ = {isa = PBXBuildFile; fileRef = MT0121 /* MakeToolsBlobs.swift */; };
-		MT0132 /* MakeToolsCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = MT0131 /* MakeToolsCatalog.swift */; };
-		MT0142 /* MakeToolsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = MT0141 /* MakeToolsStore.swift */; };
-		MT0152 /* MakeToolsSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = MT0151 /* MakeToolsSim.swift */; };
-		MT0162 /* MakeToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MT0161 /* MakeToolsView.swift */; };
-		MK0003 /* make-file.html in Resources */ = {isa = PBXBuildFile; fileRef = MK0004 /* make-file.html */; };
-		FF0001 /* FreefireESPStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0101 /* FreefireESPStore.swift */; };
-		FF0002 /* FreefireESPHomeSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0102 /* FreefireESPHomeSection.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		CA10CAFEDEADBEEF0000F041 /* KeyboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewController.swift; sourceTree = "<group>"; };
-		CA10CAFEDEADBEEF0000F042 /* DSWToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSWToolsView.swift; sourceTree = "<group>"; };
-		CA10CAFEDEADBEEF0000F043 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		CA10CAFEDEADBEEF0000F044 /* DSWKeyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DSWKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-
-		FF0101 /* FreefireESPStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreefireESPStore.swift; sourceTree = "<group>"; };
-		FF0102 /* FreefireESPHomeSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreefireESPHomeSection.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F001 /* CanhiOSShareApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanhiOSShareApp.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F003 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
@@ -140,14 +113,6 @@
 		CA10CAFEDEADBEEF0000F009 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		DEADBEEF0000000000SPLASH2 /* SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashScreenView.swift; sourceTree = "<group>"; };
 		DEADBEEF000000000DNS00002 /* NextDNSView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextDNSView.swift; sourceTree = "<group>"; };
-		MT0101 /* UnityBundleKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnityBundleKit.swift; sourceTree = "<group>"; };
-		MT0111 /* MakeToolsEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MakeToolsEngine.swift; sourceTree = "<group>"; };
-		MT0121 /* MakeToolsBlobs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MakeToolsBlobs.swift; sourceTree = "<group>"; };
-		MT0131 /* MakeToolsCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MakeToolsCatalog.swift; sourceTree = "<group>"; };
-		MT0141 /* MakeToolsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MakeToolsStore.swift; sourceTree = "<group>"; };
-		MT0151 /* MakeToolsSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MakeToolsSim.swift; sourceTree = "<group>"; };
-		MT0161 /* MakeToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MakeToolsView.swift; sourceTree = "<group>"; };
-		MK0004 /* make-file.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "make-file.html"; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00B /* ContainerStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerStore.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F00D /* NetworkSecurityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkSecurityMonitor.swift; sourceTree = "<group>"; };
@@ -194,10 +159,6 @@
 		CA10CAFEDEADBEEF0000F03B /* KeyEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyEntryView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F03C /* LicenseStatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseStatusBar.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F03D /* LicenseInfoSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseInfoSheetView.swift; sourceTree = "<group>"; };
-		FA4E0001 /* FakeAppSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeAppSheetView.swift; sourceTree = "<group>"; };
-		FB4E0007 /* FlappyBirdGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlappyBirdGameView.swift; sourceTree = "<group>"; };
-		FA4E0003 /* FlappyBird@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "FlappyBird@2x.png"; sourceTree = "<group>"; };
-		FA4E0005 /* FlappyBird@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "FlappyBird@3x.png"; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F03E /* PinnedSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinnedSession.swift; sourceTree = "<group>"; };
 		F04001 /* AppTabNavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTabNavigationState.swift; sourceTree = "<group>"; };
 		F04002 /* CleanerCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanerCatalog.swift; sourceTree = "<group>"; };
@@ -250,9 +211,6 @@
 		F04030 /* AppDataBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDataBrowserView.swift; sourceTree = "<group>"; };
 		F04031 /* AppDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDetailView.swift; sourceTree = "<group>"; };
 		F04032 /* AppManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppManagerView.swift; sourceTree = "<group>"; };
-		F04033 /* TamperDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TamperDetector.swift; sourceTree = "<group>"; };
-		F04034 /* AnnouncementBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnnouncementBlockView.swift; sourceTree = "<group>"; };
-		F04035 /* TamperBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TamperBlockView.swift; sourceTree = "<group>"; };
 		C04001 /* AppIconHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppIconHelper.h; sourceTree = "<group>"; };
 		C04002 /* AppIconHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppIconHelper.m; sourceTree = "<group>"; };
 		C04003 /* AppLauncher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppLauncher.h; sourceTree = "<group>"; };
@@ -278,24 +236,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		CA10CAFEDEADBEEF0000F040 /* DSWKeyboard */ = {
-			isa = PBXGroup;
-			children = (
-				CA10CAFEDEADBEEF0000F041 /* KeyboardViewController.swift */,
-				CA10CAFEDEADBEEF0000F042 /* DSWToolsView.swift */,
-				CA10CAFEDEADBEEF0000F043 /* Info.plist */,
-			);
-			path = DSWKeyboard;
-			sourceTree = "<group>";
-		};
-
 		CA10CAFEDEADBEEF0000000C /* MainGroup */ = {
 			isa = PBXGroup;
 			children = (
 				CA10CAFEDEADBEEF0000000D /* CanhiOSShare */,
 				CA10CAFEDEADBEEF0000000I /* Products */,
 				CA10CAFEDEADBEEF0000000K /* Frameworks */,
-				CA10CAFEDEADBEEF0000F040 /* DSWKeyboard */,);
+			);
 			sourceTree = "<group>";
 		};
 		CA10CAFEDEADBEEF0000000K /* Frameworks */ = {
@@ -315,7 +262,6 @@
 				CA10CAFEDEADBEEF0000F026 /* Info.plist */,
 				CA10CAFEDEADBEEF0000F027 /* Assets.xcassets */,
 				E05002 /* Localizable.strings */,
-				MK0004 /* make-file.html */,
 				CA10CAFEDEADBEEF0000000E /* views */,
 				CA10CAFEDEADBEEF0000000F /* helpers */,
 				CA10CAFEDEADBEEF0000000G /* exploit */,
@@ -357,13 +303,6 @@
 				F04032 /* AppManagerView.swift */,
 				DEADBEEF0000000000SPLASH2 /* SplashScreenView.swift */,
 			DEADBEEF000000000DNS00002 /* NextDNSView.swift */,
-				MT0151 /* MakeToolsSim.swift */,
-				MT0161 /* MakeToolsView.swift */,
-				F04034 /* AnnouncementBlockView.swift */,
-				F04035 /* TamperBlockView.swift */,
-					FA4E0001 /* FakeAppSheetView.swift */,
-					FB4E0007 /* FlappyBirdGameView.swift */,
-					FF0102 /* FreefireESPHomeSection.swift */,
 			);
 			path = views;
 			sourceTree = "<group>";
@@ -372,11 +311,6 @@
 			isa = PBXGroup;
 			children = (
 				CA10CAFEDEADBEEF0000F00A /* AppState.swift */,
-				MT0101 /* UnityBundleKit.swift */,
-				MT0111 /* MakeToolsEngine.swift */,
-				MT0121 /* MakeToolsBlobs.swift */,
-				MT0131 /* MakeToolsCatalog.swift */,
-				MT0141 /* MakeToolsStore.swift */,
 				CA10CAFEDEADBEEF0000F00B /* ContainerStore.swift */,
 					CA10CAFEDEADBEEF0000F00D /* NetworkSecurityMonitor.swift */,
 					CA10CAFEDEADBEEF0000F031 /* AppLanguage.swift */,
@@ -420,17 +354,13 @@
 				F0401F /* WallpaperLabService.swift */,
 				F04020 /* ZIPArchiveExtractor.swift */,
 				CA10CAFEDEADBEEF0000F03E /* PinnedSession.swift */,
-				F04033 /* TamperDetector.swift */,
 				F04021 /* ZIPArchiveWriter.swift */,
 				C04001 /* AppIconHelper.h */,
 				C04002 /* AppIconHelper.m */,
-					FA4E0003 /* FlappyBird@2x.png */,
-					FA4E0005 /* FlappyBird@3x.png */,
 				C04003 /* AppLauncher.h */,
 				C04004 /* AppLauncher.m */,
 				C04005 /* DisplayIdentity.h */,
 				C04006 /* DisplayIdentity.m */,
-				FF0101 /* FreefireESPStore.swift */,
 			);
 			path = helpers;
 			sourceTree = "<group>";
@@ -499,24 +429,6 @@
 /* End PBXVariantGroup section */
 
 /* Begin PBXNativeTarget section */
-		CA10CAFEDEADBEEF0000F045 /* DSWKeyboard */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = CA10CAFEDEADBEEF0000F04B /* Build configuration list for PBXNativeTarget "DSWKeyboard" */;
-			buildPhases = (
-				CA10CAFEDEADBEEF0000F046 /* Sources */,
-				CA10CAFEDEADBEEF0000F048 /* Frameworks */,
-				CA10CAFEDEADBEEF0000F047 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = DSWKeyboard;
-			productName = DSWKeyboard;
-			productReference = CA10CAFEDEADBEEF0000F044 /* DSWKeyboard.appex */;
-			productType = "com.apple.product-type.app-extension";
-		};
-
 		CA10CAFEDEADBEEF00000002 /* CheatiOSShare */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = CA10CAFEDEADBEEF00000008 /* Build configuration list for PBXNativeTarget "CheatiOSShare" */;
@@ -524,34 +436,17 @@
 				CA10CAFEDEADBEEF00000009 /* Sources */,
 				CA10CAFEDEADBEEF0000000B /* Frameworks */,
 				CA10CAFEDEADBEEF0000000A /* Resources */,
-				CA10CAFEDEADBEEF0000F04E /* Embed App Extensions */,);
+			);
 			buildRules = (
 			);
 			dependencies = (
-				CA10CAFEDEADBEEF0000F051 /* PBXTargetDependency */,);
+			);
 			name = CheatiOSShare;
 			productName = CheatiOSShare;
 			productReference = CA10CAFEDEADBEEF0000000J /* CheatiOSShare.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
-
-/* Begin PBXContainerItemProxy section */
-		CA10CAFEDEADBEEF0000F050 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = CA10CAFEDEADBEEF00000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = CA10CAFEDEADBEEF0000F045;
-			remoteInfo = DSWKeyboard;
-		};
-/* End PBXContainerItemProxy section */
-/* Begin PBXTargetDependency section */
-		CA10CAFEDEADBEEF0000F051 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = CA10CAFEDEADBEEF0000F045 /* DSWKeyboard */;
-			targetProxy = CA10CAFEDEADBEEF0000F050 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXProject section */
 		CA10CAFEDEADBEEF00000001 /* Project object */ = {
@@ -582,7 +477,6 @@
 			projectRoot = "";
 			targets = (
 				CA10CAFEDEADBEEF00000002 /* CheatiOSShare */,
-				CA10CAFEDEADBEEF0000F045 /* DSWKeyboard */,
 			);
 		};
 /* End PBXProject section */
@@ -594,49 +488,12 @@
 			files = (
 				CA10CAFEDEADBEEF0000B018 /* Assets.xcassets in Resources */,
 				E05001 /* Localizable.strings in Resources */,
-				MK0003 /* make-file.html in Resources */,
-					FA4E0004 /* FlappyBird@2x.png in Resources */,
-					FA4E0006 /* FlappyBird@3x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		CA10CAFEDEADBEEF0000F046 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				CA10CAFEDEADBEEF0000F04C /* KeyboardViewController.swift in Sources */,
-				CA10CAFEDEADBEEF0000F04D /* DSWToolsView.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		CA10CAFEDEADBEEF0000F047 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		CA10CAFEDEADBEEF0000F048 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		CA10CAFEDEADBEEF0000F04E /* Embed App Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-			);
-			name = "Embed App Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-
 		CA10CAFEDEADBEEF00000009 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -649,13 +506,6 @@
 					CA10CAFEDEADBEEF0000B009 /* SettingsView.swift in Sources */,
 					DEADBEEF00000000000SPLASH /* SplashScreenView.swift in Sources */,
 				DEADBEEF000000000DNS00001 /* NextDNSView.swift in Sources */,
-				MT0102 /* UnityBundleKit.swift in Sources */,
-				MT0112 /* MakeToolsEngine.swift in Sources */,
-				MT0122 /* MakeToolsBlobs.swift in Sources */,
-				MT0132 /* MakeToolsCatalog.swift in Sources */,
-				MT0142 /* MakeToolsStore.swift in Sources */,
-				MT0152 /* MakeToolsSim.swift in Sources */,
-				MT0162 /* MakeToolsView.swift in Sources */,
 				CA10CAFEDEADBEEF0000B00A /* AppState.swift in Sources */,
 				CA10CAFEDEADBEEF0000B00B /* ContainerStore.swift in Sources */,
 					CA10CAFEDEADBEEF0000B00D /* NetworkSecurityMonitor.swift in Sources */,
@@ -673,8 +523,6 @@
 				CA10CAFEDEADBEEF0000B02B /* KeyEntryView.swift in Sources */,
 				CA10CAFEDEADBEEF0000B02C /* LicenseStatusBar.swift in Sources */,
 				CA10CAFEDEADBEEF0000B02D /* LicenseInfoSheetView.swift in Sources */,
-					FA4E0002 /* FakeAppSheetView.swift in Sources */,
-					FB4E0008 /* FlappyBirdGameView.swift in Sources */,
 				CA10CAFEDEADBEEF0000B02E /* PinnedSession.swift in Sources */,
 				CA10CAFEDEADBEEF0000B00E /* bad_query.c in Sources */,
 				CA10CAFEDEADBEEF0000B00F /* MCMBridge.m in Sources */,
@@ -730,9 +578,6 @@
 				B03030 /* AppDataBrowserView.swift in Sources */,
 				B03031 /* AppDetailView.swift in Sources */,
 				B03032 /* AppManagerView.swift in Sources */,
-				B03033 /* TamperDetector.swift in Sources */,
-				B03034 /* AnnouncementBlockView.swift in Sources */,
-				B03035 /* TamperBlockView.swift in Sources */,
 				D04001 /* mcm_bridge.m in Sources */,
 				D04002 /* kexploit_opa334.m in Sources */,
 				D04003 /* krw.m in Sources */,
@@ -745,59 +590,12 @@
 				D0400A /* AppLauncher.m in Sources */,
 				D0400B /* DisplayIdentity.m in Sources */,
 				D0400C /* wallpaper_zip.c in Sources */,
-				FF0001 /* FreefireESPStore.swift in Sources */,
-				FF0002 /* FreefireESPHomeSection.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		CA10CAFEDEADBEEF0000F049 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = DSWKeyboard/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.apple.mobile.MobileHouseArrest.DSWKeyboard";
-				PRODUCT_NAME = DSWKeyboard;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		CA10CAFEDEADBEEF0000F04A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = DSWKeyboard/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.apple.mobile.MobileHouseArrest.DSWKeyboard";
-				PRODUCT_NAME = DSWKeyboard;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-
 		CA10CAFEDEADBEEF00000003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -920,7 +718,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-
 				CODE_SIGN_ENTITLEMENTS = CanhiOSShare/CheatiOSShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -951,7 +748,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-
 				CODE_SIGN_ENTITLEMENTS = CanhiOSShare/CheatiOSShare.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -980,16 +776,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		CA10CAFEDEADBEEF0000F04B /* Build configuration list for PBXNativeTarget "DSWKeyboard" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				CA10CAFEDEADBEEF0000F049 /* Debug */,
-				CA10CAFEDEADBEEF0000F04A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-
 		CA10CAFEDEADBEEF00000007 /* Build configuration list for PBXProject "CanhiOSShare" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

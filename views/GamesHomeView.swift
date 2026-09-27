@@ -43,6 +43,7 @@ struct GamesHomeView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var licenseGate: LicenseGateStore
     @StateObject private var store = PatchProjectStore()
+    @StateObject private var ffESP = FreefireESPStore()
     @State private var games: [RemoteGameSummary] = []
     @State private var isLoadingGames = false
     @State private var showLanguagePicker = false
@@ -92,6 +93,8 @@ struct GamesHomeView: View {
 
                             deviceInfoCard
                                 .padding(.horizontal, 16)
+
+                            FreefireESPHomeSection(store: ffESP)
 
                             gameSectionHeader
                                 .padding(.top, 22)
@@ -434,10 +437,7 @@ struct GamesHomeView: View {
 
     private var bottomTabBar: some View {
         HStack(spacing: 0) {
-            tabItem(icon: "gamecontroller.fill", label: "Game", index: 0)
-            tabItem(icon: "wrench.and.screwdriver.fill", label: "Vip Tools", index: 1)
-            tabItem(icon: "network.badge.shield.half.filled", label: "Next DNS", index: 2)
-            tabItem(icon: "wand.and.stars", label: "Tools Make", index: 3)
+            tabItem(icon: "house.fill", label: "Trang chủ", index: 0)
         }
         .padding(.top, 8)
         .padding(.bottom, 4)

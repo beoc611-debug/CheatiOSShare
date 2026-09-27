@@ -1,0 +1,259 @@
+import Foundation
+
+// Manages Free Fire ESP state by reading/writing a config file in the game's
+// Documents/ folder. The game reads the same file every ~1 second via the
+// patched ESPLogic (replacing the old in-game 3-finger menu).
+//
+// Config file format (esp_cfg, 8 bytes):
+//   bytes 0-3 : int32 LE — main state bits
+//   bytes 4-7 : int32 LE — aux state bits (1=FastParachute, 2=SpeedRunning)
+//
+// Main state bit constants (must match ESPLogic.template.cs):
+//   EspMaster=1, EspBox=2, EspTracer=4, EspHealth=8, EspName=16, EspDistance=32
+//   StateInitialized=128, AimEnabled=32768, NoRecoil=262144
+//   AimModeShift=16 (aimMode=2 → 131072), HeadRateShift=19 (headRate=3 → 1572864)
+
+@MainActor
+final class FreefireESPStore: ObservableObject {
+
+    // MARK: - Bit constants
+    private let bitEspMaster:       Int32 = 1
+    private let bitEspBox:          Int32 = 2
+    private let bitEspTracer:       Int32 = 4
+    private let bitEspHealth:       Int32 = 8
+    private let bitEspName:         Int32 = 16
+    private let bitEspDistance:     Int32 = 32
+    private let bitStateInitialized: Int32 = 128
+    private let bitAimEnabled:      Int32 = 32768
+    private let bitNoRecoil:        Int32 = 262144
+    // aimMode=2 (MIXED) + headRate=3 (75%) — always written, not toggled by user
+    private let defaultStateBits: Int32 = (2 << 16) | (3 << 19)
+
+    private let bitAuxFastParachute: Int32 = 1
+    private let bitAuxSpeedRunning:  Int32 = 2
+
+    // MARK: - Known Free Fire bundle IDs (ordered by prevalence)
+    static let knownBundleIDs: [String] = [
+        "com.garena.game.kgvn",
+        "com.garena.game.kgsg",
+        "com.garena.game.kgtw",
+        "com.garena.game.kgth",
+        "com.garena.game.kgid",
+        "com.garena.game.battleground"
+    ]
+
+    // MARK: - Published state (ESP tab)
+    @Published var enableESP    = true
+    @Published var playerBox    = true
+    @Published var topTracer    = true
+    @Published var healthBar    = true
+    @Published var playerName   = true
+    @Published var distance     = true
+
+    // AIM tab
+    @Published var silentAim    = false
+    @Published var noRecoil     = false
+
+    // SETTINGS tab
+    @Published var fastParachute = false
+    @Published var speedRunning  = false
+
+    // MARK: - Status
+    @Published var detectedBundleID: String?
+    @Published var isPatchInstalled  = false
+    @Published var isPatching        = false
+    @Published var patchResult: PatchResult?
+
+    enum PatchResult: Identifiable, Equatable {
+        case success
+        case failure(String)
+        var id: String {
+            switch self { case .success: return "ok"; case .failure(let m): return m }
+        }
+    }
+
+    // MARK: - Init
+    init() {
+        refresh()
+    }
+
+    // MARK: - Container resolution
+
+    private var resolvedContainer: (bundleID: String, path: String)? {
+        for id in Self.knownBundleIDs {
+            if let path = ContainerStore.resolveAppContainerPath(bundleID: id) {
+                return (id, path)
+            }
+        }
+        return nil
+    }
+
+    private func documentsPath(in container: String) -> String {
+        (container as NSString).appendingPathComponent("Documents")
+    }
+
+    private func configFilePath(in container: String) -> String {
+        (documentsPath(in: container) as NSString).appendingPathComponent("esp_cfg")
+    }
+
+    private func patchBytesPath(in container: String) -> String {
+        (documentsPath(in: container) as NSString)
+            .appendingPathComponent("Assembly-CSharp-patch.bytes")
+    }
+
+    private func localConfigPath(in container: String) -> String {
+        (documentsPath(in: container) as NSString)
+            .appendingPathComponent("localConfig.json")
+    }
+
+    // MARK: - Public interface
+
+    /// Detects the game container and reads current state from disk.
+    func refresh() {
+        guard let (bundleID, container) = resolvedContainer else {
+            detectedBundleID = nil
+            isPatchInstalled = false
+            return
+        }
+        detectedBundleID = bundleID
+        isPatchInstalled = FileManager.default.fileExists(atPath: patchBytesPath(in: container))
+        readState(from: container)
+    }
+
+    /// Toggle one of the @Published Bool properties and flush to disk.
+    func toggle(_ keyPath: ReferenceWritableKeyPath<FreefireESPStore, Bool>) {
+        self[keyPath: keyPath].toggle()
+        flushState()
+    }
+
+    /// Set a specific property and flush to disk.
+    func set(_ keyPath: ReferenceWritableKeyPath<FreefireESPStore, Bool>, to value: Bool) {
+        self[keyPath: keyPath] = value
+        flushState()
+    }
+
+    /// Copy the bundled patch bytes into the game's Documents/ folder.
+    func patchGame() {
+        guard !isPatching else { return }
+        isPatching = true
+        patchResult = nil
+
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+
+            let result: PatchResult
+            do {
+                result = try await self.performPatch()
+            } catch {
+                result = .failure(error.localizedDescription)
+            }
+
+            await MainActor.run {
+                self.isPatching = false
+                self.patchResult = result
+                if case .success = result { self.refresh() }
+            }
+        }
+    }
+
+    // MARK: - Private
+
+    private func readState(from container: String) {
+        let path = configFilePath(in: container)
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
+              data.count >= 4 else { return }
+
+        var mainBits: Int32 = 0
+        _ = withUnsafeMutableBytes(of: &mainBits) { ptr in
+            data.copyBytes(to: ptr, from: 0..<4)
+        }
+        var auxBits: Int32 = 0
+        if data.count >= 8 {
+            _ = withUnsafeMutableBytes(of: &auxBits) { ptr in
+                data.copyBytes(to: ptr, from: 4..<8)
+            }
+        }
+
+        enableESP    = (mainBits & bitEspMaster)   != 0
+        playerBox    = (mainBits & bitEspBox)       != 0
+        topTracer    = (mainBits & bitEspTracer)    != 0
+        healthBar    = (mainBits & bitEspHealth)    != 0
+        playerName   = (mainBits & bitEspName)      != 0
+        distance     = (mainBits & bitEspDistance)  != 0
+        silentAim    = (mainBits & bitAimEnabled)   != 0
+        noRecoil     = (mainBits & bitNoRecoil)     != 0
+
+        fastParachute = (auxBits & bitAuxFastParachute) != 0
+        speedRunning  = (auxBits & bitAuxSpeedRunning)  != 0
+    }
+
+    private func flushState() {
+        guard let (_, container) = resolvedContainer else { return }
+
+        var mainBits: Int32 = bitStateInitialized | defaultStateBits
+        if enableESP    { mainBits |= bitEspMaster }
+        if playerBox    { mainBits |= bitEspBox }
+        if topTracer    { mainBits |= bitEspTracer }
+        if healthBar    { mainBits |= bitEspHealth }
+        if playerName   { mainBits |= bitEspName }
+        if distance     { mainBits |= bitEspDistance }
+        if silentAim    { mainBits |= bitAimEnabled }
+        if noRecoil     { mainBits |= bitNoRecoil }
+
+        var auxBits: Int32 = 0
+        if fastParachute { auxBits |= bitAuxFastParachute }
+        if speedRunning  { auxBits |= bitAuxSpeedRunning }
+
+        var data = Data(count: 8)
+        data.withUnsafeMutableBytes { ptr in
+            withUnsafeBytes(of: mainBits) { src in
+                ptr.baseAddress!.copyMemory(from: src.baseAddress!, byteCount: 4)
+            }
+            withUnsafeBytes(of: auxBits) { src in
+                (ptr.baseAddress! + 4).copyMemory(from: src.baseAddress!, byteCount: 4)
+            }
+        }
+
+        let docPath = documentsPath(in: container)
+        try? FileManager.default.createDirectory(
+            atPath: docPath, withIntermediateDirectories: true)
+        try? data.write(to: URL(fileURLWithPath: configFilePath(in: container)))
+    }
+
+    private func performPatch() async throws -> PatchResult {
+        guard let (_, container) = await MainActor.run(resultType: Optional<(String, String)>.self, body: {
+            self.resolvedContainer
+        }) else {
+            throw NSError(
+                domain: "FreefireESP", code: 1,
+                userInfo: [NSLocalizedDescriptionKey:
+                    "Không tìm thấy Free Fire trên thiết bị. Hãy cài game trước."])
+        }
+
+        guard let patchSrc = Bundle.main.url(
+            forResource: "Assembly-CSharp-patch", withExtension: "bytes") else {
+            throw NSError(
+                domain: "FreefireESP", code: 2,
+                userInfo: [NSLocalizedDescriptionKey:
+                    "File patch chưa được đóng gói vào app. Vui lòng liên hệ tác giả để cập nhật."])
+        }
+
+        let fm = FileManager.default
+        let docPath = documentsPath(in: container)
+        try fm.createDirectory(atPath: docPath, withIntermediateDirectories: true)
+
+        // Copy Assembly-CSharp-patch.bytes
+        let destBytes = patchBytesPath(in: container)
+        try? fm.removeItem(atPath: destBytes)
+        try fm.copyItem(at: patchSrc, to: URL(fileURLWithPath: destBytes))
+
+        // Copy localConfig.json if bundled (optional — skip silently if absent)
+        if let configSrc = Bundle.main.url(forResource: "localConfig", withExtension: "json") {
+            let destConfig = localConfigPath(in: container)
+            try? fm.removeItem(atPath: destConfig)
+            try? fm.copyItem(at: configSrc, to: URL(fileURLWithPath: destConfig))
+        }
+
+        return .success
+    }
+}
