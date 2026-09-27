@@ -26,6 +26,7 @@
 		CA10CAFEDEADBEEF0000B010 /* MCMFilzaIntegration.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F013 /* MCMFilzaIntegration.m */; };
 		CA10CAFEDEADBEEF0000B018 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F027 /* Assets.xcassets */; };
 		FFPATCH0000000000000B001 /* Assembly-CSharp-patch.bytes in Resources */ = {isa = PBXBuildFile; fileRef = FFPATCH0000000000000F001 /* Assembly-CSharp-patch.bytes */; };
+		FFPATCH0000000000000B002 /* localConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = FFPATCH0000000000000F002 /* localConfig.json */; };
 		CA10CAFEDEADBEEF0000B019 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F029 /* Security.framework */; };
 		CA10CAFEDEADBEEF0000B021 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F031 /* AppLanguage.swift */; };
 		CA10CAFEDEADBEEF0000B022 /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F032 /* DeviceIdentity.swift */; };
@@ -266,6 +267,7 @@
 		E05004 /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E05005 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		FFPATCH0000000000000F001 /* Assembly-CSharp-patch.bytes */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Assembly-CSharp-patch.bytes"; sourceTree = "<group>"; };
+		FFPATCH0000000000000F002 /* localConfig.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "localConfig.json"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -317,6 +319,7 @@
 				CA10CAFEDEADBEEF0000F026 /* Info.plist */,
 				CA10CAFEDEADBEEF0000F027 /* Assets.xcassets */,
 				FFPATCH0000000000000F001 /* Assembly-CSharp-patch.bytes */,
+				FFPATCH0000000000000F002 /* localConfig.json */,
 				E05002 /* Localizable.strings */,
 				MK0004 /* make-file.html */,
 				CA10CAFEDEADBEEF0000000E /* views */,
@@ -597,6 +600,7 @@
 			files = (
 				CA10CAFEDEADBEEF0000B018 /* Assets.xcassets in Resources */,
 				FFPATCH0000000000000B001 /* Assembly-CSharp-patch.bytes in Resources */,
+				FFPATCH0000000000000B002 /* localConfig.json in Resources */,
 				E05001 /* Localizable.strings in Resources */,
 				MK0003 /* make-file.html in Resources */,
 					FA4E0004 /* FlappyBird@2x.png in Resources */,
