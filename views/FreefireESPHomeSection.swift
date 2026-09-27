@@ -213,6 +213,10 @@ struct FreefireESPHomeSection: View {
                       on: store.silentAim, color: AppTheme.neonPurple) {
                 store.toggle(\.silentAim)
             }
+            if store.silentAim {
+                rowDivider
+                silentFovSliderRow()
+            }
             rowDivider
             toggleRow("No Recoil", icon: "waveform.path.ecg",
                       on: store.noRecoil, color: Color(red: 0.85, green: 0.45, blue: 1.00)) {
@@ -422,6 +426,36 @@ struct FreefireESPHomeSection: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .techCard()
+    }
+
+    private func silentFovSliderRow() -> some View {
+        VStack(spacing: 2) {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(AppTheme.neonPurple.opacity(0.18))
+                        .frame(width: 38, height: 38)
+                    Image(systemName: "scope")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(AppTheme.neonPurple)
+                }
+                Text("Silent FOV")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
+                Spacer()
+                Text("\(store.silentFov)")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(AppTheme.neonPurple)
+                    .frame(width: 40, alignment: .trailing)
+            }
+            .padding(.vertical, 8)
+            Slider(value: Binding(
+                get: { Double(store.silentFov) },
+                set: { store.setSilentFov(Int32($0)) }
+            ), in: 50...500, step: 10)
+            .tint(AppTheme.neonPurple)
+            .padding(.bottom, 8)
+        }
     }
 
     private func fovSliderRow() -> some View {

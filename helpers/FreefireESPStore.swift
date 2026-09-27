@@ -32,6 +32,7 @@ final class FreefireESPStore: ObservableObject {
     private let aimModeShift: Int32 = 16
     private let headRateShift: Int32 = 19
     private let auxFovRadiusShift: Int32 = 4
+    private let auxSilentFovShift: Int32 = 12
 
     private let bitAuxFastParachute: Int32 = 1
     private let bitAuxSpeedRunning:  Int32 = 2
@@ -74,6 +75,7 @@ final class FreefireESPStore: ObservableObject {
 
     // AIM tab
     @Published var silentAim    = false
+    @Published var silentFov: Int32 = 200  // 0=no limit, else radius in px (stored /2 in 8 bits)
     @Published var noRecoil     = false
     // Aim FOV system (AimSystemEnabled)
     @Published var aimFov       = false
@@ -200,6 +202,11 @@ final class FreefireESPStore: ObservableObject {
         flushState()
     }
 
+    func setSilentFov(_ radius: Int32) {
+        silentFov = max(50, min(500, radius))
+        flushState()
+    }
+
     func setFovRadius(_ radius: Int32) {
         fovRadius = max(30, min(200, radius))
         flushState()
@@ -292,6 +299,8 @@ final class FreefireESPStore: ObservableObject {
         playerName   = (mainBits & bitEspName)      != 0
         distance     = (mainBits & bitEspDistance)  != 0
         silentAim    = (mainBits & bitAimEnabled)   != 0
+        let sfRaw    = (auxBits >> auxSilentFovShift) & 0xFF
+        silentFov    = sfRaw > 0 ? sfRaw * 2 : 200
         noRecoil     = (mainBits & bitNoRecoil)     != 0
         aimFov       = (mainBits & bitAimFov)       != 0
         aimFovHide   = (mainBits & bitAimFovHide)   != 0
@@ -329,6 +338,7 @@ final class FreefireESPStore: ObservableObject {
         if speedRunning  { auxBits |= bitAuxSpeedRunning }
         if fakeDamage    { auxBits |= bitAuxFakeDamage }
         auxBits |= (fovRadius & 0xFF) << auxFovRadiusShift
+        auxBits |= ((silentFov / 2) & 0xFF) << auxSilentFovShift
 
         var data = Data(count: 8)
         data.withUnsafeMutableBytes { ptr in
