@@ -95,9 +95,10 @@ struct GamesHomeView: View {
                             if ffTab == 0 {
                                 deviceInfoCard
                                     .padding(.horizontal, 16)
+                                    .padding(.bottom, 14)
                             }
 
-                            FreefireESPHomeSection(store: ffESP, showMisc: ffTab == 1)
+                            FreefireESPHomeSection(store: ffESP, tab: ffTab)
 
                             Spacer(minLength: 32)
                         }
@@ -419,10 +420,10 @@ struct GamesHomeView: View {
     // MARK: - Bottom Tab Bar
 
     private var bottomTabBar: some View {
-        // Tạm ẩn các tab Vip Tools, Next DNS, Tools Make — chỉ hiện tab Game
         HStack(spacing: 0) {
-            ffTabItem(icon: "eye.fill", label: "ESP/AIM", ffIndex: 0)
-            ffTabItem(icon: "slider.horizontal.3", label: "Misc", ffIndex: 1)
+            ffTabItem(icon: "house.fill", label: "Home", ffIndex: 0)
+            ffTabItem(icon: "eye.fill", label: "ESP/AIM", ffIndex: 1)
+            ffTabItem(icon: "slider.horizontal.3", label: "Misc", ffIndex: 2)
         }
         .padding(.top, 8)
         .padding(.bottom, 4)

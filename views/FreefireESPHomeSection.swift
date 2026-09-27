@@ -2,12 +2,15 @@ import SwiftUI
 
 struct FreefireESPHomeSection: View {
     @ObservedObject var store: FreefireESPStore
-    var showMisc: Bool = false
+    /// 0 = Home (status + patch), 1 = ESP/AIM, 2 = Misc (settings)
+    var tab: Int = 0
 
     var body: some View {
         VStack(spacing: 14) {
-            if !showMisc {
+            if tab == 0 {
                 statusCard
+                patchButton
+            } else if tab == 1 {
                 espCard
                 aimCard
                 patchButton
