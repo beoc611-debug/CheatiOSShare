@@ -32,7 +32,14 @@ final class FreefireESPStore: ObservableObject {
     private let bitAuxFastParachute: Int32 = 1
     private let bitAuxSpeedRunning:  Int32 = 2
 
-    // MARK: - Known Free Fire bundle IDs (ordered by prevalence)
+    // MARK: - Game variant selector
+    enum FFVariant: String, CaseIterable, Identifiable {
+        case freefire    = "Free Fire"
+        case freefireMax = "Free Fire MAX"
+        var id: String { rawValue }
+    }
+
+    // MARK: - Known bundle IDs
     static let knownBundleIDs: [String] = [
         "com.garena.game.kgvn",
         "com.garena.game.kgsg",
@@ -40,6 +47,15 @@ final class FreefireESPStore: ObservableObject {
         "com.garena.game.kgth",
         "com.garena.game.kgid",
         "com.garena.game.battleground"
+    ]
+    static let knownMAXBundleIDs: [String] = [
+        "com.garena.game.fbrgvn",
+        "com.garena.game.fbrgsg",
+        "com.garena.game.fbrgtw",
+        "com.garena.game.fbrgth",
+        "com.garena.game.fbrgid",
+        "com.garena.game.fbrgus",
+        "com.dts.freefiremax"
     ]
 
     // MARK: - Published state (ESP tab)
@@ -59,8 +75,11 @@ final class FreefireESPStore: ObservableObject {
     @Published var speedRunning  = false
 
     // MARK: - Status
+    @Published var selectedVariant: FFVariant = .freefire
     @Published var detectedBundleID: String?
-    @Published var isPatchInstalled  = false
+    @Published var detectedMAXBundleID: String?
+    @Published var isPatchInstalled    = false
+    @Published var isPatchInstalledMAX = false
     @Published var isPatching        = false
     @Published var patchResult: PatchResult?
 
@@ -79,13 +98,18 @@ final class FreefireESPStore: ObservableObject {
 
     // MARK: - Container resolution
 
-    private var resolvedContainer: (bundleID: String, path: String)? {
-        for id in Self.knownBundleIDs {
+    private func resolvedContainer(for variant: FFVariant) -> (bundleID: String, path: String)? {
+        let ids = variant == .freefire ? Self.knownBundleIDs : Self.knownMAXBundleIDs
+        for id in ids {
             if let path = ContainerStore.resolveAppContainerPath(bundleID: id) {
                 return (id, path)
             }
         }
         return nil
+    }
+
+    private var resolvedContainer: (bundleID: String, path: String)? {
+        resolvedContainer(for: selectedVariant)
     }
 
     private func documentsPath(in container: String) -> String {
@@ -108,16 +132,34 @@ final class FreefireESPStore: ObservableObject {
 
     // MARK: - Public interface
 
-    /// Detects the game container and reads current state from disk.
+    /// Detects both FF and FF MAX containers, reads state from selected variant.
     func refresh() {
-        guard let (bundleID, container) = resolvedContainer else {
+        if let (bundleID, container) = resolvedContainer(for: .freefire) {
+            detectedBundleID = bundleID
+            isPatchInstalled = FileManager.default.fileExists(atPath: patchBytesPath(in: container))
+        } else {
             detectedBundleID = nil
             isPatchInstalled = false
-            return
         }
-        detectedBundleID = bundleID
-        isPatchInstalled = FileManager.default.fileExists(atPath: patchBytesPath(in: container))
-        readState(from: container)
+        if let (bundleID, container) = resolvedContainer(for: .freefireMax) {
+            detectedMAXBundleID = bundleID
+            isPatchInstalledMAX = FileManager.default.fileExists(atPath: patchBytesPath(in: container))
+        } else {
+            detectedMAXBundleID = nil
+            isPatchInstalledMAX = false
+        }
+        if let (_, container) = resolvedContainer {
+            readState(from: container)
+        }
+    }
+
+    /// Switch target game and re-read state.
+    func selectVariant(_ variant: FFVariant) {
+        selectedVariant = variant
+        if let (_, container) = resolvedContainer {
+            readState(from: container)
+            flushState()
+        }
     }
 
     /// Toggle one of the @Published Bool properties and flush to disk.
@@ -221,13 +263,15 @@ final class FreefireESPStore: ObservableObject {
     }
 
     private func performPatch() async throws -> PatchResult {
+        let variant = await MainActor.run { self.selectedVariant }
         guard let (_, container) = await MainActor.run(resultType: Optional<(String, String)>.self, body: {
             self.resolvedContainer
         }) else {
+            let name = variant == .freefire ? "Free Fire" : "Free Fire MAX"
             throw NSError(
                 domain: "FreefireESP", code: 1,
                 userInfo: [NSLocalizedDescriptionKey:
-                    "Không tìm thấy Free Fire trên thiết bị. Hãy cài game trước."])
+                    "Không tìm thấy \(name) trên thiết bị. Hãy cài game trước."])
         }
 
         guard let patchSrc = Bundle.main.url(

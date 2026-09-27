@@ -67,12 +67,45 @@ struct FreefireESPHomeSection: View {
 
     private var statusCard: some View {
         VStack(spacing: 0) {
+            // Game variant picker
+            HStack(spacing: 0) {
+                ForEach(FreefireESPStore.FFVariant.allCases) { variant in
+                    let isSelected = store.selectedVariant == variant
+                    Button {
+                        store.selectVariant(variant)
+                    } label: {
+                        Text(variant.rawValue)
+                            .font(.system(size: 12, weight: isSelected ? .bold : .medium))
+                            .foregroundStyle(isSelected ? .white : Color(red: 0.45, green: 0.55, blue: 0.75))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 7)
+                            .background(
+                                isSelected
+                                    ? AnyView(Capsule().fill(
+                                        LinearGradient(colors: [AppTheme.neonPurple, AppTheme.techGlow],
+                                                       startPoint: .leading, endPoint: .trailing)))
+                                    : AnyView(Color.clear)
+                            )
+                            .animation(.easeInOut(duration: 0.18), value: isSelected)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(3)
+            .background(Color.white.opacity(0.06))
+            .clipShape(Capsule())
+            .padding(.bottom, 12)
+
+            // Detected status
+            let detected = store.selectedVariant == .freefire ? store.detectedBundleID : store.detectedMAXBundleID
+            let patchInstalled = store.selectedVariant == .freefire ? store.isPatchInstalled : store.isPatchInstalledMAX
+
             statusRow(
                 icon: "apps.iphone",
-                iconColor: store.detectedBundleID != nil ? AppTheme.neonCyan : Color(red: 0.45, green: 0.50, blue: 0.68),
-                label: "Free Fire",
-                value: store.detectedBundleID != nil ? "Đã phát hiện" : "Không tìm thấy",
-                valueColor: store.detectedBundleID != nil
+                iconColor: detected != nil ? AppTheme.neonCyan : Color(red: 0.45, green: 0.50, blue: 0.68),
+                label: store.selectedVariant.rawValue,
+                value: detected != nil ? "Đã phát hiện" : "Không tìm thấy",
+                valueColor: detected != nil
                     ? Color(red: 0.10, green: 0.90, blue: 0.52)
                     : Color(red: 0.80, green: 0.30, blue: 0.30)
             )
@@ -81,10 +114,10 @@ struct FreefireESPHomeSection: View {
 
             statusRow(
                 icon: "doc.badge.gearshape",
-                iconColor: store.isPatchInstalled ? AppTheme.techGlow : Color(red: 0.45, green: 0.50, blue: 0.68),
+                iconColor: patchInstalled ? AppTheme.techGlow : Color(red: 0.45, green: 0.50, blue: 0.68),
                 label: "Patch file",
-                value: store.isPatchInstalled ? "Đã cài đặt" : "Chưa cài",
-                valueColor: store.isPatchInstalled
+                value: patchInstalled ? "Đã cài đặt" : "Chưa cài",
+                valueColor: patchInstalled
                     ? Color(red: 0.10, green: 0.90, blue: 0.52)
                     : Color(red: 0.85, green: 0.65, blue: 0.10)
             )
@@ -242,11 +275,15 @@ struct FreefireESPHomeSection: View {
                 )
             }
             .buttonStyle(.plain)
-            .disabled(store.isPatching || store.detectedBundleID == nil)
-            .opacity((store.detectedBundleID == nil && !store.isPatching) ? 0.45 : 1.0)
+            .disabled(store.isPatching || (store.selectedVariant == .freefire ? store.detectedBundleID == nil : store.detectedMAXBundleID == nil))
+            .opacity({
+                let detected = store.selectedVariant == .freefire ? store.detectedBundleID : store.detectedMAXBundleID
+                return (detected == nil && !store.isPatching) ? 0.45 : 1.0
+            }())
 
-            if store.detectedBundleID == nil {
-                Text("Không tìm thấy Free Fire — hãy cài game trước")
+            let detected = store.selectedVariant == .freefire ? store.detectedBundleID : store.detectedMAXBundleID
+            if detected == nil {
+                Text("Không tìm thấy \(store.selectedVariant.rawValue) — hãy cài game trước")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(Color(red: 0.55, green: 0.45, blue: 0.68))
                     .multilineTextAlignment(.center)
