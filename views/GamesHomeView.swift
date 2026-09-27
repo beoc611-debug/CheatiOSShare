@@ -421,9 +421,9 @@ struct GamesHomeView: View {
 
     private var bottomTabBar: some View {
         HStack(spacing: 0) {
-            ffTabItem(icon: "house.fill", label: "Home", ffIndex: 0)
-            ffTabItem(icon: "eye.fill", label: "ESP/AIM", ffIndex: 1)
-            ffTabItem(icon: "slider.horizontal.3", label: "Misc", ffIndex: 2)
+            ffTabItem(icon: "house.fill", label: "HOME", ffIndex: 0)
+            ffTabItem(icon: "scope", label: "ESP/AIM", ffIndex: 1)
+            ffTabItem(icon: "slider.horizontal.3", label: "MISC", ffIndex: 2)
         }
         .padding(.top, 8)
         .padding(.bottom, 4)
