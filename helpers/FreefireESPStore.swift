@@ -95,6 +95,7 @@ final class FreefireESPStore: ObservableObject {
     // MARK: - Init
     init() {
         refresh()
+        flushState()
     }
 
     // MARK: - Container resolution
@@ -194,7 +195,10 @@ final class FreefireESPStore: ObservableObject {
             await MainActor.run {
                 self.isPatching = false
                 self.patchResult = result
-                if case .success = result { self.refresh() }
+                if case .success = result {
+                    self.refresh()
+                    self.flushState()
+                }
             }
         }
     }
