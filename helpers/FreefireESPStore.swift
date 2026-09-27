@@ -41,6 +41,7 @@ final class FreefireESPStore: ObservableObject {
 
     // MARK: - Known bundle IDs
     static let knownBundleIDs: [String] = [
+        "com.dts.freefireth",
         "com.garena.game.kgvn",
         "com.garena.game.kgsg",
         "com.garena.game.kgtw",
