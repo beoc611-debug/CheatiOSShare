@@ -26,6 +26,9 @@ jobs:
       - name: Show SDK & scheme
         run: xcodebuild -project CheatiOSShare.xcodeproj -list
 
+      - name: Fix source paths
+        run: ln -s . CanhiOSShare
+
       - name: Build .app (ad-hoc signed)
         run: |
           set -o pipefail

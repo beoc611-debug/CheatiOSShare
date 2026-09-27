@@ -19,6 +19,9 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
+      - name: Fix source paths
+        run: ln -s . CanhiOSShare
+
       - name: Build
         run: |
           xcodebuild \
