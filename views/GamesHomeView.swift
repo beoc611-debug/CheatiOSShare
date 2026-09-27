@@ -50,6 +50,7 @@ struct GamesHomeView: View {
     @State private var announcement: Announcement?
     @State private var shownAnnouncementIDs: Set<String> = []
     @State private var selectedTab = 0
+    @State private var ffTab = 0
     @State private var selectedGame: RemoteGameSummary? = nil
     @State private var contactURL: URL? = URL(string: "https://t.me/crackcyipa")
     @State private var showFakeAppSheet = false
@@ -91,10 +92,12 @@ struct GamesHomeView: View {
                                 .padding(.top, 8)
                                 .padding(.bottom, 16)
 
-                            deviceInfoCard
-                                .padding(.horizontal, 16)
+                            if ffTab == 0 {
+                                deviceInfoCard
+                                    .padding(.horizontal, 16)
+                            }
 
-                            FreefireESPHomeSection(store: ffESP)
+                            FreefireESPHomeSection(store: ffESP, showMisc: ffTab == 1)
 
                             Spacer(minLength: 32)
                         }
@@ -423,7 +426,8 @@ struct GamesHomeView: View {
 
     private var bottomTabBar: some View {
         HStack(spacing: 0) {
-            tabItem(icon: "house.fill", label: "Trang chủ", index: 0)
+            ffTabItem(icon: "eye.fill", label: "ESP/AIM", ffIndex: 0)
+            ffTabItem(icon: "slider.horizontal.3", label: "Misc", ffIndex: 1)
         }
         .padding(.top, 8)
         .padding(.bottom, 4)
@@ -452,6 +456,29 @@ struct GamesHomeView: View {
         return Button {
             withAnimation(.spring(response: 0.28, dampingFraction: 0.72)) {
                 selectedTab = index
+            }
+        } label: {
+            VStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: active ? .bold : .regular))
+                    .foregroundStyle(active ? AppTheme.neonPurple : Color(red: 0.40, green: 0.48, blue: 0.68))
+                    .shadow(color: active ? AppTheme.neonPurple.opacity(0.65) : .clear, radius: 8)
+                Text(label)
+                    .font(.system(size: 10, weight: active ? .bold : .medium))
+                    .foregroundStyle(active ? AppTheme.neonPurple : Color(red: 0.40, green: 0.48, blue: 0.68))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func ffTabItem(icon: String, label: String, ffIndex: Int) -> some View {
+        let active = ffTab == ffIndex
+        return Button {
+            withAnimation(.spring(response: 0.22, dampingFraction: 0.75)) {
+                ffTab = ffIndex
+                selectedTab = 0
             }
         } label: {
             VStack(spacing: 5) {

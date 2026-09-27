@@ -28,7 +28,7 @@ final class FreefireESPStore: ObservableObject {
     private let bitAimEnabled:      Int32 = 32768
     private let bitNoRecoil:        Int32 = 262144
     private let bitAimFov:          Int32 = 4194304
-    private let bitAimFovHide:      Int32 = 16777216
+    private let bitAimFovHide:      Int32 = 8388608
     private let aimModeShift: Int32 = 16
     private let headRateShift: Int32 = 19
     private let auxFovRadiusShift: Int32 = 4
