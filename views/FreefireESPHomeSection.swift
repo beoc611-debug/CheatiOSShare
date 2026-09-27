@@ -224,8 +224,8 @@ struct FreefireESPHomeSection: View {
                                 startPoint: .top, endPoint: .center
                             )
                         }
-                    },
-                    in: CutShape(cut: 14)
+                    }
+                    .clipShape(CutShape(cut: 14))
                 )
                 .overlay(
                     CutShape(cut: 14)
