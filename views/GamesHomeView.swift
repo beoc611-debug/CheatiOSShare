@@ -85,7 +85,8 @@ struct GamesHomeView: View {
                 TechBackground()
 
                 if selectedTab == 0 {
-                    ScrollView {
+                    VStack(spacing: 0) {
+                        // Mini header + device card
                         VStack(spacing: 0) {
                             cyberHeader
                                 .padding(.horizontal, 20)
@@ -101,13 +102,11 @@ struct GamesHomeView: View {
 
                             Spacer(minLength: 32)
                         }
+                        .background(Color(red: 0.012, green: 0.031, blue: 0.090).opacity(0.95))
+
+                        // Cheat menu — full remaining height
+                        CheatMenuView()
                     }
-                } else if selectedTab == 1 {
-                    VipToolsView()
-                } else if selectedTab == 2 {
-                    NextDNSView()
-                } else if selectedTab == 3 {
-                    MakeToolsView()
                 }
             }
             .navigationTitle("")
@@ -425,6 +424,7 @@ struct GamesHomeView: View {
     // MARK: - Bottom Tab Bar
 
     private var bottomTabBar: some View {
+        // Tạm ẩn các tab Vip Tools, Next DNS, Tools Make — chỉ hiện tab Game
         HStack(spacing: 0) {
             ffTabItem(icon: "eye.fill", label: "ESP/AIM", ffIndex: 0)
             ffTabItem(icon: "slider.horizontal.3", label: "Misc", ffIndex: 1)

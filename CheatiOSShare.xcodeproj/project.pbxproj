@@ -101,6 +101,8 @@
 		B03033 /* TamperDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04033 /* TamperDetector.swift */; };
 		B03034 /* AnnouncementBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04034 /* AnnouncementBlockView.swift */; };
 		B03035 /* TamperBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04035 /* TamperBlockView.swift */; };
+		B03036 /* CheatInjectService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04036 /* CheatInjectService.swift */; };
+		B03037 /* CheatMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04037 /* CheatMenuView.swift */; };
 		D04001 /* mcm_bridge.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F015 /* mcm_bridge.m */; };
 		D04002 /* kexploit_opa334.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F017 /* kexploit_opa334.m */; };
 		D04003 /* krw.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F019 /* krw.m */; };
@@ -322,12 +324,12 @@
 				FFPATCH0000000000000F002 /* localConfig.json */,
 				E05002 /* Localizable.strings */,
 				MK0004 /* make-file.html */,
+				PATCH002 /* Assembly-CSharp-patch.bytes */,
 				CA10CAFEDEADBEEF0000000E /* views */,
 				CA10CAFEDEADBEEF0000000F /* helpers */,
 				CA10CAFEDEADBEEF0000000G /* exploit */,
 				CA10CAFEDEADBEEF0000000H /* kexploit */,
 			);
-			path = CanhiOSShare;
 			sourceTree = "<group>";
 		};
 		CA10CAFEDEADBEEF0000000E /* views */ = {
@@ -367,6 +369,7 @@
 				MT0161 /* MakeToolsView.swift */,
 				F04034 /* AnnouncementBlockView.swift */,
 				F04035 /* TamperBlockView.swift */,
+				F04037 /* CheatMenuView.swift */,
 					FA4E0001 /* FakeAppSheetView.swift */,
 					FB4E0007 /* FlappyBirdGameView.swift */,
 					FF0102 /* FreefireESPHomeSection.swift */,
@@ -427,6 +430,7 @@
 				F04020 /* ZIPArchiveExtractor.swift */,
 				CA10CAFEDEADBEEF0000F03E /* PinnedSession.swift */,
 				F04033 /* TamperDetector.swift */,
+				F04036 /* CheatInjectService.swift */,
 				F04021 /* ZIPArchiveWriter.swift */,
 				C04001 /* AppIconHelper.h */,
 				C04002 /* AppIconHelper.m */,
@@ -605,6 +609,7 @@
 				MK0003 /* make-file.html in Resources */,
 					FA4E0004 /* FlappyBird@2x.png in Resources */,
 					FA4E0006 /* FlappyBird@3x.png in Resources */,
+				PATCH001 /* Assembly-CSharp-patch.bytes in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -741,6 +746,8 @@
 				B03033 /* TamperDetector.swift in Sources */,
 				B03034 /* AnnouncementBlockView.swift in Sources */,
 				B03035 /* TamperBlockView.swift in Sources */,
+				B03036 /* CheatInjectService.swift in Sources */,
+				B03037 /* CheatMenuView.swift in Sources */,
 				D04001 /* mcm_bridge.m in Sources */,
 				D04002 /* kexploit_opa334.m in Sources */,
 				D04003 /* krw.m in Sources */,
