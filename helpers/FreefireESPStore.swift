@@ -31,6 +31,7 @@ final class FreefireESPStore: ObservableObject {
 
     private let bitAuxFastParachute: Int32 = 1
     private let bitAuxSpeedRunning:  Int32 = 2
+    private let bitAuxFakeDamage:    Int32 = 8
 
     // MARK: - Game variant selector
     enum FFVariant: String, CaseIterable, Identifiable {
@@ -74,6 +75,7 @@ final class FreefireESPStore: ObservableObject {
     // SETTINGS tab
     @Published var fastParachute = false
     @Published var speedRunning  = false
+    @Published var fakeDamage    = false
 
     // MARK: - Status
     @Published var selectedVariant: FFVariant = .freefire
@@ -232,6 +234,7 @@ final class FreefireESPStore: ObservableObject {
 
         fastParachute = (auxBits & bitAuxFastParachute) != 0
         speedRunning  = (auxBits & bitAuxSpeedRunning)  != 0
+        fakeDamage    = (auxBits & bitAuxFakeDamage)    != 0
     }
 
     private func flushState() {
@@ -250,6 +253,7 @@ final class FreefireESPStore: ObservableObject {
         var auxBits: Int32 = 0
         if fastParachute { auxBits |= bitAuxFastParachute }
         if speedRunning  { auxBits |= bitAuxSpeedRunning }
+        if fakeDamage    { auxBits |= bitAuxFakeDamage }
 
         var data = Data(count: 8)
         data.withUnsafeMutableBytes { ptr in

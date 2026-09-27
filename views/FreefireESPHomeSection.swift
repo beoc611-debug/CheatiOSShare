@@ -217,6 +217,10 @@ struct FreefireESPHomeSection: View {
                       on: store.speedRunning, color: Color(red: 0.95, green: 0.40, blue: 0.25)) {
                 store.toggle(\.speedRunning)
             }
+            toggleRow("Fake Dame", icon: "bolt.fill",
+                      on: store.fakeDamage, color: Color(red: 1.00, green: 0.22, blue: 0.22)) {
+                store.toggle(\.fakeDamage)
+            }
         }
     }
 
