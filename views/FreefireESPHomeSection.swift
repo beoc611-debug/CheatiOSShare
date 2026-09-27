@@ -11,7 +11,7 @@ struct FreefireESPHomeSection: View {
                 .padding(.top, 22)
                 .padding(.bottom, 12)
 
-            VStack(spacing: 10) {
+            VStack(spacing: 14) {
                 statusCard
                 espCard
                 aimCard
@@ -19,7 +19,7 @@ struct FreefireESPHomeSection: View {
                 patchButton
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 8)
+            .padding(.bottom, 16)
         }
     }
 
@@ -128,23 +128,24 @@ struct FreefireESPHomeSection: View {
     }
 
     private func statusRow(icon: String, iconColor: Color, label: String, value: String, valueColor: Color) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             ZStack {
-                Circle()
-                    .fill(iconColor.opacity(0.16))
-                    .frame(width: 30, height: 30)
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(iconColor.opacity(0.18))
+                    .frame(width: 36, height: 36)
                 Image(systemName: icon)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(iconColor)
             }
             Text(label)
-                .font(.subheadline)
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
             Spacer()
             Text(value)
                 .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(valueColor)
         }
+        .padding(.vertical, 4)
     }
 
     private var statusDivider: some View {
@@ -159,6 +160,15 @@ struct FreefireESPHomeSection: View {
             .padding(.vertical, 9)
     }
 
+    // MARK: - Row divider
+
+    private var rowDivider: some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.07))
+            .frame(height: 0.5)
+            .padding(.horizontal, 4)
+    }
+
     // MARK: - ESP toggles card
 
     private var espCard: some View {
@@ -167,22 +177,27 @@ struct FreefireESPHomeSection: View {
                       on: store.enableESP, color: AppTheme.neonCyan) {
                 store.toggle(\.enableESP)
             }
+            rowDivider
             toggleRow("Player Box", icon: "square.dashed",
                       on: store.playerBox, color: AppTheme.techGlow) {
                 store.toggle(\.playerBox)
             }
+            rowDivider
             toggleRow("Top Tracer", icon: "arrow.up.to.line.compact",
                       on: store.topTracer, color: AppTheme.techGlow) {
                 store.toggle(\.topTracer)
             }
+            rowDivider
             toggleRow("Health Bar", icon: "heart.fill",
                       on: store.healthBar, color: Color(red: 0.20, green: 0.92, blue: 0.55)) {
                 store.toggle(\.healthBar)
             }
+            rowDivider
             toggleRow("Player Name", icon: "person.text.rectangle",
                       on: store.playerName, color: Color(red: 0.55, green: 0.72, blue: 1.00)) {
                 store.toggle(\.playerName)
             }
+            rowDivider
             toggleRow("Distance", icon: "ruler",
                       on: store.distance, color: Color(red: 0.90, green: 0.72, blue: 0.20)) {
                 store.toggle(\.distance)
@@ -198,11 +213,12 @@ struct FreefireESPHomeSection: View {
                       on: store.silentAim, color: AppTheme.neonPurple) {
                 store.toggle(\.silentAim)
             }
+            rowDivider
             toggleRow("No Recoil", icon: "waveform.path.ecg",
                       on: store.noRecoil, color: Color(red: 0.85, green: 0.45, blue: 1.00)) {
                 store.toggle(\.noRecoil)
             }
-
+            rowDivider
             // Aim FOV
             toggleRow("Aim FOV", icon: "viewfinder.circle",
                       on: store.aimFov, color: Color(red: 1.00, green: 0.80, blue: 0.10)) {
@@ -210,15 +226,16 @@ struct FreefireESPHomeSection: View {
             }
 
             if store.aimFov {
+                rowDivider
                 // FOV radius slider
                 fovSliderRow()
-
+                rowDivider
                 // Hide FOV circle
                 toggleRow("Hide FOV", icon: "eye.slash",
                           on: store.aimFovHide, color: Color(red: 0.60, green: 0.60, blue: 0.60)) {
                     store.toggle(\.aimFovHide)
                 }
-
+                rowDivider
                 // Aim target
                 segmentRow(
                     label: "Nhắm vào",
@@ -230,6 +247,7 @@ struct FreefireESPHomeSection: View {
 
                 // Head % — only when Mix mode
                 if store.aimMode == 2 {
+                    rowDivider
                     segmentRow(
                         label: "% Nhắm đầu",
                         icon: "person.crop.circle",
@@ -250,10 +268,12 @@ struct FreefireESPHomeSection: View {
                       on: store.fastParachute, color: Color(red: 0.90, green: 0.65, blue: 0.15)) {
                 store.toggle(\.fastParachute)
             }
+            rowDivider
             toggleRow("Speed Running ×3", icon: "hare.fill",
                       on: store.speedRunning, color: Color(red: 0.95, green: 0.40, blue: 0.25)) {
                 store.toggle(\.speedRunning)
             }
+            rowDivider
             toggleRow("Fake Dame", icon: "bolt.fill",
                       on: store.fakeDamage, color: Color(red: 1.00, green: 0.22, blue: 0.22)) {
                 store.toggle(\.fakeDamage)
@@ -406,31 +426,31 @@ struct FreefireESPHomeSection: View {
 
     private func fovSliderRow() -> some View {
         VStack(spacing: 2) {
-            HStack(spacing: 12) {
+            HStack(spacing: 14) {
                 ZStack {
-                    Circle()
-                        .fill(Color(red: 1.00, green: 0.80, blue: 0.10).opacity(0.16))
-                        .frame(width: 32, height: 32)
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color(red: 1.00, green: 0.80, blue: 0.10).opacity(0.18))
+                        .frame(width: 38, height: 38)
                     Image(systemName: "circle.dashed")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Color(red: 1.00, green: 0.80, blue: 0.10))
                 }
                 Text("FOV Radius")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color(red: 0.45, green: 0.55, blue: 0.75))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
                 Spacer()
                 Text("\(store.fovRadius)")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(Color(red: 1.00, green: 0.80, blue: 0.10))
-                    .frame(width: 34, alignment: .trailing)
+                    .frame(width: 36, alignment: .trailing)
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 8)
             Slider(value: Binding(
                 get: { Double(store.fovRadius) },
                 set: { store.setFovRadius(Int32($0)) }
             ), in: 30...200, step: 5)
             .tint(Color(red: 1.00, green: 0.80, blue: 0.10))
-            .padding(.bottom, 4)
+            .padding(.bottom, 8)
         }
     }
 
@@ -442,18 +462,18 @@ struct FreefireESPHomeSection: View {
         color: Color,
         onSelect: @escaping (Int) -> Void
     ) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             ZStack {
-                Circle()
-                    .fill(color.opacity(0.16))
-                    .frame(width: 32, height: 32)
+                RoundedRectangle(cornerRadius: 9)
+                    .fill(color.opacity(0.18))
+                    .frame(width: 38, height: 38)
                 Image(systemName: icon)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(color)
             }
             Text(label)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Color(red: 0.45, green: 0.55, blue: 0.75))
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
             Spacer()
             HStack(spacing: 0) {
                 ForEach(options.indices, id: \.self) { i in
@@ -462,8 +482,8 @@ struct FreefireESPHomeSection: View {
                         Text(options[i])
                             .font(.system(size: 11, weight: isActive ? .bold : .medium))
                             .foregroundStyle(isActive ? .white : Color(red: 0.45, green: 0.55, blue: 0.75))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 5)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 6)
                             .background(
                                 isActive
                                     ? AnyView(Capsule().fill(color.opacity(0.35)).overlay(Capsule().strokeBorder(color.opacity(0.6), lineWidth: 1)))
@@ -475,10 +495,10 @@ struct FreefireESPHomeSection: View {
                 }
             }
             .padding(3)
-            .background(Color.white.opacity(0.06))
+            .background(Color.white.opacity(0.07))
             .clipShape(Capsule())
         }
-        .padding(.vertical, 7)
+        .padding(.vertical, 11)
     }
 
     private func toggleRow(
@@ -488,21 +508,21 @@ struct FreefireESPHomeSection: View {
         color: Color,
         action: @escaping () -> Void
     ) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             ZStack {
-                Circle()
-                    .fill(on ? color.opacity(0.18) : Color.white.opacity(0.05))
-                    .frame(width: 32, height: 32)
+                RoundedRectangle(cornerRadius: 9)
+                    .fill(on ? color.opacity(0.22) : Color.white.opacity(0.07))
+                    .frame(width: 38, height: 38)
                     .animation(.easeInOut(duration: 0.18), value: on)
                 Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(on ? color : Color(red: 0.40, green: 0.48, blue: 0.65))
                     .animation(.easeInOut(duration: 0.18), value: on)
             }
 
             Text(label)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(on ? .white : Color(red: 0.45, green: 0.55, blue: 0.75))
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(on ? .white : Color(red: 0.52, green: 0.60, blue: 0.78))
                 .animation(.easeInOut(duration: 0.18), value: on)
 
             Spacer()
@@ -513,7 +533,7 @@ struct FreefireESPHomeSection: View {
                     Text("Tắt")
                         .font(.system(size: 12, weight: !on ? .bold : .medium))
                         .foregroundStyle(!on ? .white : Color(red: 0.45, green: 0.55, blue: 0.75))
-                        .frame(width: 38, height: 26)
+                        .frame(width: 40, height: 28)
                         .background(!on
                             ? AnyView(Capsule().fill(Color(red: 0.30, green: 0.32, blue: 0.45)))
                             : AnyView(Color.clear))
@@ -524,7 +544,7 @@ struct FreefireESPHomeSection: View {
                     Text("Bật")
                         .font(.system(size: 12, weight: on ? .bold : .medium))
                         .foregroundStyle(on ? .white : Color(red: 0.45, green: 0.55, blue: 0.75))
-                        .frame(width: 38, height: 26)
+                        .frame(width: 40, height: 28)
                         .background(on
                             ? AnyView(Capsule().fill(color.opacity(0.85)))
                             : AnyView(Color.clear))
@@ -533,10 +553,10 @@ struct FreefireESPHomeSection: View {
                 .buttonStyle(.plain)
             }
             .padding(2)
-            .background(Color.white.opacity(0.07))
+            .background(Color.white.opacity(0.08))
             .clipShape(Capsule())
             .overlay(Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 0.5))
         }
-        .padding(.vertical, 7)
+        .padding(.vertical, 11)
     }
 }
