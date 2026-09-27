@@ -203,24 +203,41 @@ struct FreefireESPHomeSection: View {
                 store.toggle(\.noRecoil)
             }
 
-            // Aim target
-            segmentRow(
-                label: "Nhắm vào",
-                icon: "target",
-                options: ["Thân", "Đầu", "Mix"],
-                selected: Int(store.aimMode),
-                color: AppTheme.neonPurple
-            ) { store.setAimMode(Int32($0)) }
+            // Aim FOV
+            toggleRow("Aim FOV", icon: "viewfinder.circle",
+                      on: store.aimFov, color: Color(red: 1.00, green: 0.80, blue: 0.10)) {
+                store.toggle(\.aimFov)
+            }
 
-            // Head % — only when Mix mode
-            if store.aimMode == 2 {
+            if store.aimFov {
+                // FOV radius slider
+                fovSliderRow()
+
+                // Hide FOV circle
+                toggleRow("Hide FOV", icon: "eye.slash",
+                          on: store.aimFovHide, color: Color(red: 0.60, green: 0.60, blue: 0.60)) {
+                    store.toggle(\.aimFovHide)
+                }
+
+                // Aim target
                 segmentRow(
-                    label: "% Nhắm đầu",
-                    icon: "person.crop.circle",
-                    options: ["25%", "50%", "75%", "100%"],
-                    selected: Int(store.headRate) - 1,
-                    color: Color(red: 0.85, green: 0.45, blue: 1.00)
-                ) { store.setHeadRate(Int32($0 + 1)) }
+                    label: "Nhắm vào",
+                    icon: "target",
+                    options: ["Thân", "Đầu", "Mix"],
+                    selected: Int(store.aimMode),
+                    color: Color(red: 1.00, green: 0.80, blue: 0.10)
+                ) { store.setAimMode(Int32($0)) }
+
+                // Head % — only when Mix mode
+                if store.aimMode == 2 {
+                    segmentRow(
+                        label: "% Nhắm đầu",
+                        icon: "person.crop.circle",
+                        options: ["25%", "50%", "75%", "100%"],
+                        selected: Int(store.headRate) - 1,
+                        color: Color(red: 0.85, green: 0.45, blue: 1.00)
+                    ) { store.setHeadRate(Int32($0 + 1)) }
+                }
             }
         }
     }
@@ -357,6 +374,35 @@ struct FreefireESPHomeSection: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .techCard()
+    }
+
+    private func fovSliderRow() -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color(red: 1.00, green: 0.80, blue: 0.10).opacity(0.16))
+                    .frame(width: 32, height: 32)
+                Image(systemName: "circle.dashed")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color(red: 1.00, green: 0.80, blue: 0.10))
+            }
+            Text("FOV Radius")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color(red: 0.45, green: 0.55, blue: 0.75))
+            Spacer()
+            Text("\(store.fovRadius)")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(Color(red: 1.00, green: 0.80, blue: 0.10))
+                .frame(width: 34, alignment: .trailing)
+        }
+        .padding(.vertical, 4)
+
+        Slider(value: Binding(
+            get: { Double(store.fovRadius) },
+            set: { store.setFovRadius(Int32($0)) }
+        ), in: 30...200, step: 5)
+        .tint(Color(red: 1.00, green: 0.80, blue: 0.10))
+        .padding(.bottom, 4)
     }
 
     private func segmentRow(

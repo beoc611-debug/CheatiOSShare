@@ -26,8 +26,11 @@ final class FreefireESPStore: ObservableObject {
     private let bitStateInitialized: Int32 = 128
     private let bitAimEnabled:      Int32 = 32768
     private let bitNoRecoil:        Int32 = 262144
+    private let bitAimFov:          Int32 = 4194304
+    private let bitAimFovHide:      Int32 = 16777216
     private let aimModeShift: Int32 = 16
     private let headRateShift: Int32 = 19
+    private let auxFovRadiusShift: Int32 = 4
 
     private let bitAuxFastParachute: Int32 = 1
     private let bitAuxSpeedRunning:  Int32 = 2
@@ -71,8 +74,12 @@ final class FreefireESPStore: ObservableObject {
     // AIM tab
     @Published var silentAim    = false
     @Published var noRecoil     = false
-    // 0=Body, 1=Head, 2=Mixed
-    @Published var aimMode: Int32 = 2
+    // Aim FOV system (AimSystemEnabled)
+    @Published var aimFov       = false
+    @Published var aimFovHide   = false
+    @Published var fovRadius: Int32 = 100   // 30-200 screen pixels
+    // 0=Body, 1=Head, 2=Mixed — used by Aim FOV
+    @Published var aimMode: Int32 = 1
     // 1=25%, 2=50%, 3=75%, 4=100%
     @Published var headRate: Int32 = 3
 
@@ -192,6 +199,11 @@ final class FreefireESPStore: ObservableObject {
         flushState()
     }
 
+    func setFovRadius(_ radius: Int32) {
+        fovRadius = max(30, min(200, radius))
+        flushState()
+    }
+
     /// Copy the bundled patch bytes into the game's Documents/ folder.
     func patchGame() {
         guard !isPatching else { return }
@@ -245,10 +257,14 @@ final class FreefireESPStore: ObservableObject {
         distance     = (mainBits & bitEspDistance)  != 0
         silentAim    = (mainBits & bitAimEnabled)   != 0
         noRecoil     = (mainBits & bitNoRecoil)     != 0
+        aimFov       = (mainBits & bitAimFov)       != 0
+        aimFovHide   = (mainBits & bitAimFovHide)   != 0
         let modeVal  = (mainBits >> aimModeShift) & 3
-        aimMode      = modeVal > 0 || (mainBits & bitStateInitialized) != 0 ? modeVal : 2
+        aimMode      = (mainBits & bitStateInitialized) != 0 ? modeVal : 1
         let rateVal  = (mainBits >> headRateShift) & 7
         headRate     = rateVal >= 1 && rateVal <= 4 ? rateVal : 3
+        let radiusVal = (auxBits >> auxFovRadiusShift) & 0xFF
+        fovRadius    = radiusVal > 0 ? radiusVal : 100
 
         fastParachute = (auxBits & bitAuxFastParachute) != 0
         speedRunning  = (auxBits & bitAuxSpeedRunning)  != 0
@@ -267,6 +283,8 @@ final class FreefireESPStore: ObservableObject {
         if distance     { mainBits |= bitEspDistance }
         if silentAim    { mainBits |= bitAimEnabled }
         if noRecoil     { mainBits |= bitNoRecoil }
+        if aimFov       { mainBits |= bitAimFov }
+        if aimFovHide   { mainBits |= bitAimFovHide }
         mainBits |= (aimMode & 3) << aimModeShift
         mainBits |= (headRate & 7) << headRateShift
 
@@ -274,6 +292,7 @@ final class FreefireESPStore: ObservableObject {
         if fastParachute { auxBits |= bitAuxFastParachute }
         if speedRunning  { auxBits |= bitAuxSpeedRunning }
         if fakeDamage    { auxBits |= bitAuxFakeDamage }
+        auxBits |= (fovRadius & 0xFF) << auxFovRadiusShift
 
         var data = Data(count: 8)
         data.withUnsafeMutableBytes { ptr in
