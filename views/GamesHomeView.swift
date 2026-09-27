@@ -96,18 +96,6 @@ struct GamesHomeView: View {
 
                             FreefireESPHomeSection(store: ffESP)
 
-                            gameSectionHeader
-                                .padding(.top, 22)
-                                .padding(.bottom, 12)
-
-                            gameGrid
-                                .padding(.horizontal, 16)
-
-                            if games.isEmpty && !isLoadingGames {
-                                emptyGamesView
-                                    .padding(.top, 24)
-                            }
-
                             Spacer(minLength: 32)
                         }
                     }
@@ -122,10 +110,8 @@ struct GamesHomeView: View {
             .navigationTitle("")
             .navigationBarHidden(true)
             .refreshable {
-                await loadGames()
                 await checkAnnouncement()
             }
-            .task { await loadGames() }
             .task {
                 try? await Task.sleep(nanoseconds: 4_000_000_000)
                 await checkAnnouncement()
