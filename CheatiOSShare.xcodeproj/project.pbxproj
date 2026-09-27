@@ -136,6 +136,8 @@
 
 		FF0101 /* FreefireESPStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreefireESPStore.swift; sourceTree = "<group>"; };
 		FF0102 /* FreefireESPHomeSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreefireESPHomeSection.swift; sourceTree = "<group>"; };
+		F04037 /* CheatMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheatMenuView.swift; sourceTree = "<group>"; };
+		F04036 /* CheatInjectService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheatInjectService.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F001 /* CanhiOSShareApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanhiOSShareApp.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F003 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
