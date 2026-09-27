@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 // Manages Free Fire ESP state by reading/writing a config file in the game's
 // Documents/ folder. The game reads the same file every ~1 second via the
@@ -204,6 +205,40 @@ final class FreefireESPStore: ObservableObject {
         flushState()
     }
 
+    /// Xóa patch file và esp_cfg khỏi Documents/ của game.
+    func removePatches() {
+        guard let (_, container) = resolvedContainer else { return }
+        let fm = FileManager.default
+        try? fm.removeItem(atPath: patchBytesPath(in: container))
+        try? fm.removeItem(atPath: configFilePath(in: container))
+        refresh()
+    }
+
+    /// Mở game sau khi patch thành công.
+    private func openGame() {
+        let schemes: [String: String] = [
+            "com.dts.freefireth":            "freefireth://",
+            "com.dts.freefiremax":           "freefiremax://",
+            "com.garena.game.kgvn":          "garena://",
+            "com.garena.game.kgsg":          "garena://",
+            "com.garena.game.kgtw":          "garena://",
+            "com.garena.game.kgth":          "garena://",
+            "com.garena.game.kgid":          "garena://",
+            "com.garena.game.battleground":  "garena://",
+            "com.garena.game.fbrgvn":        "garena://",
+            "com.garena.game.fbrgsg":        "garena://",
+            "com.garena.game.fbrgtw":        "garena://",
+            "com.garena.game.fbrgth":        "garena://",
+            "com.garena.game.fbrgid":        "garena://",
+            "com.garena.game.fbrgus":        "garena://"
+        ]
+        let bundleID = selectedVariant == .freefire ? detectedBundleID : detectedMAXBundleID
+        guard let bid = bundleID,
+              let scheme = schemes[bid],
+              let url = URL(string: scheme) else { return }
+        UIApplication.shared.open(url)
+    }
+
     /// Copy the bundled patch bytes into the game's Documents/ folder.
     func patchGame() {
         guard !isPatching else { return }
@@ -226,6 +261,7 @@ final class FreefireESPStore: ObservableObject {
                 if case .success = result {
                     self.refresh()
                     self.flushState()
+                    self.openGame()
                 }
             }
         }

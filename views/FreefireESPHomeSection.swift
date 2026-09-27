@@ -264,65 +264,93 @@ struct FreefireESPHomeSection: View {
     // MARK: - Patch button
 
     private var patchButton: some View {
-        VStack(spacing: 6) {
-            Button {
-                store.patchGame()
-            } label: {
-                HStack(spacing: 10) {
-                    if store.isPatching {
-                        ProgressView()
-                            .scaleEffect(0.85)
-                            .tint(.white)
-                    } else {
-                        Image(systemName: "doc.badge.plus")
-                            .font(.system(size: 16, weight: .bold))
+        let detected = store.selectedVariant == .freefire ? store.detectedBundleID : store.detectedMAXBundleID
+        let patchInstalled = store.selectedVariant == .freefire ? store.isPatchInstalled : store.isPatchInstalledMAX
+
+        return VStack(spacing: 6) {
+            if patchInstalled && !store.isPatching {
+                // Remove patch button
+                Button {
+                    store.removePatches()
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "trash.fill")
+                            .font(.system(size: 15, weight: .bold))
+                        Text("Xóa Patch File Khỏi Game")
+                            .font(.system(size: 15, weight: .bold))
+                            .kerning(0.2)
                     }
-                    Text(store.isPatching ? "Đang patch..." : "Patch File vào Game")
-                        .font(.system(size: 15, weight: .bold))
-                        .kerning(0.2)
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 15)
-                .background(
-                    ZStack {
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 15)
+                    .background(
                         LinearGradient(
-                            colors: store.isPatching
-                                ? [Color(red: 0.20, green: 0.20, blue: 0.35), Color(red: 0.15, green: 0.15, blue: 0.28)]
-                                : [AppTheme.neonPurple, AppTheme.techGlow],
+                            colors: [Color(red: 0.75, green: 0.15, blue: 0.15), Color(red: 0.55, green: 0.10, blue: 0.10)],
                             startPoint: .leading, endPoint: .trailing
                         )
-                        if !store.isPatching {
-                            LinearGradient(
-                                colors: [.white.opacity(0.12), .clear],
-                                startPoint: .top, endPoint: .center
-                            )
+                        .clipShape(CutShape(cut: 14))
+                    )
+                    .overlay(CutShape(cut: 14).strokeBorder(Color.red.opacity(0.45), lineWidth: 1.2))
+                    .shadow(color: Color.red.opacity(0.35), radius: 12, y: 4)
+                }
+                .buttonStyle(.plain)
+            } else {
+                // Patch button
+                Button {
+                    store.patchGame()
+                } label: {
+                    HStack(spacing: 10) {
+                        if store.isPatching {
+                            ProgressView()
+                                .scaleEffect(0.85)
+                                .tint(.white)
+                        } else {
+                            Image(systemName: "doc.badge.plus")
+                                .font(.system(size: 16, weight: .bold))
                         }
+                        Text(store.isPatching ? "Đang patch..." : "Patch File vào Game")
+                            .font(.system(size: 15, weight: .bold))
+                            .kerning(0.2)
                     }
-                    .clipShape(CutShape(cut: 14))
-                )
-                .overlay(
-                    CutShape(cut: 14)
-                        .strokeBorder(
-                            store.isPatching
-                                ? AppTheme.techGlow.opacity(0.25)
-                                : AppTheme.neonCyan.opacity(0.55),
-                            lineWidth: 1.2
-                        )
-                )
-                .shadow(
-                    color: store.isPatching ? .clear : AppTheme.neonPurple.opacity(0.50),
-                    radius: 16, y: 4
-                )
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 15)
+                    .background(
+                        ZStack {
+                            LinearGradient(
+                                colors: store.isPatching
+                                    ? [Color(red: 0.20, green: 0.20, blue: 0.35), Color(red: 0.15, green: 0.15, blue: 0.28)]
+                                    : [AppTheme.neonPurple, AppTheme.techGlow],
+                                startPoint: .leading, endPoint: .trailing
+                            )
+                            if !store.isPatching {
+                                LinearGradient(
+                                    colors: [.white.opacity(0.12), .clear],
+                                    startPoint: .top, endPoint: .center
+                                )
+                            }
+                        }
+                        .clipShape(CutShape(cut: 14))
+                    )
+                    .overlay(
+                        CutShape(cut: 14)
+                            .strokeBorder(
+                                store.isPatching
+                                    ? AppTheme.techGlow.opacity(0.25)
+                                    : AppTheme.neonCyan.opacity(0.55),
+                                lineWidth: 1.2
+                            )
+                    )
+                    .shadow(
+                        color: store.isPatching ? .clear : AppTheme.neonPurple.opacity(0.50),
+                        radius: 16, y: 4
+                    )
+                }
+                .buttonStyle(.plain)
+                .disabled(store.isPatching || detected == nil)
+                .opacity((detected == nil && !store.isPatching) ? 0.45 : 1.0)
             }
-            .buttonStyle(.plain)
-            .disabled(store.isPatching || (store.selectedVariant == .freefire ? store.detectedBundleID == nil : store.detectedMAXBundleID == nil))
-            .opacity({
-                let detected = store.selectedVariant == .freefire ? store.detectedBundleID : store.detectedMAXBundleID
-                return (detected == nil && !store.isPatching) ? 0.45 : 1.0
-            }())
 
-            let detected = store.selectedVariant == .freefire ? store.detectedBundleID : store.detectedMAXBundleID
             if detected == nil {
                 Text("Không tìm thấy \(store.selectedVariant.rawValue) — hãy cài game trước")
                     .font(.system(size: 11, weight: .medium))
@@ -335,7 +363,7 @@ struct FreefireESPHomeSection: View {
             case .success:
                 return Alert(
                     title: Text("Patch thành công"),
-                    message: Text("Assembly-CSharp-patch.bytes đã được copy vào Documents/ của Free Fire. Mở game để áp dụng."),
+                    message: Text("Đang mở game..."),
                     dismissButton: .default(Text("OK"))
                 )
             case .failure(let msg):
@@ -377,32 +405,33 @@ struct FreefireESPHomeSection: View {
     }
 
     private func fovSliderRow() -> some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(Color(red: 1.00, green: 0.80, blue: 0.10).opacity(0.16))
-                    .frame(width: 32, height: 32)
-                Image(systemName: "circle.dashed")
-                    .font(.system(size: 13, weight: .semibold))
+        VStack(spacing: 2) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 1.00, green: 0.80, blue: 0.10).opacity(0.16))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "circle.dashed")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Color(red: 1.00, green: 0.80, blue: 0.10))
+                }
+                Text("FOV Radius")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color(red: 0.45, green: 0.55, blue: 0.75))
+                Spacer()
+                Text("\(store.fovRadius)")
+                    .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(Color(red: 1.00, green: 0.80, blue: 0.10))
+                    .frame(width: 34, alignment: .trailing)
             }
-            Text("FOV Radius")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Color(red: 0.45, green: 0.55, blue: 0.75))
-            Spacer()
-            Text("\(store.fovRadius)")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(Color(red: 1.00, green: 0.80, blue: 0.10))
-                .frame(width: 34, alignment: .trailing)
+            .padding(.vertical, 4)
+            Slider(value: Binding(
+                get: { Double(store.fovRadius) },
+                set: { store.setFovRadius(Int32($0)) }
+            ), in: 30...200, step: 5)
+            .tint(Color(red: 1.00, green: 0.80, blue: 0.10))
+            .padding(.bottom, 4)
         }
-        .padding(.vertical, 4)
-
-        Slider(value: Binding(
-            get: { Double(store.fovRadius) },
-            set: { store.setFovRadius(Int32($0)) }
-        ), in: 30...200, step: 5)
-        .tint(Color(red: 1.00, green: 0.80, blue: 0.10))
-        .padding(.bottom, 4)
     }
 
     private func segmentRow(
@@ -459,47 +488,55 @@ struct FreefireESPHomeSection: View {
         color: Color,
         action: @escaping () -> Void
     ) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(on ? color.opacity(0.18) : Color.white.opacity(0.05))
-                        .frame(width: 32, height: 32)
-                        .animation(.easeInOut(duration: 0.18), value: on)
-                    Image(systemName: icon)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(on ? color : Color(red: 0.40, green: 0.48, blue: 0.65))
-                        .animation(.easeInOut(duration: 0.18), value: on)
-                }
-
-                Text(label)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(on ? .white : Color(red: 0.45, green: 0.55, blue: 0.75))
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(on ? color.opacity(0.18) : Color.white.opacity(0.05))
+                    .frame(width: 32, height: 32)
                     .animation(.easeInOut(duration: 0.18), value: on)
-
-                Spacer()
-
-                // Toggle pill
-                ZStack(alignment: on ? .trailing : .leading) {
-                    Capsule()
-                        .fill(on ? color.opacity(0.30) : Color.white.opacity(0.07))
-                        .frame(width: 44, height: 24)
-                        .overlay(
-                            Capsule()
-                                .strokeBorder(on ? color.opacity(0.70) : Color.white.opacity(0.15), lineWidth: 1)
-                        )
-                        .shadow(color: on ? color.opacity(0.40) : .clear, radius: 6)
-                    Circle()
-                        .fill(on ? color : Color(red: 0.35, green: 0.40, blue: 0.58))
-                        .frame(width: 18, height: 18)
-                        .shadow(color: on ? color.opacity(0.70) : .clear, radius: 4)
-                        .padding(.horizontal, 3)
-                        .animation(.spring(response: 0.25, dampingFraction: 0.72), value: on)
-                }
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(on ? color : Color(red: 0.40, green: 0.48, blue: 0.65))
+                    .animation(.easeInOut(duration: 0.18), value: on)
             }
-            .padding(.vertical, 7)
-            .contentShape(Rectangle())
+
+            Text(label)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(on ? .white : Color(red: 0.45, green: 0.55, blue: 0.75))
+                .animation(.easeInOut(duration: 0.18), value: on)
+
+            Spacer()
+
+            // Tắt / Bật tab buttons
+            HStack(spacing: 0) {
+                Button { if on { action() } } label: {
+                    Text("Tắt")
+                        .font(.system(size: 12, weight: !on ? .bold : .medium))
+                        .foregroundStyle(!on ? .white : Color(red: 0.45, green: 0.55, blue: 0.75))
+                        .frame(width: 38, height: 26)
+                        .background(!on
+                            ? AnyView(Capsule().fill(Color(red: 0.30, green: 0.32, blue: 0.45)))
+                            : AnyView(Color.clear))
+                        .animation(.easeInOut(duration: 0.15), value: on)
+                }
+                .buttonStyle(.plain)
+                Button { if !on { action() } } label: {
+                    Text("Bật")
+                        .font(.system(size: 12, weight: on ? .bold : .medium))
+                        .foregroundStyle(on ? .white : Color(red: 0.45, green: 0.55, blue: 0.75))
+                        .frame(width: 38, height: 26)
+                        .background(on
+                            ? AnyView(Capsule().fill(color.opacity(0.85)))
+                            : AnyView(Color.clear))
+                        .animation(.easeInOut(duration: 0.15), value: on)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(2)
+            .background(Color.white.opacity(0.07))
+            .clipShape(Capsule())
+            .overlay(Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 0.5))
         }
-        .buttonStyle(.plain)
+        .padding(.vertical, 7)
     }
 }
