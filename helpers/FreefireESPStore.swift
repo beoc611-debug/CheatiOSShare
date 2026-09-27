@@ -26,8 +26,8 @@ final class FreefireESPStore: ObservableObject {
     private let bitStateInitialized: Int32 = 128
     private let bitAimEnabled:      Int32 = 32768
     private let bitNoRecoil:        Int32 = 262144
-    // aimMode=2 (MIXED) + headRate=3 (75%) — always written, not toggled by user
-    private let defaultStateBits: Int32 = (2 << 16) | (3 << 19)
+    private let aimModeShift: Int32 = 16
+    private let headRateShift: Int32 = 19
 
     private let bitAuxFastParachute: Int32 = 1
     private let bitAuxSpeedRunning:  Int32 = 2
@@ -71,6 +71,10 @@ final class FreefireESPStore: ObservableObject {
     // AIM tab
     @Published var silentAim    = false
     @Published var noRecoil     = false
+    // 0=Body, 1=Head, 2=Mixed
+    @Published var aimMode: Int32 = 2
+    // 1=25%, 2=50%, 3=75%, 4=100%
+    @Published var headRate: Int32 = 3
 
     // SETTINGS tab
     @Published var fastParachute = false
@@ -178,6 +182,16 @@ final class FreefireESPStore: ObservableObject {
         flushState()
     }
 
+    func setAimMode(_ mode: Int32) {
+        aimMode = mode
+        flushState()
+    }
+
+    func setHeadRate(_ rate: Int32) {
+        headRate = rate
+        flushState()
+    }
+
     /// Copy the bundled patch bytes into the game's Documents/ folder.
     func patchGame() {
         guard !isPatching else { return }
@@ -231,6 +245,10 @@ final class FreefireESPStore: ObservableObject {
         distance     = (mainBits & bitEspDistance)  != 0
         silentAim    = (mainBits & bitAimEnabled)   != 0
         noRecoil     = (mainBits & bitNoRecoil)     != 0
+        let modeVal  = (mainBits >> aimModeShift) & 3
+        aimMode      = modeVal > 0 || (mainBits & bitStateInitialized) != 0 ? modeVal : 2
+        let rateVal  = (mainBits >> headRateShift) & 7
+        headRate     = rateVal >= 1 && rateVal <= 4 ? rateVal : 3
 
         fastParachute = (auxBits & bitAuxFastParachute) != 0
         speedRunning  = (auxBits & bitAuxSpeedRunning)  != 0
@@ -240,7 +258,7 @@ final class FreefireESPStore: ObservableObject {
     private func flushState() {
         guard let (_, container) = resolvedContainer else { return }
 
-        var mainBits: Int32 = bitStateInitialized | defaultStateBits
+        var mainBits: Int32 = bitStateInitialized
         if enableESP    { mainBits |= bitEspMaster }
         if playerBox    { mainBits |= bitEspBox }
         if topTracer    { mainBits |= bitEspTracer }
@@ -249,6 +267,8 @@ final class FreefireESPStore: ObservableObject {
         if distance     { mainBits |= bitEspDistance }
         if silentAim    { mainBits |= bitAimEnabled }
         if noRecoil     { mainBits |= bitNoRecoil }
+        mainBits |= (aimMode & 3) << aimModeShift
+        mainBits |= (headRate & 7) << headRateShift
 
         var auxBits: Int32 = 0
         if fastParachute { auxBits |= bitAuxFastParachute }

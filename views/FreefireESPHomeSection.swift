@@ -202,6 +202,26 @@ struct FreefireESPHomeSection: View {
                       on: store.noRecoil, color: Color(red: 0.85, green: 0.45, blue: 1.00)) {
                 store.toggle(\.noRecoil)
             }
+
+            // Aim target
+            segmentRow(
+                label: "Nhắm vào",
+                icon: "target",
+                options: ["Thân", "Đầu", "Mix"],
+                selected: Int(store.aimMode),
+                color: AppTheme.neonPurple
+            ) { store.setAimMode(Int32($0)) }
+
+            // Head % — only when Mix mode
+            if store.aimMode == 2 {
+                segmentRow(
+                    label: "% Nhắm đầu",
+                    icon: "person.crop.circle",
+                    options: ["25%", "50%", "75%", "100%"],
+                    selected: Int(store.headRate) - 1,
+                    color: Color(red: 0.85, green: 0.45, blue: 1.00)
+                ) { store.setHeadRate(Int32($0 + 1)) }
+            }
         }
     }
 
@@ -337,6 +357,53 @@ struct FreefireESPHomeSection: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .techCard()
+    }
+
+    private func segmentRow(
+        label: String,
+        icon: String,
+        options: [String],
+        selected: Int,
+        color: Color,
+        onSelect: @escaping (Int) -> Void
+    ) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.16))
+                    .frame(width: 32, height: 32)
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(color)
+            }
+            Text(label)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color(red: 0.45, green: 0.55, blue: 0.75))
+            Spacer()
+            HStack(spacing: 0) {
+                ForEach(options.indices, id: \.self) { i in
+                    let isActive = i == selected
+                    Button { onSelect(i) } label: {
+                        Text(options[i])
+                            .font(.system(size: 11, weight: isActive ? .bold : .medium))
+                            .foregroundStyle(isActive ? .white : Color(red: 0.45, green: 0.55, blue: 0.75))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 5)
+                            .background(
+                                isActive
+                                    ? AnyView(Capsule().fill(color.opacity(0.35)).overlay(Capsule().strokeBorder(color.opacity(0.6), lineWidth: 1)))
+                                    : AnyView(Color.clear)
+                            )
+                            .animation(.easeInOut(duration: 0.15), value: isActive)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(3)
+            .background(Color.white.opacity(0.06))
+            .clipShape(Capsule())
+        }
+        .padding(.vertical, 7)
     }
 
     private func toggleRow(
