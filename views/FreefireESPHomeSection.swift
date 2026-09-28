@@ -298,35 +298,24 @@ struct FreefireESPHomeSection: View {
                     .padding(.vertical, 8)
                 }
 
-                // Thickness slider (Line=0, Box=1, Name=3 only; Health follows Box)
-                if store.selectedEspElement == 0 || store.selectedEspElement == 1 || store.selectedEspElement == 3 {
+                // Thickness slider (Line=0, Box=1 only; Health follows Box; Name has no border)
+                if store.selectedEspElement == 0 || store.selectedEspElement == 1 {
                     rowDivider
                     let elemName = Self.espElements[store.selectedEspElement]
                     let thickBinding = Binding<Double>(
                         get: {
-                            switch self.store.selectedEspElement {
-                            case 0: return Double(self.store.lineThicknessRaw)
-                            case 1: return Double(self.store.boxThicknessRaw)
-                            default: return Double(self.store.nameThicknessRaw)
-                            }
+                            Double(self.store.selectedEspElement == 0
+                                ? self.store.lineThicknessRaw : self.store.boxThicknessRaw)
                         },
                         set: { v in
                             let raw = Int32(v)
-                            switch self.store.selectedEspElement {
-                            case 0: self.store.lineThicknessRaw = raw
-                            case 1: self.store.boxThicknessRaw  = raw
-                            default: self.store.nameThicknessRaw = raw
-                            }
+                            if self.store.selectedEspElement == 0 { self.store.lineThicknessRaw = raw }
+                            else { self.store.boxThicknessRaw = raw }
                             self.store.flushStatePublic()
                         }
                     )
-                    let rawVal: Int32 = {
-                        switch store.selectedEspElement {
-                        case 0: return store.lineThicknessRaw
-                        case 1: return store.boxThicknessRaw
-                        default: return store.nameThicknessRaw
-                        }
-                    }()
+                    let rawVal: Int32 = store.selectedEspElement == 0
+                        ? store.lineThicknessRaw : store.boxThicknessRaw
                     let pxVal = String(format: "%.1f", 0.5 + Double(rawVal) * 0.2)
 
                     VStack(spacing: 2) {
