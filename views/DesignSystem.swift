@@ -23,18 +23,18 @@ enum AppTheme {
     static let emptyIconSize: CGFloat = 30
     static let selectionIconSize: CGFloat = 18
 
-    // MARK: Cyberpunk palette
-    static let cyberBase      = Color(red: 0.012, green: 0.031, blue: 0.090)
-    static let techGlow       = Color(red: 0.180, green: 0.522, blue: 1.000)   // electric blue
-    static let neonPurple     = Color(red: 0.580, green: 0.227, blue: 0.949)   // neon purple
-    static let neonCyan       = Color(red: 0.102, green: 0.851, blue: 1.000)   // cyan
-    static let techCardFill   = Color(red: 0.068, green: 0.098, blue: 0.180)
+    // MARK: Gold palette
+    static let cyberBase      = Color(red: 0.06, green: 0.04, blue: 0.01)
+    static let techGlow       = Color(red: 1.00, green: 0.76, blue: 0.18)   // gold
+    static let neonPurple     = Color(red: 0.90, green: 0.58, blue: 0.05)   // amber
+    static let neonCyan       = Color(red: 1.00, green: 0.90, blue: 0.40)   // bright gold
+    static let techCardFill   = Color(red: 0.10, green: 0.08, blue: 0.03)
 
     static var techCardStroke: LinearGradient {
         LinearGradient(
             colors: [
-                Color(red: 0.18, green: 0.52, blue: 1.00).opacity(0.55),
-                Color(red: 0.58, green: 0.23, blue: 0.95).opacity(0.38)
+                Color(red: 1.00, green: 0.76, blue: 0.18).opacity(0.50),
+                Color(red: 0.90, green: 0.58, blue: 0.05).opacity(0.30)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing

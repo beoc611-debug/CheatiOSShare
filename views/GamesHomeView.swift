@@ -166,8 +166,8 @@ struct GamesHomeView: View {
                         .font(.system(size: 30, weight: .black))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [Color(red: 0.26, green: 0.55, blue: 1.00),
-                                         Color(red: 0.48, green: 0.37, blue: 1.00)],
+                                colors: [Color(red: 1.00, green: 0.85, blue: 0.35),
+                                         Color(red: 1.00, green: 0.65, blue: 0.10)],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
@@ -178,7 +178,7 @@ struct GamesHomeView: View {
                             .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [AppTheme.neonPurple, Color(red: 0.55, green: 0.25, blue: 0.90)],
+                                    colors: [AppTheme.neonCyan, AppTheme.techGlow],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
@@ -187,7 +187,7 @@ struct GamesHomeView: View {
                             .font(.system(size: 16, weight: .heavy))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [AppTheme.neonPurple, Color(red: 0.45, green: 0.20, blue: 0.80)],
+                                    colors: [AppTheme.neonCyan, AppTheme.techGlow],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -198,7 +198,7 @@ struct GamesHomeView: View {
 
                 Text("Tr\u{1EE3} th\u{1EE7} game \u{00B7} An to\u{00E0}n \u{00B7} \u{1ED4}n \u{0111}\u{1ECB}nh")
                     .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(Color(red: 0.54, green: 0.62, blue: 0.78))
+                    .foregroundStyle(Color(red: 0.75, green: 0.65, blue: 0.45))
             }
 
             Spacer()
@@ -429,9 +429,9 @@ struct GamesHomeView: View {
         .padding(.bottom, 4)
         .background(
             ZStack {
-                Color(red: 0.05, green: 0.04, blue: 0.16).opacity(0.98)
+                Color(red: 0.08, green: 0.06, blue: 0.02).opacity(0.97)
                 LinearGradient(
-                    colors: [AppTheme.neonPurple.opacity(0.07), .clear],
+                    colors: [AppTheme.techGlow.opacity(0.06), .clear],
                     startPoint: .top, endPoint: .bottom
                 )
             }
@@ -440,7 +440,7 @@ struct GamesHomeView: View {
         .overlay(alignment: .top) {
             Rectangle()
                 .fill(LinearGradient(
-                    colors: [AppTheme.neonPurple.opacity(0.42), AppTheme.techGlow.opacity(0.20), AppTheme.neonPurple.opacity(0.42)],
+                    colors: [AppTheme.neonPurple.opacity(0.50), AppTheme.neonCyan.opacity(0.25), AppTheme.neonPurple.opacity(0.50)],
                     startPoint: .leading, endPoint: .trailing
                 ))
                 .frame(height: 0.8)
@@ -457,11 +457,11 @@ struct GamesHomeView: View {
             VStack(spacing: 5) {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: active ? .bold : .regular))
-                    .foregroundStyle(active ? AppTheme.neonPurple : Color(red: 0.40, green: 0.48, blue: 0.68))
-                    .shadow(color: active ? AppTheme.neonPurple.opacity(0.65) : .clear, radius: 8)
+                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.52, green: 0.46, blue: 0.32))
+                    .shadow(color: active ? AppTheme.techGlow.opacity(0.60) : .clear, radius: 8)
                 Text(label)
                     .font(.system(size: 10, weight: active ? .bold : .medium))
-                    .foregroundStyle(active ? AppTheme.neonPurple : Color(red: 0.40, green: 0.48, blue: 0.68))
+                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.52, green: 0.46, blue: 0.32))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)
@@ -480,11 +480,11 @@ struct GamesHomeView: View {
             VStack(spacing: 5) {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: active ? .bold : .regular))
-                    .foregroundStyle(active ? AppTheme.neonPurple : Color(red: 0.40, green: 0.48, blue: 0.68))
-                    .shadow(color: active ? AppTheme.neonPurple.opacity(0.65) : .clear, radius: 8)
+                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.52, green: 0.46, blue: 0.32))
+                    .shadow(color: active ? AppTheme.techGlow.opacity(0.60) : .clear, radius: 8)
                 Text(label)
                     .font(.system(size: 10, weight: active ? .bold : .medium))
-                    .foregroundStyle(active ? AppTheme.neonPurple : Color(red: 0.40, green: 0.48, blue: 0.68))
+                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.52, green: 0.46, blue: 0.32))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)

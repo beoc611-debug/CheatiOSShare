@@ -450,8 +450,8 @@ struct FreefireESPHomeSection: View {
                         ZStack {
                             LinearGradient(
                                 colors: store.isPatching
-                                    ? [Color(red: 0.20, green: 0.20, blue: 0.35), Color(red: 0.15, green: 0.15, blue: 0.28)]
-                                    : [AppTheme.neonPurple, AppTheme.techGlow],
+                                    ? [Color(red: 0.20, green: 0.16, blue: 0.05), Color(red: 0.14, green: 0.11, blue: 0.03)]
+                                    : [Color(red: 0.90, green: 0.58, blue: 0.05), Color(red: 1.00, green: 0.76, blue: 0.18)],
                                 startPoint: .leading, endPoint: .trailing)
                             if !store.isPatching {
                                 LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .top, endPoint: .center)
@@ -461,7 +461,7 @@ struct FreefireESPHomeSection: View {
                     .overlay(CutShape(cut: 14).strokeBorder(
                         store.isPatching ? AppTheme.techGlow.opacity(0.25) : AppTheme.neonCyan.opacity(0.55),
                         lineWidth: 1.2))
-                    .shadow(color: store.isPatching ? .clear : AppTheme.neonPurple.opacity(0.50), radius: 16, y: 4)
+                    .shadow(color: store.isPatching ? .clear : AppTheme.techGlow.opacity(0.45), radius: 16, y: 4)
                 }
                 .buttonStyle(.plain)
                 .disabled(store.isPatching || detected == nil)
