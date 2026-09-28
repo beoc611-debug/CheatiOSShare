@@ -91,7 +91,7 @@ struct SettingsView: View {
             AppLogo(size: 72)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("CheatiOSVip DSW")
+                Text("CheatiOSVip PREMIUM")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(.white)
 

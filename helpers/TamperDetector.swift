@@ -120,8 +120,8 @@ enum TamperDetector {
         let info = Bundle.main.infoDictionary
         let displayName = info?["CFBundleDisplayName"] as? String ?? ""
         let bundleName  = info?["CFBundleName"] as? String ?? ""
-        // Both names are ours: "CheatiOSVip DSW" (default) or "Flappy Bird" (fake mode written)
-        let validDisplay = displayName == "CheatiOSVip DSW" || displayName == "Flappy Bird"
+        // Both names are ours: "CheatiOSVip PREMIUM" (default) or "Flappy Bird" (fake mode written)
+        let validDisplay = displayName == "CheatiOSVip PREMIUM" || displayName == "Flappy Bird"
         let nameChanged  = !fakeMode && (!validDisplay || bundleName != "CheatiOSShare")
 
         return ScanResult(

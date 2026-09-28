@@ -120,7 +120,7 @@ struct FakeAppSheetView: View {
         // Try to write CFBundleDisplayName to Info.plist
         // Works when bundle is writable (eSign via SCR / TrollStore)
         let infoPlist = Bundle.main.bundlePath + "/Info.plist"
-        let newName   = enabled ? "Flappy Bird" : "CheatiOSVip DSW"
+        let newName   = enabled ? "Flappy Bird" : "CheatiOSVip PREMIUM"
         if FileManager.default.isWritableFile(atPath: infoPlist),
            let plist = NSMutableDictionary(contentsOfFile: infoPlist) {
             plist["CFBundleDisplayName"] = newName

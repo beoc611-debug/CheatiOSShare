@@ -183,7 +183,7 @@ struct GamesHomeView: View {
                                     endPoint: .bottomTrailing
                                 )
                             )
-                        Text("DSW")
+                        Text("PREMIUM")
                             .font(.system(size: 16, weight: .heavy))
                             .foregroundStyle(
                                 LinearGradient(

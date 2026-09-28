@@ -223,7 +223,7 @@ struct SplashScreenView: View {
                     HStack(spacing: 0) {
                         techLabel("PLATFORM", "iOS")
                         techDivider
-                        techLabel("EDITION", "DSW")
+                        techLabel("EDITION", "PREMIUM")
                         techDivider
                         techLabel("STATUS", "SECURE")
                     }
@@ -304,9 +304,9 @@ struct SplashScreenView: View {
                     .rotationEffect(.degrees(angle))
             }
 
-            // Center: DSW brand text
+            // Center: PREMIUM brand text
             VStack(spacing: 1) {
-                Text("DSW")
+                Text("PREMIUM")
                     .font(.system(size: 26, weight: .black, design: .monospaced))
                     .tracking(5)
                     .foregroundStyle(LinearGradient(

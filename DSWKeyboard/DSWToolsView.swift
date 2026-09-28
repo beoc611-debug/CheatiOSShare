@@ -65,7 +65,7 @@ struct DSWToolsView: View {
             Image(systemName: "wrench.and.screwdriver.fill")
                 .foregroundColor(accent)
                 .font(.system(size: 14, weight: .semibold))
-            Text("DSW Tools")
+            Text("PREMIUM Tools")
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(.white)
             Spacer()
