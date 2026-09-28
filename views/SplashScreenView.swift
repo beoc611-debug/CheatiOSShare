@@ -3,8 +3,6 @@ import SwiftUI
 struct SplashScreenView: View {
     var onFinished: () -> Void
 
-    @State private var logoOpacity:  Double  = 0
-    @State private var logoScale:    CGFloat = 0.85
     @State private var titleOpacity: Double  = 0
     @State private var barWidth:     CGFloat = 0
     @State private var screenOpacity:Double  = 1
@@ -26,19 +24,6 @@ struct SplashScreenView: View {
 
             VStack(spacing: 0) {
                 Spacer()
-
-                // App icon
-                Image("AppIcon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 100, height: 100)
-                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .shadow(color: cyan.opacity(0.40), radius: 24, y: 8)
-                    .shadow(color: purple.opacity(0.25), radius: 40, y: 12)
-                    .scaleEffect(logoScale)
-                    .opacity(logoOpacity)
-
-                Spacer().frame(height: 28)
 
                 // App name
                 VStack(spacing: 6) {
@@ -97,10 +82,7 @@ struct SplashScreenView: View {
     }
 
     private func runSequence() {
-        withAnimation(.spring(response: 0.55, dampingFraction: 0.72).delay(0.10)) {
-            logoOpacity = 1; logoScale = 1
-        }
-        withAnimation(.easeOut(duration: 0.40).delay(0.45)) {
+        withAnimation(.easeOut(duration: 0.45).delay(0.20)) {
             titleOpacity = 1
         }
         withAnimation(.easeInOut(duration: 1.10).delay(0.55)) {
