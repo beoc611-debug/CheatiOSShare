@@ -78,8 +78,8 @@ final class FreefireESPStore: ObservableObject {
     @Published var espColorEnabled = false
 
     // ESP Color presets (index 0-11 into ESPColorPreset.all)
-    @Published var lineColorIdx:   Int32 = 0   // White
-    @Published var boxColorIdx:    Int32 = 0   // White
+    @Published var lineColorIdx:   Int32 = 1   // Red (default visible)
+    @Published var boxColorIdx:    Int32 = 1   // Red (default visible)
     @Published var healthColorIdx: Int32 = 2   // Green
     @Published var nameColorIdx:   Int32 = 4   // Yellow
     @Published var distColorIdx:   Int32 = 0   // White
@@ -356,6 +356,12 @@ final class FreefireESPStore: ObservableObject {
             let b10 = Int32(data[10])
             distColorIdx  = b10 & 0xF
             countColorIdx = (b10 >> 4) & 0xF
+        }
+        // Migrate: if line AND box are both white (index 0 = default/unconfigured),
+        // switch to red (index 1) so ESP is visible on bright backgrounds.
+        if lineColorIdx == 0 && boxColorIdx == 0 {
+            lineColorIdx = 1
+            boxColorIdx  = 1
         }
     }
 
