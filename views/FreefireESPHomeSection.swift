@@ -151,6 +151,9 @@ struct FreefireESPHomeSection: View {
             rowDivider
             toggleRow("Distance", icon: "ruler",
                       on: store.distance, color: Color(red: 0.90, green: 0.72, blue: 0.20)) { store.toggle(\.distance) }
+            rowDivider
+            toggleRow("ESP Count", icon: "number.circle.fill",
+                      on: store.espCount, color: Color(red: 1.00, green: 0.22, blue: 0.22)) { store.toggle(\.espCount) }
         }
     }
 

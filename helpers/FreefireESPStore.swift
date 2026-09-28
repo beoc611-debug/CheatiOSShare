@@ -29,6 +29,7 @@ final class FreefireESPStore: ObservableObject {
     private let bitNoRecoil:        Int32 = 262144
     private let bitAimFov:          Int32 = 4194304
     private let bitAimFovHide:      Int32 = 8388608
+    private let bitEspCount:        Int32 = 256
     private let aimModeShift: Int32 = 16
     private let headRateShift: Int32 = 19
     private let auxFovRadiusShift: Int32 = 4
@@ -72,6 +73,7 @@ final class FreefireESPStore: ObservableObject {
     @Published var healthBar    = true
     @Published var playerName   = true
     @Published var distance     = true
+    @Published var espCount     = true
 
     // AIM tab
     @Published var silentAim    = false
@@ -298,6 +300,7 @@ final class FreefireESPStore: ObservableObject {
         healthBar    = (mainBits & bitEspHealth)    != 0
         playerName   = (mainBits & bitEspName)      != 0
         distance     = (mainBits & bitEspDistance)  != 0
+        espCount     = (mainBits & bitEspCount)     != 0
         silentAim    = (mainBits & bitAimEnabled)   != 0
         let sfRaw    = (auxBits >> auxSilentFovShift) & 0xFF
         silentFov    = sfRaw > 0 ? sfRaw * 2 : 200
@@ -326,6 +329,7 @@ final class FreefireESPStore: ObservableObject {
         if healthBar    { mainBits |= bitEspHealth }
         if playerName   { mainBits |= bitEspName }
         if distance     { mainBits |= bitEspDistance }
+        if espCount     { mainBits |= bitEspCount }
         if silentAim    { mainBits |= bitAimEnabled }
         if noRecoil     { mainBits |= bitNoRecoil }
         if aimFov       { mainBits |= bitAimFov }
