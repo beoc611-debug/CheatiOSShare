@@ -298,40 +298,45 @@ struct FreefireESPHomeSection: View {
                     .padding(.vertical, 8)
                 }
 
-                // Thickness slider (Line=0, Box=1 only; Health follows Box; Name has no border)
-                if store.selectedEspElement == 0 || store.selectedEspElement == 1 {
+                // Thickness slider (Line=0, Box=1) / Name size slider (Name=3)
+                if store.selectedEspElement == 0 || store.selectedEspElement == 1 || store.selectedEspElement == 3 {
                     rowDivider
+                    let isName = store.selectedEspElement == 3
                     let elemName = Self.espElements[store.selectedEspElement]
                     let thickBinding = Binding<Double>(
                         get: {
-                            Double(self.store.selectedEspElement == 0
-                                ? self.store.lineThicknessRaw : self.store.boxThicknessRaw)
+                            if self.store.selectedEspElement == 0 { return Double(self.store.lineThicknessRaw) }
+                            if self.store.selectedEspElement == 3 { return Double(self.store.nameThicknessRaw) }
+                            return Double(self.store.boxThicknessRaw)
                         },
                         set: { v in
                             let raw = Int32(v)
                             if self.store.selectedEspElement == 0 { self.store.lineThicknessRaw = raw }
+                            else if self.store.selectedEspElement == 3 { self.store.nameThicknessRaw = raw }
                             else { self.store.boxThicknessRaw = raw }
                             self.store.flushStatePublic()
                         }
                     )
-                    let rawVal: Int32 = store.selectedEspElement == 0
-                        ? store.lineThicknessRaw : store.boxThicknessRaw
-                    let pxVal = String(format: "%.1f", 0.5 + Double(rawVal) * 0.2)
+                    let rawVal: Int32 = store.selectedEspElement == 0 ? store.lineThicknessRaw
+                        : (store.selectedEspElement == 3 ? store.nameThicknessRaw : store.boxThicknessRaw)
+                    let displayVal = isName
+                        ? String(format: "%.1fx", 1.0 + Double(rawVal) * 0.02)
+                        : String(format: "%.1f px", 0.5 + Double(rawVal) * 0.2)
 
                     VStack(spacing: 2) {
                         HStack(spacing: 14) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 9)
                                     .fill(accentColor.opacity(0.18)).frame(width: 38, height: 38)
-                                Image(systemName: "lineweight")
+                                Image(systemName: isName ? "textformat.size" : "lineweight")
                                     .font(.system(size: 15, weight: .semibold))
                                     .foregroundStyle(accentColor)
                             }
-                            Text("\(elemName) thickness")
+                            Text(isName ? "Name size" : "\(elemName) thickness")
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
                             Spacer()
-                            Text("\(pxVal) px")
+                            Text(displayVal)
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundStyle(accentColor)
                                 .frame(width: 52, alignment: .trailing)
