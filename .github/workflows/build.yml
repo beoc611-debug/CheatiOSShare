@@ -47,6 +47,7 @@ jobs:
             SUPPORTS_MACCATALYST=NO \
             SKIP_INSTALL=NO \
             SWIFT_STRICT_CONCURRENCY=minimal \
+            SWIFT_VERSION=5 \
             2>&1 | tee build.log
           grep -E "(error:|warning:|BUILD SUCCEEDED|BUILD FAILED)" build.log | tail -50
 
