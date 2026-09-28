@@ -30,6 +30,7 @@ final class FreefireESPStore: ObservableObject {
     private let bitAimFov:          Int32 = 4194304
     private let bitAimFovHide:      Int32 = 8388608
     private let bitEspCount:        Int32 = 256
+    private let bitEspColorEnabled: Int32 = 512
     private let aimModeShift: Int32 = 16
     private let headRateShift: Int32 = 19
     private let auxFovRadiusShift: Int32 = 4
@@ -73,7 +74,23 @@ final class FreefireESPStore: ObservableObject {
     @Published var healthBar    = true
     @Published var playerName   = true
     @Published var distance     = true
-    @Published var espCount     = true
+    @Published var espCount      = true
+    @Published var espColorEnabled = false
+
+    // ESP Color presets (index 0-11 into ESPColorPreset.all)
+    @Published var lineColorIdx:   Int32 = 0   // White
+    @Published var boxColorIdx:    Int32 = 0   // White
+    @Published var healthColorIdx: Int32 = 2   // Green
+    @Published var nameColorIdx:   Int32 = 4   // Yellow
+    @Published var distColorIdx:   Int32 = 0   // White
+    @Published var countColorIdx:  Int32 = 1   // Red
+
+    // Thickness raw values (encoded as byte; px = 0.5 + raw * 0.2)
+    @Published var lineThicknessRaw: Int32 = 5  // → 1.5 px
+    @Published var boxThicknessRaw:  Int32 = 5  // → 1.5 px
+
+    // UI-only: which element is being edited in the color picker
+    @Published var selectedEspElement: Int = 0
 
     // AIM tab
     @Published var silentAim    = false
@@ -188,6 +205,9 @@ final class FreefireESPStore: ObservableObject {
         flushState()
     }
 
+    /// Called from the view to flush after direct property mutation.
+    func flushStatePublic() { flushState() }
+
     /// Set a specific property and flush to disk.
     func set(_ keyPath: ReferenceWritableKeyPath<FreefireESPStore, Bool>, to value: Bool) {
         self[keyPath: keyPath] = value
@@ -294,13 +314,14 @@ final class FreefireESPStore: ObservableObject {
             }
         }
 
-        enableESP    = (mainBits & bitEspMaster)   != 0
-        playerBox    = (mainBits & bitEspBox)       != 0
-        topTracer    = (mainBits & bitEspTracer)    != 0
-        healthBar    = (mainBits & bitEspHealth)    != 0
-        playerName   = (mainBits & bitEspName)      != 0
-        distance     = (mainBits & bitEspDistance)  != 0
-        espCount     = (mainBits & bitEspCount)     != 0
+        enableESP       = (mainBits & bitEspMaster)      != 0
+        playerBox       = (mainBits & bitEspBox)          != 0
+        topTracer       = (mainBits & bitEspTracer)       != 0
+        healthBar       = (mainBits & bitEspHealth)       != 0
+        playerName      = (mainBits & bitEspName)         != 0
+        distance        = (mainBits & bitEspDistance)     != 0
+        espCount        = (mainBits & bitEspCount)        != 0
+        espColorEnabled = (mainBits & bitEspColorEnabled) != 0
         silentAim    = (mainBits & bitAimEnabled)   != 0
         let sfRaw    = (auxBits >> auxSilentFovShift) & 0xFF
         silentFov    = sfRaw > 0 ? sfRaw * 2 : 200
@@ -317,6 +338,25 @@ final class FreefireESPStore: ObservableObject {
         fastParachute = (auxBits & bitAuxFastParachute) != 0
         speedRunning  = (auxBits & bitAuxSpeedRunning)  != 0
         fakeDamage    = (auxBits & bitAuxFakeDamage)    != 0
+
+        lineThicknessRaw = (mainBits >> 24) & 0xF
+        boxThicknessRaw  = (mainBits >> 28) & 0xF
+
+        if data.count >= 9 {
+            let b8 = Int32(data[8])
+            lineColorIdx = b8 & 0xF
+            boxColorIdx  = (b8 >> 4) & 0xF
+        }
+        if data.count >= 10 {
+            let b9 = Int32(data[9])
+            healthColorIdx = b9 & 0xF
+            nameColorIdx   = (b9 >> 4) & 0xF
+        }
+        if data.count >= 11 {
+            let b10 = Int32(data[10])
+            distColorIdx  = b10 & 0xF
+            countColorIdx = (b10 >> 4) & 0xF
+        }
     }
 
     private func flushState() {
@@ -329,13 +369,19 @@ final class FreefireESPStore: ObservableObject {
         if healthBar    { mainBits |= bitEspHealth }
         if playerName   { mainBits |= bitEspName }
         if distance     { mainBits |= bitEspDistance }
-        if espCount     { mainBits |= bitEspCount }
+        if espCount        { mainBits |= bitEspCount }
+        if espColorEnabled { mainBits |= bitEspColorEnabled }
         if silentAim    { mainBits |= bitAimEnabled }
         if noRecoil     { mainBits |= bitNoRecoil }
         if aimFov       { mainBits |= bitAimFov }
         if aimFovHide   { mainBits |= bitAimFovHide }
         mainBits |= (aimMode & 3) << aimModeShift
         mainBits |= (headRate & 7) << headRateShift
+        // Pack thickness indices into bits 24-27 (line) and 28-31 (box)
+        var mainBitsU = UInt32(bitPattern: mainBits)
+        mainBitsU |= UInt32(lineThicknessRaw & 0xF) << 24
+        mainBitsU |= UInt32(boxThicknessRaw  & 0xF) << 28
+        mainBits = Int32(bitPattern: mainBitsU)
 
         var auxBits: Int32 = 0
         if fastParachute { auxBits |= bitAuxFastParachute }
@@ -344,7 +390,7 @@ final class FreefireESPStore: ObservableObject {
         auxBits |= (fovRadius & 0xFF) << auxFovRadiusShift
         auxBits |= ((silentFov / 2) & 0xFF) << auxSilentFovShift
 
-        var data = Data(count: 8)
+        var data = Data(count: 11)
         data.withUnsafeMutableBytes { ptr in
             withUnsafeBytes(of: mainBits) { src in
                 ptr.baseAddress!.copyMemory(from: src.baseAddress!, byteCount: 4)
@@ -353,6 +399,9 @@ final class FreefireESPStore: ObservableObject {
                 (ptr.baseAddress! + 4).copyMemory(from: src.baseAddress!, byteCount: 4)
             }
         }
+        data[8]  = UInt8((lineColorIdx & 0xF) | ((boxColorIdx & 0xF) << 4))
+        data[9]  = UInt8((healthColorIdx & 0xF) | ((nameColorIdx & 0xF) << 4))
+        data[10] = UInt8((distColorIdx & 0xF) | ((countColorIdx & 0xF) << 4))
 
         let docPath = documentsPath(in: container)
         try? FileManager.default.createDirectory(

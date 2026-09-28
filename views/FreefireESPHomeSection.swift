@@ -12,6 +12,7 @@ struct FreefireESPHomeSection: View {
                 patchButton
             } else if tab == 1 {
                 espCard
+                espColorCard
                 aimCard
                 patchButton
             } else {
@@ -130,6 +131,54 @@ struct FreefireESPHomeSection: View {
             .padding(.horizontal, 4)
     }
 
+    // MARK: - ESP Color helpers
+
+    private static let colorPresets: [(name: String, r: Double, g: Double, b: Double)] = [
+        ("White",  1.00, 1.00, 1.00),
+        ("Red",    1.00, 0.10, 0.10),
+        ("Green",  0.10, 0.95, 0.10),
+        ("Blue",   0.20, 0.50, 1.00),
+        ("Yellow", 1.00, 1.00, 0.10),
+        ("Cyan",   0.00, 1.00, 1.00),
+        ("Orange", 1.00, 0.60, 0.00),
+        ("Pink",   1.00, 0.40, 0.80),
+        ("Purple", 0.70, 0.20, 1.00),
+        ("Ice",    0.60, 0.90, 1.00),
+        ("Lime",   0.50, 1.00, 0.00),
+        ("Gold",   1.00, 0.84, 0.00),
+    ]
+
+    private func presetColor(_ idx: Int32) -> Color {
+        let i = Int(max(0, min(11, idx)))
+        let p = Self.colorPresets[i]
+        return Color(red: p.r, green: p.g, blue: p.b)
+    }
+
+    private static let espElements = ["Line", "Box", "Health", "Name", "Distance", "Count"]
+
+    private func currentColorIdx() -> Int32 {
+        switch store.selectedEspElement {
+        case 0: return store.lineColorIdx
+        case 1: return store.boxColorIdx
+        case 2: return store.healthColorIdx
+        case 3: return store.nameColorIdx
+        case 4: return store.distColorIdx
+        default: return store.countColorIdx
+        }
+    }
+
+    private func setColorIdx(_ idx: Int32) {
+        switch store.selectedEspElement {
+        case 0: store.lineColorIdx   = idx
+        case 1: store.boxColorIdx    = idx
+        case 2: store.healthColorIdx = idx
+        case 3: store.nameColorIdx   = idx
+        case 4: store.distColorIdx   = idx
+        default: store.countColorIdx = idx
+        }
+        store.flushStatePublic()
+    }
+
     // MARK: - ESP card
 
     private var espCard: some View {
@@ -154,6 +203,155 @@ struct FreefireESPHomeSection: View {
             rowDivider
             toggleRow("ESP Count", icon: "number.circle.fill",
                       on: store.espCount, color: Color(red: 1.00, green: 0.22, blue: 0.22)) { store.toggle(\.espCount) }
+        }
+    }
+
+    // MARK: - ESP Color card
+
+    private var espColorCard: some View {
+        let accentColor = Color(red: 0.55, green: 0.80, blue: 1.00)
+        return espGroup(title: "ESP COLOR", icon: "paintpalette.fill", color: accentColor) {
+            // Toggle
+            toggleRow("ESP Color", icon: "paintpalette.fill",
+                      on: store.espColorEnabled, color: accentColor) { store.toggle(\.espColorEnabled) }
+
+            if store.espColorEnabled {
+                rowDivider
+
+                // Element picker row
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 9)
+                            .fill(accentColor.opacity(0.18)).frame(width: 38, height: 38)
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(accentColor)
+                    }
+                    Text("Element")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
+                    Spacer()
+                    // Color circle preview
+                    Circle()
+                        .fill(presetColor(currentColorIdx()))
+                        .frame(width: 20, height: 20)
+                        .overlay(Circle().strokeBorder(Color.white.opacity(0.3), lineWidth: 1))
+                    // Element stepper
+                    HStack(spacing: 0) {
+                        Button {
+                            store.selectedEspElement = (store.selectedEspElement + Self.espElements.count - 1) % Self.espElements.count
+                        } label: {
+                            Image(systemName: "chevron.up")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(accentColor)
+                                .frame(width: 28, height: 30)
+                        }.buttonStyle(.plain)
+                        Text(Self.espElements[store.selectedEspElement])
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(minWidth: 54)
+                        Button {
+                            store.selectedEspElement = (store.selectedEspElement + 1) % Self.espElements.count
+                        } label: {
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(accentColor)
+                                .frame(width: 28, height: 30)
+                        }.buttonStyle(.plain)
+                    }
+                    .background(Color.white.opacity(0.08))
+                    .clipShape(Capsule())
+                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5))
+                }
+                .padding(.vertical, 11)
+
+                rowDivider
+
+                // Color preset picker
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 9)
+                            .fill(presetColor(currentColorIdx()).opacity(0.25)).frame(width: 38, height: 38)
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 18)).foregroundStyle(presetColor(currentColorIdx()))
+                    }
+                    Text("Color")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
+                    Spacer()
+                    // Color name
+                    Text(Self.colorPresets[Int(currentColorIdx())].name)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(presetColor(currentColorIdx()))
+                }
+                .padding(.vertical, 6)
+
+                // Color chips
+                let cols = Array(repeating: GridItem(.flexible(), spacing: 6), count: 6)
+                LazyVGrid(columns: cols, spacing: 6) {
+                    ForEach(0..<Self.colorPresets.count, id: \.self) { i in
+                        let p = Self.colorPresets[i]
+                        let isSelected = currentColorIdx() == Int32(i)
+                        Button { setColorIdx(Int32(i)) } label: {
+                            Circle()
+                                .fill(Color(red: p.r, green: p.g, blue: p.b))
+                                .frame(height: 32)
+                                .overlay(
+                                    Circle().strokeBorder(
+                                        isSelected ? Color.white : Color.white.opacity(0.18),
+                                        lineWidth: isSelected ? 2.5 : 1))
+                                .scaleEffect(isSelected ? 1.1 : 1.0)
+                                .animation(.spring(response: 0.2), value: isSelected)
+                        }.buttonStyle(.plain)
+                    }
+                }
+                .padding(.bottom, 4)
+
+                // Thickness slider (Line and Box only)
+                if store.selectedEspElement == 0 || store.selectedEspElement == 1 {
+                    rowDivider
+                    let elemName = Self.espElements[store.selectedEspElement]
+                    let thickBinding = Binding<Double>(
+                        get: {
+                            Double(store.selectedEspElement == 0
+                                   ? store.lineThicknessRaw : store.boxThicknessRaw)
+                        },
+                        set: { v in
+                            let raw = Int32(v)
+                            if store.selectedEspElement == 0 { store.lineThicknessRaw = raw }
+                            else { store.boxThicknessRaw = raw }
+                            store.flushStatePublic()
+                        }
+                    )
+                    let rawVal = store.selectedEspElement == 0
+                        ? store.lineThicknessRaw : store.boxThicknessRaw
+                    let pxVal = String(format: "%.1f", 0.5 + Double(rawVal) * 0.2)
+
+                    VStack(spacing: 2) {
+                        HStack(spacing: 14) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 9)
+                                    .fill(accentColor.opacity(0.18)).frame(width: 38, height: 38)
+                                Image(systemName: "lineweight")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(accentColor)
+                            }
+                            Text("\(elemName) (thickness) px")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
+                            Spacer()
+                            Text(pxVal)
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(accentColor)
+                                .frame(width: 36, alignment: .trailing)
+                        }
+                        .padding(.vertical, 8)
+                        Slider(value: thickBinding, in: 1...30, step: 1)
+                            .tint(accentColor)
+                            .padding(.bottom, 8)
+                    }
+                }
+            }
         }
     }
 
