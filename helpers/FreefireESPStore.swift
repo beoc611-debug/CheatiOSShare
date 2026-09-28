@@ -1,18 +1,22 @@
 import Foundation
 import UIKit
+import SwiftUI
 
 // Manages Free Fire ESP state by reading/writing a config file in the game's
 // Documents/ folder. The game reads the same file every ~1 second via the
 // patched ESPLogic (replacing the old in-game 3-finger menu).
 //
-// Config file format (esp_cfg, 8 bytes):
-//   bytes 0-3 : int32 LE — main state bits
-//   bytes 4-7 : int32 LE — aux state bits (1=FastParachute, 2=SpeedRunning)
-//
-// Main state bit constants (must match ESPLogic.template.cs):
-//   EspMaster=1, EspBox=2, EspTracer=4, EspHealth=8, EspName=16, EspDistance=32
-//   StateInitialized=128, AimEnabled=32768, NoRecoil=262144
-//   AimModeShift=16 (aimMode=2 → 131072), HeadRateShift=19 (headRate=3 → 1572864)
+// Config file format (esp_cfg, 32 bytes):
+//   bytes 0-3  : int32 LE — main state bits (bits 0-23 only, no thickness)
+//   bytes 4-7  : int32 LE — aux state bits
+//   bytes 8-10 : (reserved/unused)
+//   bytes 11-13: thickness raw (line, box, name) — 0-97, px = 0.5 + raw * 0.2
+//   bytes 14-16: line color (R, G, B) 0-255
+//   bytes 17-19: box color (R, G, B)
+//   bytes 20-22: health color (R, G, B)
+//   bytes 23-25: name color (R, G, B)
+//   bytes 26-28: dist color (R, G, B)
+//   bytes 29-31: count color (R, G, B)
 
 @MainActor
 final class FreefireESPStore: ObservableObject {
@@ -77,32 +81,31 @@ final class FreefireESPStore: ObservableObject {
     @Published var espCount      = true
     @Published var espColorEnabled = false
 
-    // ESP Color presets (index 0-11 into ESPColorPreset.all)
-    @Published var lineColorIdx:   Int32 = 1   // Red (default visible)
-    @Published var boxColorIdx:    Int32 = 1   // Red (default visible)
-    @Published var healthColorIdx: Int32 = 2   // Green
-    @Published var nameColorIdx:   Int32 = 4   // Yellow
-    @Published var distColorIdx:   Int32 = 0   // White
-    @Published var countColorIdx:  Int32 = 1   // Red
+    // ESP Colors (full RGB — stored as bytes 14-31 in config)
+    @Published var lineColor:   Color = Color(red: 1.00, green: 0.10, blue: 0.10)
+    @Published var boxColor:    Color = Color(red: 1.00, green: 0.10, blue: 0.10)
+    @Published var healthColor: Color = Color(red: 0.10, green: 0.95, blue: 0.10)
+    @Published var nameColor:   Color = Color(red: 1.00, green: 1.00, blue: 0.10)
+    @Published var distColor:   Color = Color(red: 1.00, green: 1.00, blue: 1.00)
+    @Published var countColor:  Color = Color(red: 1.00, green: 0.10, blue: 0.10)
 
-    // Thickness raw values (encoded as byte; px = 0.5 + raw * 0.2)
-    @Published var lineThicknessRaw: Int32 = 5  // → 1.5 px
-    @Published var boxThicknessRaw:  Int32 = 5  // → 1.5 px
+    // Thickness raw (0-97 → px = 0.5 + raw * 0.2, max 20.0 px at raw=97)
+    // Health bar width auto-follows boxThicknessRaw (no separate slider)
+    @Published var lineThicknessRaw:  Int32 = 5   // → 1.5 px
+    @Published var boxThicknessRaw:   Int32 = 5   // → 1.5 px
+    @Published var nameThicknessRaw:  Int32 = 5   // → 1.5 px
 
     // UI-only: which element is being edited in the color picker
     @Published var selectedEspElement: Int = 0
 
     // AIM tab
     @Published var silentAim    = false
-    @Published var silentFov: Int32 = 200  // 0=no limit, else radius in px (stored /2 in 8 bits)
+    @Published var silentFov: Int32 = 200
     @Published var noRecoil     = false
-    // Aim FOV system (AimSystemEnabled)
     @Published var aimFov       = false
     @Published var aimFovHide   = false
-    @Published var fovRadius: Int32 = 100   // 30-200 screen pixels
-    // 0=Body, 1=Head, 2=Mixed — used by Aim FOV
+    @Published var fovRadius: Int32 = 100
     @Published var aimMode: Int32 = 1
-    // 1=25%, 2=50%, 3=75%, 4=100%
     @Published var headRate: Int32 = 3
 
     // SETTINGS tab
@@ -169,7 +172,6 @@ final class FreefireESPStore: ObservableObject {
 
     // MARK: - Public interface
 
-    /// Detects both FF and FF MAX containers, reads state from selected variant.
     func refresh() {
         if let (bundleID, container) = resolvedContainer(for: .freefire) {
             detectedBundleID = bundleID
@@ -190,7 +192,6 @@ final class FreefireESPStore: ObservableObject {
         }
     }
 
-    /// Switch target game and re-read state.
     func selectVariant(_ variant: FFVariant) {
         selectedVariant = variant
         if let (_, container) = resolvedContainer {
@@ -199,16 +200,13 @@ final class FreefireESPStore: ObservableObject {
         }
     }
 
-    /// Toggle one of the @Published Bool properties and flush to disk.
     func toggle(_ keyPath: ReferenceWritableKeyPath<FreefireESPStore, Bool>) {
         self[keyPath: keyPath].toggle()
         flushState()
     }
 
-    /// Called from the view to flush after direct property mutation.
     func flushStatePublic() { flushState() }
 
-    /// Set a specific property and flush to disk.
     func set(_ keyPath: ReferenceWritableKeyPath<FreefireESPStore, Bool>, to value: Bool) {
         self[keyPath: keyPath] = value
         flushState()
@@ -234,7 +232,6 @@ final class FreefireESPStore: ObservableObject {
         flushState()
     }
 
-    /// Xóa patch file và esp_cfg khỏi Documents/ của game.
     func removePatches() {
         guard let (_, container) = resolvedContainer else { return }
         let fm = FileManager.default
@@ -243,7 +240,6 @@ final class FreefireESPStore: ObservableObject {
         refresh()
     }
 
-    /// Mở game sau khi patch thành công.
     private func openGame() {
         let schemes: [String: String] = [
             "com.dts.freefireth":            "freefireth://",
@@ -268,7 +264,6 @@ final class FreefireESPStore: ObservableObject {
         UIApplication.shared.open(url)
     }
 
-    /// Copy the bundled patch bytes into the game's Documents/ folder.
     func patchGame() {
         guard !isPatching else { return }
         isPatching = true
@@ -294,6 +289,23 @@ final class FreefireESPStore: ObservableObject {
                 }
             }
         }
+    }
+
+    // MARK: - Color helpers
+
+    private func colorToBytes(_ color: Color) -> (UInt8, UInt8, UInt8) {
+        let ui = UIColor(color)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return (
+            UInt8(max(0, min(255, Int(r * 255 + 0.5)))),
+            UInt8(max(0, min(255, Int(g * 255 + 0.5)))),
+            UInt8(max(0, min(255, Int(b * 255 + 0.5))))
+        )
+    }
+
+    private func bytesToColor(r: UInt8, g: UInt8, b: UInt8) -> Color {
+        Color(red: Double(r) / 255.0, green: Double(g) / 255.0, blue: Double(b) / 255.0)
     }
 
     // MARK: - Private
@@ -339,30 +351,18 @@ final class FreefireESPStore: ObservableObject {
         speedRunning  = (auxBits & bitAuxSpeedRunning)  != 0
         fakeDamage    = (auxBits & bitAuxFakeDamage)    != 0
 
-        lineThicknessRaw = (mainBits >> 24) & 0xF
-        boxThicknessRaw  = (mainBits >> 28) & 0xF
+        // Thickness from bytes 11-13
+        lineThicknessRaw  = data.count >= 12 ? Int32(data[11]) : 5
+        boxThicknessRaw   = data.count >= 13 ? Int32(data[12]) : 5
+        nameThicknessRaw  = data.count >= 14 ? Int32(data[13]) : 5
 
-        if data.count >= 9 {
-            let b8 = Int32(data[8])
-            lineColorIdx = b8 & 0xF
-            boxColorIdx  = (b8 >> 4) & 0xF
-        }
-        if data.count >= 10 {
-            let b9 = Int32(data[9])
-            healthColorIdx = b9 & 0xF
-            nameColorIdx   = (b9 >> 4) & 0xF
-        }
-        if data.count >= 11 {
-            let b10 = Int32(data[10])
-            distColorIdx  = b10 & 0xF
-            countColorIdx = (b10 >> 4) & 0xF
-        }
-        // Migrate: if line AND box are both white (index 0 = default/unconfigured),
-        // switch to red (index 1) so ESP is visible on bright backgrounds.
-        if lineColorIdx == 0 && boxColorIdx == 0 {
-            lineColorIdx = 1
-            boxColorIdx  = 1
-        }
+        // RGB colors from bytes 14-31
+        if data.count >= 17 { lineColor   = bytesToColor(r: data[14], g: data[15], b: data[16]) }
+        if data.count >= 20 { boxColor    = bytesToColor(r: data[17], g: data[18], b: data[19]) }
+        if data.count >= 23 { healthColor = bytesToColor(r: data[20], g: data[21], b: data[22]) }
+        if data.count >= 26 { nameColor   = bytesToColor(r: data[23], g: data[24], b: data[25]) }
+        if data.count >= 29 { distColor   = bytesToColor(r: data[26], g: data[27], b: data[28]) }
+        if data.count >= 32 { countColor  = bytesToColor(r: data[29], g: data[30], b: data[31]) }
     }
 
     private func flushState() {
@@ -383,11 +383,7 @@ final class FreefireESPStore: ObservableObject {
         if aimFovHide   { mainBits |= bitAimFovHide }
         mainBits |= (aimMode & 3) << aimModeShift
         mainBits |= (headRate & 7) << headRateShift
-        // Pack thickness indices into bits 24-27 (line) and 28-31 (box)
-        var mainBitsU = UInt32(bitPattern: mainBits)
-        mainBitsU |= UInt32(lineThicknessRaw & 0xF) << 24
-        mainBitsU |= UInt32(boxThicknessRaw  & 0xF) << 28
-        mainBits = Int32(bitPattern: mainBitsU)
+        // NOTE: thickness no longer packed in mainBits (was causing float precision bug in C#)
 
         var auxBits: Int32 = 0
         if fastParachute { auxBits |= bitAuxFastParachute }
@@ -396,7 +392,7 @@ final class FreefireESPStore: ObservableObject {
         auxBits |= (fovRadius & 0xFF) << auxFovRadiusShift
         auxBits |= ((silentFov / 2) & 0xFF) << auxSilentFovShift
 
-        var data = Data(count: 11)
+        var data = Data(count: 32)
         data.withUnsafeMutableBytes { ptr in
             withUnsafeBytes(of: mainBits) { src in
                 ptr.baseAddress!.copyMemory(from: src.baseAddress!, byteCount: 4)
@@ -405,9 +401,20 @@ final class FreefireESPStore: ObservableObject {
                 (ptr.baseAddress! + 4).copyMemory(from: src.baseAddress!, byteCount: 4)
             }
         }
-        data[8]  = UInt8((lineColorIdx & 0xF) | ((boxColorIdx & 0xF) << 4))
-        data[9]  = UInt8((healthColorIdx & 0xF) | ((nameColorIdx & 0xF) << 4))
-        data[10] = UInt8((distColorIdx & 0xF) | ((countColorIdx & 0xF) << 4))
+        // bytes 8-10: reserved (zero)
+        data[8] = 0; data[9] = 0; data[10] = 0
+        // bytes 11-13: thickness (0-97)
+        data[11] = UInt8(min(97, max(0, lineThicknessRaw)))
+        data[12] = UInt8(min(97, max(0, boxThicknessRaw)))
+        data[13] = UInt8(min(97, max(0, nameThicknessRaw)))
+        // bytes 14-31: RGB colors
+        let espColors: [Color] = [lineColor, boxColor, healthColor, nameColor, distColor, countColor]
+        for (i, color) in espColors.enumerated() {
+            let (r, g, b) = colorToBytes(color)
+            data[14 + i * 3] = r
+            data[15 + i * 3] = g
+            data[16 + i * 3] = b
+        }
 
         let docPath = documentsPath(in: container)
         try? FileManager.default.createDirectory(
@@ -439,12 +446,10 @@ final class FreefireESPStore: ObservableObject {
         let docPath = documentsPath(in: container)
         try fm.createDirectory(atPath: docPath, withIntermediateDirectories: true)
 
-        // Copy Assembly-CSharp-patch.bytes
         let destBytes = patchBytesPath(in: container)
         try? fm.removeItem(atPath: destBytes)
         try fm.copyItem(at: patchSrc, to: URL(fileURLWithPath: destBytes))
 
-        // Copy localConfig.json if bundled (optional — skip silently if absent)
         if let configSrc = Bundle.main.url(forResource: "localConfig", withExtension: "json") {
             let destConfig = localConfigPath(in: container)
             try? fm.removeItem(atPath: destConfig)

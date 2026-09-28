@@ -133,50 +133,43 @@ struct FreefireESPHomeSection: View {
 
     // MARK: - ESP Color helpers
 
-    private static let colorPresets: [(name: String, r: Double, g: Double, b: Double)] = [
-        ("White",  1.00, 1.00, 1.00),
-        ("Red",    1.00, 0.10, 0.10),
-        ("Green",  0.10, 0.95, 0.10),
-        ("Blue",   0.20, 0.50, 1.00),
-        ("Yellow", 1.00, 1.00, 0.10),
-        ("Cyan",   0.00, 1.00, 1.00),
-        ("Orange", 1.00, 0.60, 0.00),
-        ("Pink",   1.00, 0.40, 0.80),
-        ("Purple", 0.70, 0.20, 1.00),
-        ("Ice",    0.60, 0.90, 1.00),
-        ("Lime",   0.50, 1.00, 0.00),
-        ("Gold",   1.00, 0.84, 0.00),
-    ]
-
-    private func presetColor(_ idx: Int32) -> Color {
-        let i = Int(max(0, min(11, idx)))
-        let p = Self.colorPresets[i]
-        return Color(red: p.r, green: p.g, blue: p.b)
-    }
-
     private static let espElements = ["Line", "Box", "Health", "Name", "Distance", "Count"]
 
-    private func currentColorIdx() -> Int32 {
-        switch store.selectedEspElement {
-        case 0: return store.lineColorIdx
-        case 1: return store.boxColorIdx
-        case 2: return store.healthColorIdx
-        case 3: return store.nameColorIdx
-        case 4: return store.distColorIdx
-        default: return store.countColorIdx
-        }
+    private func currentColorBinding() -> Binding<Color> {
+        Binding(
+            get: {
+                switch self.store.selectedEspElement {
+                case 0: return self.store.lineColor
+                case 1: return self.store.boxColor
+                case 2: return self.store.healthColor
+                case 3: return self.store.nameColor
+                case 4: return self.store.distColor
+                default: return self.store.countColor
+                }
+            },
+            set: { newColor in
+                switch self.store.selectedEspElement {
+                case 0: self.store.lineColor   = newColor
+                case 1: self.store.boxColor    = newColor
+                case 2: self.store.healthColor = newColor
+                case 3: self.store.nameColor   = newColor
+                case 4: self.store.distColor   = newColor
+                default: self.store.countColor = newColor
+                }
+                self.store.flushStatePublic()
+            }
+        )
     }
 
-    private func setColorIdx(_ idx: Int32) {
+    private func currentColor() -> Color {
         switch store.selectedEspElement {
-        case 0: store.lineColorIdx   = idx
-        case 1: store.boxColorIdx    = idx
-        case 2: store.healthColorIdx = idx
-        case 3: store.nameColorIdx   = idx
-        case 4: store.distColorIdx   = idx
-        default: store.countColorIdx = idx
+        case 0: return store.lineColor
+        case 1: return store.boxColor
+        case 2: return store.healthColor
+        case 3: return store.nameColor
+        case 4: return store.distColor
+        default: return store.countColor
         }
-        store.flushStatePublic()
     }
 
     // MARK: - ESP card
@@ -233,7 +226,7 @@ struct FreefireESPHomeSection: View {
                     Spacer()
                     // Color circle preview
                     Circle()
-                        .fill(presetColor(currentColorIdx()))
+                        .fill(currentColor())
                         .frame(width: 20, height: 20)
                         .overlay(Circle().strokeBorder(Color.white.opacity(0.3), lineWidth: 1))
                     // Element stepper
@@ -267,64 +260,73 @@ struct FreefireESPHomeSection: View {
 
                 rowDivider
 
-                // Color preset picker
+                // Full color picker (iOS 14+ native — shows color wheel + sliders)
                 HStack(spacing: 14) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 9)
-                            .fill(presetColor(currentColorIdx()).opacity(0.25)).frame(width: 38, height: 38)
+                            .fill(currentColor().opacity(0.3)).frame(width: 38, height: 38)
                         Image(systemName: "circle.fill")
-                            .font(.system(size: 18)).foregroundStyle(presetColor(currentColorIdx()))
+                            .font(.system(size: 18))
+                            .foregroundStyle(currentColor())
                     }
-                    Text("Color")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
-                    Spacer()
-                    // Color name
-                    Text(Self.colorPresets[Int(currentColorIdx())].name)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(presetColor(currentColorIdx()))
+                    ColorPicker(
+                        Self.espElements[store.selectedEspElement],
+                        selection: currentColorBinding(),
+                        supportsOpacity: false
+                    )
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
                 }
-                .padding(.vertical, 6)
+                .padding(.vertical, 8)
 
-                // Color chips
-                let cols = Array(repeating: GridItem(.flexible(), spacing: 6), count: 6)
-                LazyVGrid(columns: cols, spacing: 6) {
-                    ForEach(0..<Self.colorPresets.count, id: \.self) { i in
-                        let p = Self.colorPresets[i]
-                        let isSelected = currentColorIdx() == Int32(i)
-                        Button { setColorIdx(Int32(i)) } label: {
-                            Circle()
-                                .fill(Color(red: p.r, green: p.g, blue: p.b))
-                                .frame(height: 32)
-                                .overlay(
-                                    Circle().strokeBorder(
-                                        isSelected ? Color.white : Color.white.opacity(0.18),
-                                        lineWidth: isSelected ? 2.5 : 1))
-                                .scaleEffect(isSelected ? 1.1 : 1.0)
-                                .animation(.spring(response: 0.2), value: isSelected)
-                        }.buttonStyle(.plain)
+                // Health info note (no separate thickness — follows Box)
+                if store.selectedEspElement == 2 {
+                    rowDivider
+                    HStack(spacing: 14) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 9)
+                                .fill(Color.white.opacity(0.07)).frame(width: 38, height: 38)
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
+                        }
+                        Text("Health bar width tự theo Box")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
+                        Spacer()
                     }
+                    .padding(.vertical, 8)
                 }
-                .padding(.bottom, 4)
 
-                // Thickness slider (Line and Box only)
-                if store.selectedEspElement == 0 || store.selectedEspElement == 1 {
+                // Thickness slider (Line=0, Box=1, Name=3 only; Health follows Box)
+                if store.selectedEspElement == 0 || store.selectedEspElement == 1 || store.selectedEspElement == 3 {
                     rowDivider
                     let elemName = Self.espElements[store.selectedEspElement]
                     let thickBinding = Binding<Double>(
                         get: {
-                            Double(store.selectedEspElement == 0
-                                   ? store.lineThicknessRaw : store.boxThicknessRaw)
+                            switch self.store.selectedEspElement {
+                            case 0: return Double(self.store.lineThicknessRaw)
+                            case 1: return Double(self.store.boxThicknessRaw)
+                            default: return Double(self.store.nameThicknessRaw)
+                            }
                         },
                         set: { v in
                             let raw = Int32(v)
-                            if store.selectedEspElement == 0 { store.lineThicknessRaw = raw }
-                            else { store.boxThicknessRaw = raw }
-                            store.flushStatePublic()
+                            switch self.store.selectedEspElement {
+                            case 0: self.store.lineThicknessRaw = raw
+                            case 1: self.store.boxThicknessRaw  = raw
+                            default: self.store.nameThicknessRaw = raw
+                            }
+                            self.store.flushStatePublic()
                         }
                     )
-                    let rawVal = store.selectedEspElement == 0
-                        ? store.lineThicknessRaw : store.boxThicknessRaw
+                    let rawVal: Int32 = {
+                        switch store.selectedEspElement {
+                        case 0: return store.lineThicknessRaw
+                        case 1: return store.boxThicknessRaw
+                        default: return store.nameThicknessRaw
+                        }
+                    }()
                     let pxVal = String(format: "%.1f", 0.5 + Double(rawVal) * 0.2)
 
                     VStack(spacing: 2) {
@@ -336,17 +338,17 @@ struct FreefireESPHomeSection: View {
                                     .font(.system(size: 15, weight: .semibold))
                                     .foregroundStyle(accentColor)
                             }
-                            Text("\(elemName) (thickness) px")
+                            Text("\(elemName) thickness")
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
                             Spacer()
-                            Text(pxVal)
+                            Text("\(pxVal) px")
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundStyle(accentColor)
-                                .frame(width: 36, alignment: .trailing)
+                                .frame(width: 52, alignment: .trailing)
                         }
                         .padding(.vertical, 8)
-                        Slider(value: thickBinding, in: 1...30, step: 1)
+                        Slider(value: thickBinding, in: 1...97, step: 1)
                             .tint(accentColor)
                             .padding(.bottom, 8)
                     }
