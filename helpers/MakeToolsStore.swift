@@ -178,6 +178,7 @@ final class MakeToolsStore: ObservableObject {
         let name = url.lastPathComponent
 
         Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
             let started = url.startAccessingSecurityScopedResource()
             defer { if started { url.stopAccessingSecurityScopedResource() } }
             do {
@@ -187,14 +188,14 @@ final class MakeToolsStore: ObservableObject {
                 let det = MakeToolsEngine.detect(bytes, b)
                 let nowHash = MakeToolsEngine.cdnHash(bytes)
                 await MainActor.run {
-                    self?.finishLoad(name: name, bytes: bytes, bundle: b, detection: det, nowHash: nowHash)
+                    self.finishLoad(name: name, bytes: bytes, bundle: b, detection: det, nowHash: nowHash)
                 }
                 // Upload to server after local parse
-                await self?.uploadToServer(data: data, fileName: name)
+                await self.uploadToServer(data: data, fileName: name)
             } catch {
                 let msg = error.localizedDescription
                 await MainActor.run {
-                    self?.failLoad(name: name, message: msg)
+                    self.failLoad(name: name, message: msg)
                 }
             }
         }
@@ -540,10 +541,11 @@ final class MakeToolsStore: ObservableObject {
             sizeText += (origCount > 0 && outBytes.count == origCount) ? "— khớp file nguồn" : ("— khác nguồn \(diff > 0 ? "+" : "")\(diff)")
             var stats: [[String]] = [["Dung lượng", sizeText], ["Nguồn", "Server ✓"]]
             if origCount > 0 && outBytes.count == origCount { stats.append(["Số byte đổi", MakeToolsEngine.viNum(changed)]) }
+            let finalStats = stats
             await MainActor.run {
                 self.serverResultData = fileData
                 self.result = res
-                self.resultStats = stats
+                self.resultStats = finalStats
                 self.isBusy = false
             }
         } catch {
@@ -620,6 +622,7 @@ final class MakeToolsStore: ObservableObject {
         isScanning = true
         scannedFiles = []
         Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
             let targets: [(String, String)] = [
                 ("com.dts.freefireth", "Free Fire"),
                 ("com.dts.freefiremax", "Free Fire Max")
@@ -652,10 +655,11 @@ final class MakeToolsStore: ObservableObject {
                     }
                 }
             }
+            let finalFound = found
             await MainActor.run {
-                self?.scannedFiles = found
-                self?.isScanning = false
-                self?.showScanResults = true
+                self.scannedFiles = finalFound
+                self.isScanning = false
+                self.showScanResults = true
             }
         }
     }
@@ -668,21 +672,22 @@ final class MakeToolsStore: ObservableObject {
         patchGameResult = nil
         let data = serverResultData ?? Data(res.out)
         Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
             // Re-resolve để làm mới sandbox extension token
             guard ContainerStore.resolveAppContainerPath(bundleID: bid) != nil else {
                 await MainActor.run {
-                    self?.patchGameResult = "err:Không tìm được container game. Đảm bảo game đã cài."
-                    self?.isPatchingGame = false
+                    self.patchGameResult = "err:Không tìm được container game. Đảm bảo game đã cài."
+                    self.isPatchingGame = false
                 }
                 return
             }
             do {
                 try data.write(to: URL(fileURLWithPath: gamePath), options: .atomic)
-                await MainActor.run { self?.patchGameResult = "ok"; self?.isPatchingGame = false }
+                await MainActor.run { self.patchGameResult = "ok"; self.isPatchingGame = false }
             } catch {
                 await MainActor.run {
-                    self?.patchGameResult = "err:\(error.localizedDescription)"
-                    self?.isPatchingGame = false
+                    self.patchGameResult = "err:\(error.localizedDescription)"
+                    self.isPatchingGame = false
                 }
             }
         }
@@ -803,19 +808,20 @@ final class MakeToolsStore: ObservableObject {
         sourceGameHint = file.hint
         let name = file.name
         Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
             do {
                 let data = try Data(contentsOf: URL(fileURLWithPath: file.path))
                 // Auto-backup file gốc nếu chưa có
-                self?.saveBackupIfNew(data: data, file: file)
+                self.saveBackupIfNew(data: data, file: file)
                 let bytes = Bytes(data)
                 let b = try UnityBundle.parse(bytes)
                 let det = MakeToolsEngine.detect(bytes, b)
                 let nowHash = MakeToolsEngine.cdnHash(bytes)
-                await MainActor.run { self?.finishLoad(name: name, bytes: bytes, bundle: b, detection: det, nowHash: nowHash) }
-                await self?.uploadToServer(data: data, fileName: name)
+                await MainActor.run { self.finishLoad(name: name, bytes: bytes, bundle: b, detection: det, nowHash: nowHash) }
+                await self.uploadToServer(data: data, fileName: name)
             } catch {
                 let msg = error.localizedDescription
-                await MainActor.run { self?.failLoad(name: name, message: msg) }
+                await MainActor.run { self.failLoad(name: name, message: msg) }
             }
         }
     }
