@@ -3,78 +3,114 @@ import SwiftUI
 struct SplashScreenView: View {
     var onFinished: () -> Void
 
-    @State private var titleOpacity: Double  = 0
-    @State private var barWidth:     CGFloat = 0
-    @State private var screenOpacity:Double  = 1
+    @State private var contentOpacity: Double  = 0
+    @State private var contentScale:   CGFloat = 0.88
+    @State private var screenOpacity:  Double  = 1
 
-    private let cyan   = Color(red: 0.00, green: 0.88, blue: 1.00)
-    private let purple = Color(red: 0.58, green: 0.18, blue: 1.00)
+    private let gold   = Color(red: 1.00, green: 0.78, blue: 0.20)
+    private let gold2  = Color(red: 0.85, green: 0.55, blue: 0.05)
+    private let white  = Color.white
 
     var body: some View {
         ZStack {
-            // Background
-            LinearGradient(
-                colors: [
-                    Color(red: 0.06, green: 0.04, blue: 0.16),
-                    Color(red: 0.03, green: 0.02, blue: 0.10)
-                ],
-                startPoint: .top, endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            // ── Background image ──
+            Image("AppBg")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
 
+            // ── Center content ──
             VStack(spacing: 0) {
                 Spacer()
 
-                // App name
-                VStack(spacing: 6) {
-                    HStack(spacing: 0) {
-                        Text("Cheati")
-                            .font(.system(size: 32, weight: .black))
-                            .foregroundStyle(.white)
-                        Text("OS")
-                            .font(.system(size: 32, weight: .black))
-                            .foregroundStyle(cyan)
-                        Text("Vip")
-                            .font(.system(size: 32, weight: .black))
-                            .foregroundStyle(.white)
+                VStack(spacing: 16) {
+                    // Gamepad icon box
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [gold.opacity(0.18), gold2.opacity(0.08)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 88, height: 88)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .strokeBorder(
+                                        LinearGradient(colors: [gold, gold2],
+                                                       startPoint: .topLeading,
+                                                       endPoint: .bottomTrailing),
+                                        lineWidth: 1.5
+                                    )
+                            )
+
+                        // Orbital ring behind gamepad
+                        Ellipse()
+                            .stroke(
+                                LinearGradient(colors: [gold.opacity(0.9), gold2.opacity(0.3)],
+                                               startPoint: .topLeading, endPoint: .bottomTrailing),
+                                lineWidth: 2
+                            )
+                            .frame(width: 64, height: 22)
+                            .rotationEffect(.degrees(-18))
+
+                        Image(systemName: "gamecontroller.fill")
+                            .font(.system(size: 34, weight: .bold))
+                            .foregroundStyle(
+                                LinearGradient(colors: [gold, gold2],
+                                               startPoint: .top, endPoint: .bottom)
+                            )
+                            .shadow(color: gold.opacity(0.6), radius: 10)
                     }
-                    Text("PREMIUM")
-                        .font(.system(size: 12, weight: .heavy, design: .monospaced))
-                        .tracking(4)
+                    .shadow(color: gold.opacity(0.35), radius: 20, y: 6)
+
+                    // App name
+                    Text("CheatiOSVip")
+                        .font(.system(size: 34, weight: .black))
                         .foregroundStyle(
-                            LinearGradient(colors: [cyan, purple],
-                                           startPoint: .leading, endPoint: .trailing)
+                            LinearGradient(colors: [gold, Color(red: 1.0, green: 0.92, blue: 0.55), gold2],
+                                           startPoint: .topLeading, endPoint: .bottomTrailing)
                         )
+                        .shadow(color: gold.opacity(0.5), radius: 12)
+
+                    // Premium pill
+                    HStack(spacing: 5) {
+                        Image(systemName: "crown.fill")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(gold)
+                        Text("Premium")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(gold)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .strokeBorder(
+                                LinearGradient(colors: [gold, gold2],
+                                               startPoint: .leading, endPoint: .trailing),
+                                lineWidth: 1.4
+                            )
+                    )
+
+                    // Subtitle
+                    Text("Nền tảng Patch Game hàng đầu")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.70))
+                        .padding(.top, 2)
                 }
-                .opacity(titleOpacity)
-
-                Spacer().frame(height: 10)
-
-                Text("Trợ thủ game  ·  An toàn  ·  Ổn định")
-                    .font(.system(size: 11.5, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.30))
-                    .opacity(titleOpacity)
+                .scaleEffect(contentScale)
+                .opacity(contentOpacity)
 
                 Spacer()
 
-                // Progress bar
-                VStack(spacing: 8) {
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(.white.opacity(0.07))
-                            .frame(height: 3)
-                        Capsule()
-                            .fill(LinearGradient(colors: [cyan, purple],
-                                                 startPoint: .leading, endPoint: .trailing))
-                            .frame(width: barWidth, height: 3)
-                            .shadow(color: cyan.opacity(0.6), radius: 6)
-                    }
-                    .frame(maxWidth: 200)
-                    .opacity(titleOpacity)
-                }
-                .padding(.bottom, 52)
+                // Copyright
+                Text("© CanhiOSCrack / ALL Rights Reserved")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundStyle(gold.opacity(0.55))
+                    .padding(.bottom, 36)
+                    .opacity(contentOpacity)
             }
-            .padding(.horizontal, 32)
         }
         .opacity(screenOpacity)
         .preferredColorScheme(.dark)
@@ -82,25 +118,19 @@ struct SplashScreenView: View {
     }
 
     private func runSequence() {
-        withAnimation(.easeOut(duration: 0.45).delay(0.20)) {
-            titleOpacity = 1
+        withAnimation(.spring(response: 0.60, dampingFraction: 0.72).delay(0.15)) {
+            contentOpacity = 1
+            contentScale   = 1
         }
-        withAnimation(.easeInOut(duration: 1.10).delay(0.55)) {
-            barWidth = 200
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.85) {
-            withAnimation(.easeInOut(duration: 0.40)) { screenOpacity = 0 }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { onFinished() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.20) {
+            withAnimation(.easeInOut(duration: 0.42)) { screenOpacity = 0 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.46) { onFinished() }
         }
     }
 }
 
-// Keep stubs so the compiler won't complain if anything references these
 struct SplashParticle: Identifiable {
     let id = UUID()
-    var x, y: CGFloat
-    var size: CGFloat
-    var opacity: Double
-    var speed: Double
+    var x, y: CGFloat; var size: CGFloat; var opacity: Double; var speed: Double
     static func spawn(_ count: Int) -> [SplashParticle] { [] }
 }
