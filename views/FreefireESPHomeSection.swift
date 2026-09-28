@@ -14,10 +14,8 @@ struct FreefireESPHomeSection: View {
                 espCard
                 espColorCard
                 aimCard
-                patchButton
             } else {
                 settingsCard
-                patchButton
             }
         }
         .padding(.horizontal, 16)
@@ -418,8 +416,8 @@ struct FreefireESPHomeSection: View {
             if patchInstalled && !store.isPatching {
                 Button { store.removePatches() } label: {
                     HStack(spacing: 10) {
-                        Image(systemName: "trash.fill").font(.system(size: 15, weight: .bold))
-                        Text("Xóa Patch File Khỏi Game").font(.system(size: 15, weight: .bold)).kerning(0.2)
+                        Image(systemName: "arrow.uturn.backward.circle.fill").font(.system(size: 15, weight: .bold))
+                        Text("Un Patch").font(.system(size: 15, weight: .bold)).kerning(0.2)
                     }
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
