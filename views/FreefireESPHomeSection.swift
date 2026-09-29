@@ -192,6 +192,9 @@ struct FreefireESPHomeSection: View {
             toggleRow("Distance", icon: "ruler",
                       on: store.distance, color: Color(red: 0.90, green: 0.72, blue: 0.20)) { store.toggle(\.distance) }
             rowDivider
+            toggleRow("Skeleton ESP", icon: "figure.walk",
+                      on: store.showSkeleton, color: Color(red: 0.00, green: 1.00, blue: 1.00)) { store.toggle(\.showSkeleton) }
+            rowDivider
             toggleRow("ESP Count", icon: "number.circle.fill",
                       on: store.espCount, color: Color(red: 1.00, green: 0.22, blue: 0.22)) { store.toggle(\.espCount) }
         }
@@ -536,7 +539,7 @@ struct FreefireESPHomeSection: View {
                 Text("\(store.fovRadius)").font(.system(size: 14, weight: .bold)).foregroundStyle(Color(red: 1.00, green: 0.80, blue: 0.10)).frame(width: 36, alignment: .trailing)
             }
             .padding(.vertical, 8)
-            Slider(value: Binding(get: { Double(store.fovRadius) }, set: { store.setFovRadius(Int32($0)) }), in: 30...200, step: 5)
+            Slider(value: Binding(get: { Double(store.fovRadius) }, set: { store.setFovRadius(Int32($0)) }), in: 30...500, step: 10)
                 .tint(Color(red: 1.00, green: 0.80, blue: 0.10)).padding(.bottom, 8)
         }
     }

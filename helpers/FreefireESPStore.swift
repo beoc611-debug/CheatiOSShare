@@ -35,6 +35,7 @@ final class FreefireESPStore: ObservableObject {
     private let bitAimFovHide:      Int32 = 8388608
     private let bitEspCount:        Int32 = 256
     private let bitEspColorEnabled: Int32 = 512
+    private let bitEspSkeleton:     Int32 = 1024
     private let aimModeShift: Int32 = 16
     private let headRateShift: Int32 = 19
     private let auxFovRadiusShift: Int32 = 4
@@ -80,6 +81,7 @@ final class FreefireESPStore: ObservableObject {
     @Published var distance     = true
     @Published var espCount      = true
     @Published var espColorEnabled = false
+    @Published var showSkeleton  = true
 
     // ESP Colors (full RGB — stored as bytes 14-31 in config)
     @Published var lineColor:   Color = Color(red: 1.00, green: 0.10, blue: 0.10)
@@ -228,7 +230,7 @@ final class FreefireESPStore: ObservableObject {
     }
 
     func setFovRadius(_ radius: Int32) {
-        fovRadius = max(30, min(200, radius))
+        fovRadius = max(30, min(500, radius))
         flushState()
     }
 
@@ -334,6 +336,7 @@ final class FreefireESPStore: ObservableObject {
         distance        = (mainBits & bitEspDistance)     != 0
         espCount        = (mainBits & bitEspCount)        != 0
         espColorEnabled = (mainBits & bitEspColorEnabled) != 0
+        showSkeleton    = (mainBits & bitEspSkeleton)     != 0
         silentAim    = (mainBits & bitAimEnabled)   != 0
         let sfRaw    = (auxBits >> auxSilentFovShift) & 0xFF
         silentFov    = sfRaw > 0 ? sfRaw * 2 : 200
@@ -345,7 +348,7 @@ final class FreefireESPStore: ObservableObject {
         let rateVal  = (mainBits >> headRateShift) & 7
         headRate     = rateVal >= 1 && rateVal <= 4 ? rateVal : 3
         let radiusVal = (auxBits >> auxFovRadiusShift) & 0xFF
-        fovRadius    = radiusVal > 0 ? radiusVal : 100
+        fovRadius    = radiusVal > 0 ? radiusVal * 2 : 150
 
         fastParachute = (auxBits & bitAuxFastParachute) != 0
         speedRunning  = (auxBits & bitAuxSpeedRunning)  != 0
@@ -377,6 +380,7 @@ final class FreefireESPStore: ObservableObject {
         if distance     { mainBits |= bitEspDistance }
         if espCount        { mainBits |= bitEspCount }
         if espColorEnabled { mainBits |= bitEspColorEnabled }
+        if showSkeleton    { mainBits |= bitEspSkeleton }
         if silentAim    { mainBits |= bitAimEnabled }
         if noRecoil     { mainBits |= bitNoRecoil }
         if aimFov       { mainBits |= bitAimFov }
@@ -389,7 +393,7 @@ final class FreefireESPStore: ObservableObject {
         if fastParachute { auxBits |= bitAuxFastParachute }
         if speedRunning  { auxBits |= bitAuxSpeedRunning }
         if fakeDamage    { auxBits |= bitAuxFakeDamage }
-        auxBits |= (fovRadius & 0xFF) << auxFovRadiusShift
+        auxBits |= ((fovRadius / 2) & 0xFF) << auxFovRadiusShift
         auxBits |= ((silentFov / 2) & 0xFF) << auxSilentFovShift
 
         var data = Data(count: 32)
