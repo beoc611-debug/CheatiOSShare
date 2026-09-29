@@ -210,7 +210,7 @@ struct FreefireESPHomeSection: View {
 
     // MARK: - ESP Color helpers
 
-    private static let espElements = ["Line", "Box", "Health", "Name", "Distance", "Count"]
+    private static let espElements = ["Line", "Box", "Health", "Name", "Distance", "Count", "Skeleton", "FOV"]
 
     private func currentColorBinding() -> Binding<Color> {
         Binding(
@@ -221,17 +221,21 @@ struct FreefireESPHomeSection: View {
                 case 2: return self.store.healthColor
                 case 3: return self.store.nameColor
                 case 4: return self.store.distColor
-                default: return self.store.countColor
+                case 5: return self.store.countColor
+                case 6: return self.store.skeletonColor
+                default: return self.store.fovColor
                 }
             },
             set: { newColor in
                 switch self.store.selectedEspElement {
-                case 0: self.store.lineColor   = newColor
-                case 1: self.store.boxColor    = newColor
-                case 2: self.store.healthColor = newColor
-                case 3: self.store.nameColor   = newColor
-                case 4: self.store.distColor   = newColor
-                default: self.store.countColor = newColor
+                case 0: self.store.lineColor     = newColor
+                case 1: self.store.boxColor      = newColor
+                case 2: self.store.healthColor   = newColor
+                case 3: self.store.nameColor     = newColor
+                case 4: self.store.distColor     = newColor
+                case 5: self.store.countColor    = newColor
+                case 6: self.store.skeletonColor = newColor
+                default: self.store.fovColor     = newColor
                 }
                 self.store.flushStatePublic()
             }
@@ -245,7 +249,9 @@ struct FreefireESPHomeSection: View {
         case 2: return store.healthColor
         case 3: return store.nameColor
         case 4: return store.distColor
-        default: return store.countColor
+        case 5: return store.countColor
+        case 6: return store.skeletonColor
+        default: return store.fovColor
         }
     }
 
@@ -378,8 +384,8 @@ struct FreefireESPHomeSection: View {
                     .padding(.vertical, 8)
                 }
 
-                // Thickness slider (Line=0, Box=1) / Name size slider (Name=3)
-                if store.selectedEspElement == 0 || store.selectedEspElement == 1 || store.selectedEspElement == 3 {
+                // Thickness slider (Line=0, Box=1, Name=3, Skeleton=6)
+                if store.selectedEspElement == 0 || store.selectedEspElement == 1 || store.selectedEspElement == 3 || store.selectedEspElement == 6 {
                     rowDivider
                     let isName = store.selectedEspElement == 3
                     let elemName = Self.espElements[store.selectedEspElement]
@@ -387,18 +393,21 @@ struct FreefireESPHomeSection: View {
                         get: {
                             if self.store.selectedEspElement == 0 { return Double(self.store.lineThicknessRaw) }
                             if self.store.selectedEspElement == 3 { return Double(self.store.nameThicknessRaw) }
+                            if self.store.selectedEspElement == 6 { return Double(self.store.skelThicknessRaw) }
                             return Double(self.store.boxThicknessRaw)
                         },
                         set: { v in
                             let raw = Int32(v)
                             if self.store.selectedEspElement == 0 { self.store.lineThicknessRaw = raw }
                             else if self.store.selectedEspElement == 3 { self.store.nameThicknessRaw = raw }
+                            else if self.store.selectedEspElement == 6 { self.store.skelThicknessRaw = raw }
                             else { self.store.boxThicknessRaw = raw }
                             self.store.flushStatePublic()
                         }
                     )
                     let rawVal: Int32 = store.selectedEspElement == 0 ? store.lineThicknessRaw
-                        : (store.selectedEspElement == 3 ? store.nameThicknessRaw : store.boxThicknessRaw)
+                        : (store.selectedEspElement == 3 ? store.nameThicknessRaw
+                        : (store.selectedEspElement == 6 ? store.skelThicknessRaw : store.boxThicknessRaw))
                     let displayVal = isName
                         ? String(format: "%.1fx", 1.0 + Double(rawVal) * 0.02)
                         : String(format: "%.1f px", 0.5 + Double(rawVal) * 0.2)

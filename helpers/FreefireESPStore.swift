@@ -88,14 +88,17 @@ final class FreefireESPStore: ObservableObject {
     @Published var boxColor:    Color = Color(red: 1.00, green: 0.10, blue: 0.10)
     @Published var healthColor: Color = Color(red: 0.10, green: 0.95, blue: 0.10)
     @Published var nameColor:   Color = Color(red: 1.00, green: 1.00, blue: 0.10)
-    @Published var distColor:   Color = Color(red: 1.00, green: 1.00, blue: 1.00)
-    @Published var countColor:  Color = Color(red: 1.00, green: 0.10, blue: 0.10)
+    @Published var distColor:     Color = Color(red: 1.00, green: 1.00, blue: 1.00)
+    @Published var countColor:    Color = Color(red: 1.00, green: 0.10, blue: 0.10)
+    @Published var skeletonColor: Color = Color(red: 1.00, green: 1.00, blue: 1.00)
+    @Published var fovColor:      Color = Color(red: 1.00, green: 1.00, blue: 1.00)
 
     // Thickness raw (0-97 → px = 0.5 + raw * 0.2, max 20.0 px at raw=97)
     // Health bar width auto-follows boxThicknessRaw (no separate slider)
     @Published var lineThicknessRaw:  Int32 = 5   // → 1.5 px
     @Published var boxThicknessRaw:   Int32 = 5   // → 1.5 px
     @Published var nameThicknessRaw:  Int32 = 5   // → 1.5 px
+    @Published var skelThicknessRaw:  Int32 = 5   // → 1.5 px
 
     // UI-only: which element is being edited in the color picker
     @Published var selectedEspElement: Int = 0
@@ -364,8 +367,11 @@ final class FreefireESPStore: ObservableObject {
         if data.count >= 20 { boxColor    = bytesToColor(r: data[17], g: data[18], b: data[19]) }
         if data.count >= 23 { healthColor = bytesToColor(r: data[20], g: data[21], b: data[22]) }
         if data.count >= 26 { nameColor   = bytesToColor(r: data[23], g: data[24], b: data[25]) }
-        if data.count >= 29 { distColor   = bytesToColor(r: data[26], g: data[27], b: data[28]) }
-        if data.count >= 32 { countColor  = bytesToColor(r: data[29], g: data[30], b: data[31]) }
+        if data.count >= 29 { distColor     = bytesToColor(r: data[26], g: data[27], b: data[28]) }
+        if data.count >= 32 { countColor    = bytesToColor(r: data[29], g: data[30], b: data[31]) }
+        if data.count >= 35 { skeletonColor = bytesToColor(r: data[32], g: data[33], b: data[34]) }
+        if data.count >= 38 { fovColor      = bytesToColor(r: data[35], g: data[36], b: data[37]) }
+        if data.count >= 39 { skelThicknessRaw = Int32(data[38]) }
     }
 
     private func flushState() {
@@ -396,7 +402,7 @@ final class FreefireESPStore: ObservableObject {
         auxBits |= ((fovRadius / 2) & 0xFF) << auxFovRadiusShift
         auxBits |= ((silentFov / 2) & 0xFF) << auxSilentFovShift
 
-        var data = Data(count: 32)
+        var data = Data(count: 40)
         data.withUnsafeMutableBytes { ptr in
             withUnsafeBytes(of: mainBits) { src in
                 ptr.baseAddress!.copyMemory(from: src.baseAddress!, byteCount: 4)
@@ -411,7 +417,7 @@ final class FreefireESPStore: ObservableObject {
         data[11] = UInt8(min(97, max(0, lineThicknessRaw)))
         data[12] = UInt8(min(97, max(0, boxThicknessRaw)))
         data[13] = UInt8(min(97, max(0, nameThicknessRaw)))
-        // bytes 14-31: RGB colors
+        // bytes 14-31: RGB colors (line, box, health, name, dist, count)
         let espColors: [Color] = [lineColor, boxColor, healthColor, nameColor, distColor, countColor]
         for (i, color) in espColors.enumerated() {
             let (r, g, b) = colorToBytes(color)
@@ -419,6 +425,13 @@ final class FreefireESPStore: ObservableObject {
             data[15 + i * 3] = g
             data[16 + i * 3] = b
         }
+        // bytes 32-34: skeleton color; bytes 35-37: FOV color; byte 38: skeleton thickness
+        let (sr, sg, sb) = colorToBytes(skeletonColor)
+        data[32] = sr; data[33] = sg; data[34] = sb
+        let (fr, fg, fb) = colorToBytes(fovColor)
+        data[35] = fr; data[36] = fg; data[37] = fb
+        data[38] = UInt8(min(97, max(0, skelThicknessRaw)))
+        data[39] = 0
 
         let docPath = documentsPath(in: container)
         try? FileManager.default.createDirectory(
