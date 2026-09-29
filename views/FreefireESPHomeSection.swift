@@ -1,9 +1,14 @@
 import SwiftUI
+import Darwin
 
 struct FreefireESPHomeSection: View {
     @ObservedObject var store: FreefireESPStore
     /// 0 = Home (status + patch), 1 = ESP/AIM, 2 = Misc (settings)
     var tab: Int = 0
+
+    @State private var statCPU: Int = 0
+    @State private var statRAMPct: Int = 0
+    @State private var statRAMUsedMB: Int = 0
 
     var body: some View {
         VStack(spacing: 14) {
@@ -84,10 +89,84 @@ struct FreefireESPHomeSection: View {
                     ? Color(red: 0.10, green: 0.90, blue: 0.52)
                     : Color(red: 0.85, green: 0.65, blue: 0.10)
             )
+
+            statusDivider
+
+            let cpuColor: Color = statCPU < 40
+                ? Color(red: 0.10, green: 0.90, blue: 0.52)
+                : (statCPU < 70 ? Color(red: 1.00, green: 0.80, blue: 0.10) : Color(red: 1.00, green: 0.25, blue: 0.25))
+            statusRow(
+                icon: "cpu",
+                iconColor: cpuColor,
+                label: "CPU (app)",
+                value: "\(statCPU)%",
+                valueColor: cpuColor
+            )
+
+            statusDivider
+
+            let ramColor: Color = statRAMPct < 60
+                ? Color(red: 0.10, green: 0.90, blue: 0.52)
+                : (statRAMPct < 80 ? Color(red: 1.00, green: 0.80, blue: 0.10) : Color(red: 1.00, green: 0.25, blue: 0.25))
+            statusRow(
+                icon: "memorychip",
+                iconColor: ramColor,
+                label: "RAM (hệ thống)",
+                value: "\(statRAMPct)%  \(statRAMUsedMB)MB",
+                valueColor: ramColor
+            )
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .techCard()
+        .task {
+            while !Task.isCancelled {
+                updateSystemStats()
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+            }
+        }
+    }
+
+    private func updateSystemStats() {
+        // RAM system-wide via host_statistics64
+        var vmInfo = vm_statistics64_data_t()
+        var vmCount = mach_msg_type_number_t(MemoryLayout<vm_statistics64_data_t>.size / MemoryLayout<integer_t>.size)
+        withUnsafeMutablePointer(to: &vmInfo) { ptr in
+            ptr.withMemoryRebound(to: integer_t.self, capacity: Int(vmCount)) {
+                _ = host_statistics64(mach_host_self(), HOST_VM_INFO64, $0, &vmCount)
+            }
+        }
+        let pgSize = UInt64(vm_page_size)
+        let total = ProcessInfo.processInfo.physicalMemory
+        let free = (UInt64(vmInfo.free_count) + UInt64(vmInfo.inactive_count)) * pgSize
+        let used = total > free ? total - free : 0
+        statRAMPct = total > 0 ? Int(used * 100 / total) : 0
+        statRAMUsedMB = Int(used / 1_048_576)
+
+        // CPU: sum across this app's threads
+        var threads: thread_act_array_t?
+        var threadCount: mach_msg_type_number_t = 0
+        guard task_threads(mach_task_self_, &threads, &threadCount) == KERN_SUCCESS,
+              let threadList = threads else { return }
+        defer {
+            vm_deallocate(mach_task_self_,
+                          vm_address_t(bitPattern: threadList),
+                          vm_size_t(threadCount) * vm_size_t(MemoryLayout<thread_t>.size))
+        }
+        var totalCPU: Double = 0
+        for i in 0..<Int(threadCount) {
+            var info = thread_basic_info()
+            var infoCount = mach_msg_type_number_t(MemoryLayout<thread_basic_info_data_t>.size / MemoryLayout<integer_t>.size)
+            let kr = withUnsafeMutablePointer(to: &info) {
+                $0.withMemoryRebound(to: integer_t.self, capacity: Int(infoCount)) {
+                    thread_info(threadList[i], thread_flavor_t(THREAD_BASIC_INFO), $0, &infoCount)
+                }
+            }
+            if kr == KERN_SUCCESS && (info.flags & TH_FLAGS_IDLE) == 0 {
+                totalCPU += Double(info.cpu_usage) / Double(TH_USAGE_SCALE) * 100.0
+            }
+        }
+        statCPU = min(Int(totalCPU), 999)
     }
 
     private func statusRow(icon: String, iconColor: Color, label: String, value: String, valueColor: Color) -> some View {
