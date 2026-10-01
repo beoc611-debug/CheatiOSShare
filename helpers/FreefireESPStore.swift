@@ -175,6 +175,14 @@ final class FreefireESPStore: ObservableObject {
             .appendingPathComponent("localConfig.json")
     }
 
+    private func espTokenPath(in container: String) -> String {
+        (documentsPath(in: container) as NSString).appendingPathComponent("esp_tok")
+    }
+
+    private func espHwidPath(in container: String) -> String {
+        (documentsPath(in: container) as NSString).appendingPathComponent("esp_hwid")
+    }
+
     // MARK: - Public interface
 
     func refresh() {
@@ -471,6 +479,18 @@ final class FreefireESPStore: ObservableObject {
             let destConfig = localConfigPath(in: container)
             try? fm.removeItem(atPath: destConfig)
             try? fm.copyItem(at: configSrc, to: URL(fileURLWithPath: destConfig))
+        }
+
+        // Fetch session token from server (key + hwid → HMAC token valid 15 min).
+        // Game patch reads esp_tok + esp_hwid to verify locally before enabling ESP.
+        let hwid = DeviceIdentity.current
+        let licKey = LicenseGateStore.storedKeyCode ?? ""
+        if !licKey.isEmpty,
+           let espToken = await PatchHubService.fetchPatchSession(licenseKey: licKey, hwid: hwid) {
+            try? espToken.write(
+                toFile: espTokenPath(in: container), atomically: true, encoding: .utf8)
+            try? hwid.write(
+                toFile: espHwidPath(in: container), atomically: true, encoding: .utf8)
         }
 
         return .success
