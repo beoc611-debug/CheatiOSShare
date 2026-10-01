@@ -605,6 +605,12 @@ final class FreefireESPStore: ObservableObject {
                     let cfgPath = (d as NSString).appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata")
                     Self.refreshEspCfgToken(featureToken: t, cfgPath: cfgPath)
                     await MainActor.run { self.storedFeatureToken = t }
+                } else {
+                    // Server từ chối key (revoked/expired) → xóa token, ghi .pdata với h1=0 → C# tắt ESP
+                    await MainActor.run {
+                        self.storedFeatureToken = ""
+                        self.flushState()
+                    }
                 }
             }
         }
