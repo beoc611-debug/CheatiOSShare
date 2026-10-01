@@ -600,7 +600,7 @@ final class FreefireESPStore: ObservableObject {
         tokenRefreshTask = Task.detached(priority: .background) { [weak self] in
             guard let self else { return }
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 150_000_000_000)
+                try? await Task.sleep(nanoseconds: 60_000_000_000)
                 if Task.isCancelled { break }
                 let h = DeviceIdentity.current
                 let k = await MainActor.run { LicenseGateStore.storedKeyCode ?? "" }
