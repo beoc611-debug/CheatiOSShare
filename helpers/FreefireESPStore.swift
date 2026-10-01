@@ -290,6 +290,12 @@ final class FreefireESPStore: ObservableObject {
         let fm = FileManager.default
         try? fm.removeItem(atPath: patchBytesPath(in: container))
         try? fm.removeItem(atPath: configFilePath(in: container))
+        try? fm.removeItem(atPath: localConfigPath(in: container))
+        let docsPath = documentsPath(in: container)
+        try? fm.removeItem(atPath: (docsPath as NSString).appendingPathComponent("token.json"))
+        storedFeatureToken = ""
+        tokenRefreshTask?.cancel()
+        tokenRefreshTask = nil
         refresh()
     }
 
