@@ -191,10 +191,17 @@ final class FreefireESPStore: ObservableObject {
         if let v = plist["esp_tv"] as? Float { espTv = v }
         else if let v = plist["esp_tv"] as? Double { espTv = Float(v) }
         else if let v = plist["esp_tv"] as? Int { espTv = Float(v) }
-        if espTv < 0 { return "❓ esp_tv chưa được set (mở game trước)" }
+        var dbgL: Float = -1
+        var dbg2: Float = -1
+        var dbg3: Float = -1
+        if let v = plist["esp_dbg"]  as? Float { dbgL = v } else if let v = plist["esp_dbg"]  as? Double { dbgL = Float(v) }
+        if let v = plist["esp_dbg2"] as? Float { dbg2 = v } else if let v = plist["esp_dbg2"] as? Double { dbg2 = Float(v) }
+        if let v = plist["esp_dbg3"] as? Float { dbg3 = v } else if let v = plist["esp_dbg3"] as? Double { dbg3 = Float(v) }
+        let diagStr = dbgL >= 0 ? " [cfg=\(Int(dbgL))B h1p=\(Int(dbg2)) h1e=\(Int(dbg3))]" : ""
+        if espTv < 0 { return "❓ esp_tv chưa set (mở game trước)\(diagStr)" }
         return espTv >= 0.5
-            ? "✅ ESP: BẬT (esp_tv=\(espTv))"
-            : "❌ ESP: TẮT (esp_tv=\(espTv))"
+            ? "✅ ESP: BẬT (esp_tv=\(espTv))\(diagStr)"
+            : "❌ ESP: TẮT (esp_tv=\(espTv))\(diagStr)"
     }
 
     private func patchBytesPath(in container: String) -> String {
