@@ -481,11 +481,10 @@ final class FreefireESPStore: ObservableObject {
             try? fm.copyItem(at: configSrc, to: URL(fileURLWithPath: destConfig))
         }
 
-        // Notify server — validates key+hwid, updates TOKEN in admin panel.
+        // Notify server (updates admin panel TOKEN) and write token.json for game validation.
         let hwid = DeviceIdentity.current
         let licKey = LicenseGateStore.storedKeyCode ?? ""
         let featureToken = await PatchHubService.fetchPatchAuth(licenseKey: licKey, hwid: hwid) ?? ""
-        // Write token.json with FNV signature to public + game paths for game validation.
         let _ts = Int64(Date().timeIntervalSince1970)
         var _h: UInt32 = 0
         let _bs = "\(featureToken):\(licKey):\(_ts)"

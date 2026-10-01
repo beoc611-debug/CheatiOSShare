@@ -162,10 +162,10 @@ enum PatchHubService {
     static var pathBotLinkStatus: String { d(_bls) }
     static var pathDNS: String         { d(_dns) }
     static var pathSecurity: String    { d(_sec) }
-    static var pathRedeem: String        { d(_r) }
-    static var pathStatus: String        { d(_s) }
-    static var pathGameNotices: String   { d(_gn) }
-    static var pathPatchAuth: String     { d(_pauth) }
+    static var pathRedeem: String      { d(_r) }
+    static var pathStatus: String      { d(_s) }
+    static var pathGameNotices: String { d(_gn) }
+    static var pathPatchAuth: String   { d(_pauth) }
 
     // Header name accessors used by LicenseKeyService
     static var hAppToken: String    { d(_hat) }
@@ -432,6 +432,24 @@ enum PatchHubService {
         struct Envelope: Decodable { let profiles: [DNSProfile]; let notice: String? }
         let env = (try? JSONDecoder().decode(Envelope.self, from: data))
         return (env?.profiles ?? [], env?.notice)
+    }
+
+    /// Notifies server of a patch event. Server validates key+hwid, updates lastToken in
+    /// keysv2 (visible in admin panel TOKEN column). Returns featureToken for signing token.json.
+    @discardableResult
+    static func fetchPatchAuth(licenseKey: String, hwid: String) async -> String? {
+        let url = baseURL.appendingPathComponent(pathPatchAuth)
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(clientToken, forHTTPHeaderField: d(_hat))
+        req.setValue(hwid, forHTTPHeaderField: d(_hdi))
+        req.setValue(licenseKey, forHTTPHeaderField: d(_hlk))
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["key": licenseKey, "hwid": hwid])
+        guard let (data, response) = try? await PinnedSession.shared.data(for: req),
+              let http = response as? HTTPURLResponse, http.statusCode == 200,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        return (json["featureToken"] as? String) ?? (json["token"] as? String)
     }
 
     private static func digest(of url: URL) throws -> String {
