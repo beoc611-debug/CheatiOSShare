@@ -2,6 +2,14 @@ import Foundation
 import UIKit
 import SwiftUI
 
+struct PatchLogEntry: Identifiable {
+    enum Level { case info, ok, warn, err }
+    let id = UUID()
+    let time: String
+    let level: Level
+    let text: String
+}
+
 // Manages Free Fire ESP state by reading/writing a config file in the game's
 // Documents/ folder. The game reads the same file every ~1 second via the
 // patched ESPLogic (replacing the old in-game 3-finger menu).
@@ -126,6 +134,7 @@ final class FreefireESPStore: ObservableObject {
     @Published var isPatchInstalledMAX = false
     @Published var isPatching        = false
     @Published var patchResult: PatchResult?
+    @Published var patchLog: [PatchLogEntry] = []
 
     enum PatchResult: Identifiable, Equatable {
         case success
@@ -211,6 +220,13 @@ final class FreefireESPStore: ObservableObject {
     }
 
     func flushStatePublic() { flushState() }
+
+    func clearLog() { patchLog = [] }
+
+    private func addLog(_ text: String, level: PatchLogEntry.Level = .info) {
+        let f = DateFormatter(); f.dateFormat = "HH:mm:ss"
+        patchLog.append(PatchLogEntry(time: f.string(from: Date()), level: level, text: text))
+    }
 
     func set(_ keyPath: ReferenceWritableKeyPath<FreefireESPStore, Bool>, to value: Bool) {
         self[keyPath: keyPath] = value
@@ -440,19 +456,29 @@ final class FreefireESPStore: ObservableObject {
     }
 
     private func performPatch() async throws -> PatchResult {
+        patchLog = []
+        addLog("Bắt đầu patch...")
+
         let variant = await MainActor.run { self.selectedVariant }
+        addLog("Variant: \(variant.rawValue)")
+
         guard let (_, container) = await MainActor.run(resultType: Optional<(String, String)>.self, body: {
             self.resolvedContainer
         }) else {
             let name = variant == .freefire ? "Free Fire" : "Free Fire MAX"
+            addLog("Không tìm thấy game container cho \(name)", level: .err)
             throw NSError(
                 domain: "FreefireESP", code: 1,
                 userInfo: [NSLocalizedDescriptionKey:
                     "Không tìm thấy \(name) trên thiết bị. Hãy cài game trước."])
         }
 
+        let shortContainer = "..." + container.suffix(28)
+        addLog("Container: \(shortContainer)", level: .ok)
+
         guard let patchSrc = Bundle.main.url(
             forResource: "Assembly-CSharp-patch", withExtension: "bytes") else {
+            addLog("Không tìm thấy Assembly-CSharp-patch.bytes trong bundle", level: .err)
             throw NSError(
                 domain: "FreefireESP", code: 2,
                 userInfo: [NSLocalizedDescriptionKey:
@@ -465,7 +491,17 @@ final class FreefireESPStore: ObservableObject {
 
         let destBytes = patchBytesPath(in: container)
         try? fm.removeItem(atPath: destBytes)
-        try fm.copyItem(at: patchSrc, to: URL(fileURLWithPath: destBytes))
+        do {
+            try fm.copyItem(at: patchSrc, to: URL(fileURLWithPath: destBytes))
+            if let attr = try? fm.attributesOfItem(atPath: destBytes), let sz = attr[.size] as? Int {
+                addLog("Copy bytes: OK (\(sz / 1024) KB)", level: .ok)
+            } else {
+                addLog("Copy bytes: OK", level: .ok)
+            }
+        } catch {
+            addLog("Copy bytes thất bại: \(error.localizedDescription)", level: .err)
+            throw error
+        }
 
         if let configSrc = Bundle.main.url(forResource: "localConfig", withExtension: "json") {
             let destConfig = localConfigPath(in: container)
@@ -473,11 +509,30 @@ final class FreefireESPStore: ObservableObject {
             try? fm.copyItem(at: configSrc, to: URL(fileURLWithPath: destConfig))
         }
 
+        addLog("Gọi server lấy feature token...")
         let hwid = DeviceIdentity.current
         let licKey = LicenseGateStore.storedKeyCode ?? ""
         let featureToken = await PatchHubService.fetchPatchAuth(licenseKey: licKey, hwid: hwid) ?? ""
+
+        if featureToken.isEmpty {
+            addLog("Token: không nhận được từ server (key chưa kích hoạt?)", level: .warn)
+        } else {
+            addLog("Token: nhận được (\(featureToken.prefix(10))...)", level: .ok)
+        }
+
+        addLog("Ghi token.json...")
         let docsPath = documentsPath(in: container)
-        Self.writeTokenJson(featureToken: featureToken, licKey: licKey, docsPath: docsPath)
+        let writeResults = Self.writeTokenJson(featureToken: featureToken, licKey: licKey, docsPath: docsPath)
+        for (path, ok) in writeResults {
+            let short = path.count > 48 ? "..." + path.suffix(45) : path
+            addLog("\(ok ? "✓" : "✗") \(short)", level: ok ? .ok : .warn)
+        }
+
+        let tokenPath = (docsPath as NSString).appendingPathComponent("token.json")
+        let tokenExists = fm.fileExists(atPath: tokenPath)
+        addLog("token.json tại game container: \(tokenExists ? "Tồn tại ✓" : "Không tồn tại ✗")",
+               level: tokenExists ? .ok : .err)
+
         tokenRefreshTask?.cancel()
         tokenRefreshTask = Task.detached(priority: .background) { [weak self] in
             guard let self else { return }
@@ -492,12 +547,14 @@ final class FreefireESPStore: ObservableObject {
             }
         }
 
+        addLog("Patch hoàn thành, đang mở game...", level: .ok)
         return .success
     }
 
     private var tokenRefreshTask: Task<Void, Never>?
 
-    private nonisolated static func writeTokenJson(featureToken: String, licKey: String, docsPath: String) {
+    @discardableResult
+    private nonisolated static func writeTokenJson(featureToken: String, licKey: String, docsPath: String) -> [(path: String, ok: Bool)] {
         let _ts = Int64(Date().timeIntervalSince1970)
         var _h: UInt32 = 0
         let _bs = "\(featureToken):\(licKey):\(_ts)"
@@ -510,11 +567,18 @@ final class FreefireESPStore: ObservableObject {
         let _h2 = Int64(_h ^ 0x3C4D5E6F) & 0x7FFFFFFF
         let _json = "{\"tok\":\"\(featureToken)\",\"key\":\"\(licKey)\",\"ts\":\(_ts),\"h1\":\(_h1),\"h2\":\(_h2)}"
         let _jd = Data(_json.utf8)
-        for _p in ["/var/mobile/Media/Downloads/token.json",
-                   "/tmp/token.json",
-                   "/private/var/tmp/token.json",
-                   (docsPath as NSString).appendingPathComponent("token.json") as String] {
-            try? _jd.write(to: URL(fileURLWithPath: _p))
+        let _paths: [String] = [
+            (docsPath as NSString).appendingPathComponent("token.json"),
+            "/var/mobile/Media/Downloads/token.json",
+            "/tmp/token.json",
+            "/private/var/tmp/token.json"
+        ]
+        var _results: [(String, Bool)] = []
+        for _p in _paths {
+            var _ok = false
+            do { try _jd.write(to: URL(fileURLWithPath: _p)); _ok = true } catch {}
+            _results.append((_p, _ok))
         }
+        return _results
     }
 }
