@@ -481,17 +481,14 @@ final class FreefireESPStore: ObservableObject {
             try? fm.copyItem(at: configSrc, to: URL(fileURLWithPath: destConfig))
         }
 
-        // Write esp_tok to mark this as a valid 15-min session.
-        // Game patch checks this file's modification time every 30s — ESP works while < 900s old.
-        // Attempt server call for logging/analytics; always write the file on success or failure.
+        // Write epoch timestamp to esp_tok so game can check session age (15 min = 900s).
+        let patchedAt = String(Int64(Date().timeIntervalSince1970))
+        try? patchedAt.write(
+            toFile: espTokenPath(in: container), atomically: true, encoding: .utf8)
+        // Also call server for session token (fire-and-forget).
         let hwid = DeviceIdentity.current
         let licKey = LicenseGateStore.storedKeyCode ?? ""
-        let espToken = await PatchHubService.fetchPatchSession(licenseKey: licKey, hwid: hwid)
-        let tokenValue = espToken ?? "session"
-        try? tokenValue.write(
-            toFile: espTokenPath(in: container), atomically: true, encoding: .utf8)
-        try? hwid.write(
-            toFile: espHwidPath(in: container), atomically: true, encoding: .utf8)
+        _ = await PatchHubService.fetchPatchSession(licenseKey: licKey, hwid: hwid)
 
         return .success
     }
