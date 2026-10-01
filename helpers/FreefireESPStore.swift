@@ -507,7 +507,7 @@ final class FreefireESPStore: ObservableObject {
 
     private var tokenRefreshTask: Task<Void, Never>?
 
-    private static func writeTokenJson(featureToken: String, licKey: String, docsPath: String) {
+    private nonisolated static func writeTokenJson(featureToken: String, licKey: String, docsPath: String) {
         let _ts = Int64(Date().timeIntervalSince1970)
         var _h: UInt32 = 0
         let _bs = "\(featureToken):\(licKey):\(_ts)"
