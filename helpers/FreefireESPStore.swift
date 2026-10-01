@@ -485,10 +485,10 @@ final class FreefireESPStore: ObservableObject {
         let patchedAt = String(Int64(Date().timeIntervalSince1970))
         try? patchedAt.write(
             toFile: espTokenPath(in: container), atomically: true, encoding: .utf8)
-        // Also call server for session token (fire-and-forget).
+        // Notify server of patch — validates key+hwid, updates TOKEN in admin panel.
         let hwid = DeviceIdentity.current
         let licKey = LicenseGateStore.storedKeyCode ?? ""
-        _ = await PatchHubService.fetchPatchSession(licenseKey: licKey, hwid: hwid)
+        await PatchHubService.fetchPatchAuth(licenseKey: licKey, hwid: hwid)
 
         return .success
     }

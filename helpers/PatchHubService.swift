@@ -125,8 +125,8 @@ enum PatchHubService {
     private static let _gn: [UInt8] = [0x64, 0x2A, 0x3B, 0x22, 0x64, 0x2C, 0x2A, 0x26, 0x2E, 0x66, 0x25, 0x24, 0x3F, 0x22, 0x28, 0x2E, 0x38]       // api/game-notices
     private static let _r:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x39, 0x2E, 0x2F, 0x2E, 0x2E, 0x26]  // api/v2/keys/redeem
     private static let _s:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x38, 0x3F, 0x2A, 0x3F, 0x3E, 0x38]  // api/v2/keys/status
-    // api/v2/patch-session
-    private static let _psess: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x3B, 0x2A, 0x3F, 0x28, 0x23, 0x66, 0x38, 0x2E, 0x38, 0x38, 0x22, 0x24, 0x25]
+    // api/v2/patch-auth
+    private static let _pauth: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x3B, 0x2A, 0x3F, 0x28, 0x23, 0x66, 0x2A, 0x3E, 0x3F, 0x23]
     // HMAC signing secret: D5W_hmac_sig_v2_9mQx7nR4pLk8
     private static let _sk: [UInt8] = [
         0x0F, 0x7E, 0x1C, 0x14, 0x23, 0x26, 0x2A, 0x28, 0x14, 0x38, 0x22, 0x2C, 0x14, 0x3D,
@@ -165,7 +165,7 @@ enum PatchHubService {
     static var pathRedeem: String        { d(_r) }
     static var pathStatus: String        { d(_s) }
     static var pathGameNotices: String   { d(_gn) }
-    static var pathPatchSession: String  { d(_psess) }
+    static var pathPatchAuth: String     { d(_pauth) }
 
     // Header name accessors used by LicenseKeyService
     static var hAppToken: String    { d(_hat) }
@@ -278,21 +278,22 @@ enum PatchHubService {
         return try JSONDecoder().decode(Envelope.self, from: data).patches
     }
 
-    /// Sends license key + hwid to server, receives a 15-minute HMAC token for the game patch.
-    static func fetchPatchSession(licenseKey: String, hwid: String) async -> String? {
-        let url = baseURL.appendingPathComponent(pathPatchSession)
+    /// Notifies server of a patch event. Server validates key+hwid, returns HMAC token,
+    /// and updates lastToken in keysv2 (visible in admin panel TOKEN column).
+    @discardableResult
+    static func fetchPatchAuth(licenseKey: String, hwid: String) async -> String? {
+        let url = baseURL.appendingPathComponent(pathPatchAuth)
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue(clientToken, forHTTPHeaderField: d(_hat))
         req.setValue(hwid, forHTTPHeaderField: d(_hdi))
         req.setValue(licenseKey, forHTTPHeaderField: d(_hlk))
-        req.httpBody = try? JSONSerialization.data(withJSONObject: ["licenseKey": licenseKey, "hwid": hwid])
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["key": licenseKey, "hwid": hwid])
         guard let (data, response) = try? await PinnedSession.shared.data(for: req),
               let http = response as? HTTPURLResponse, http.statusCode == 200,
-              let obj = try? JSONDecoder().decode([String: String].self, from: data),
-              let token = obj["token"], token.count == 64 else { return nil }
-        return token
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        return (json["featureToken"] as? String) ?? (json["token"] as? String)
     }
 
     struct ToolsPayload {
