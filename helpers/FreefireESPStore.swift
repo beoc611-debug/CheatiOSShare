@@ -179,9 +179,16 @@ final class FreefireESPStore: ObservableObject {
         guard let (bundleID, container) = resolvedContainer else {
             return "❓ Không tìm thấy game container"
         }
-        let plistPath = "\(container)/Library/Preferences/\(bundleID).plist"
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: plistPath)) else {
-            return "❓ Chưa đọc được PlayerPrefs (mở game trước)"
+        // Unity iOS uses "unity.{bundleID}.plist" in some versions, "{bundleID}.plist" in others
+        let paths = [
+            "\(container)/Library/Preferences/unity.\(bundleID).plist",
+            "\(container)/Library/Preferences/\(bundleID).plist",
+            "\(container)/Library/Preferences/unity.\(bundleID).player.plist",
+        ]
+        guard let plistPath = paths.first(where: { FileManager.default.fileExists(atPath: $0) }),
+              let data = try? Data(contentsOf: URL(fileURLWithPath: plistPath)) else {
+            let diagCfg = (try? Data(contentsOf: URL(fileURLWithPath: "\(container)/Documents/esp_cfg")))?.count ?? -1
+            return "❓ Không tìm thấy PlayerPrefs plist (esp_cfg=\(diagCfg)B)"
         }
         guard let plist = try? PropertyListSerialization.propertyList(
             from: data, options: [], format: nil) as? [String: Any] else {
