@@ -14,7 +14,7 @@ struct PatchLogEntry: Identifiable {
 // Documents/ folder. The game reads the same file every ~1 second via the
 // patched ESPLogic (replacing the old in-game 3-finger menu).
 //
-// Config file format (esp_cfg, 32 bytes):
+// Config file format (esp_cfg, 60 bytes):
 //   bytes 0-3  : int32 LE — main state bits (bits 0-23 only, no thickness)
 //   bytes 4-7  : int32 LE — aux state bits
 //   bytes 8-10 : (reserved/unused)
@@ -173,6 +173,28 @@ final class FreefireESPStore: ObservableObject {
 
     private func configFilePath(in container: String) -> String {
         (documentsPath(in: container) as NSString).appendingPathComponent("esp_cfg")
+    }
+
+    func checkESPStatus() -> String {
+        guard let (bundleID, container) = resolvedContainer else {
+            return "❓ Không tìm thấy game container"
+        }
+        let plistPath = "\(container)/Library/Preferences/\(bundleID).plist"
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: plistPath)) else {
+            return "❓ Chưa đọc được PlayerPrefs (mở game trước)"
+        }
+        guard let plist = try? PropertyListSerialization.propertyList(
+            from: data, options: [], format: nil) as? [String: Any] else {
+            return "❓ Không parse được PlayerPrefs"
+        }
+        var espTv: Float = -1
+        if let v = plist["esp_tv"] as? Float { espTv = v }
+        else if let v = plist["esp_tv"] as? Double { espTv = Float(v) }
+        else if let v = plist["esp_tv"] as? Int { espTv = Float(v) }
+        if espTv < 0 { return "❓ esp_tv chưa được set (mở game trước)" }
+        return espTv >= 0.5
+            ? "✅ ESP: BẬT (esp_tv=\(espTv))"
+            : "❌ ESP: TẮT (esp_tv=\(espTv))"
     }
 
     private func patchBytesPath(in container: String) -> String {

@@ -617,7 +617,7 @@ struct FreefireESPHomeSection: View {
             }
         }
         .sheet(isPresented: $showLog) {
-            PatchLogSheet(entries: store.patchLog) { store.clearLog() }
+            PatchLogSheet(store: store, entries: store.patchLog) { store.clearLog() }
         }
     }
 
@@ -768,36 +768,69 @@ struct FreefireESPHomeSection: View {
 // MARK: - Patch Log Sheet
 
 private struct PatchLogSheet: View {
+    let store: FreefireESPStore
     let entries: [PatchLogEntry]
     let onClear: () -> Void
     @Environment(\.dismiss) private var dismiss
+    @State private var espStatus: String? = nil
 
     var body: some View {
         NavigationView {
             ZStack {
                 Color(red: 0.06, green: 0.07, blue: 0.12).ignoresSafeArea()
 
-                if entries.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "doc.text")
-                            .font(.system(size: 36))
-                            .foregroundStyle(Color(red: 0.35, green: 0.40, blue: 0.55))
-                        Text("Không có log")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(Color(red: 0.40, green: 0.48, blue: 0.65))
-                    }
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            ForEach(entries) { entry in
-                                logRow(entry)
-                                Rectangle()
-                                    .fill(Color.white.opacity(0.05))
-                                    .frame(height: 0.5)
-                                    .padding(.leading, 44)
+                VStack(spacing: 0) {
+                    // ESP status banner
+                    if let status = espStatus {
+                        let isOn = status.hasPrefix("✅")
+                        HStack(spacing: 8) {
+                            Text(status)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(isOn
+                                    ? Color(red: 0.10, green: 0.95, blue: 0.55)
+                                    : Color(red: 1.0, green: 0.55, blue: 0.55))
+                            Spacer()
+                            Button {
+                                espStatus = store.checkESPStatus()
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(Color(red: 0.5, green: 0.65, blue: 1.0))
                             }
                         }
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(
+                            isOn
+                                ? Color(red: 0.05, green: 0.22, blue: 0.12)
+                                : Color(red: 0.22, green: 0.06, blue: 0.06)
+                        )
+                    }
+
+                    if entries.isEmpty && espStatus == nil {
+                        Spacer()
+                        VStack(spacing: 12) {
+                            Image(systemName: "doc.text")
+                                .font(.system(size: 36))
+                                .foregroundStyle(Color(red: 0.35, green: 0.40, blue: 0.55))
+                            Text("Không có log")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(Color(red: 0.40, green: 0.48, blue: 0.65))
+                        }
+                        Spacer()
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 0) {
+                                ForEach(entries) { entry in
+                                    logRow(entry)
+                                    Rectangle()
+                                        .fill(Color.white.opacity(0.05))
+                                        .frame(height: 0.5)
+                                        .padding(.leading, 44)
+                                }
+                            }
+                            .padding(.vertical, 8)
+                        }
                     }
                 }
             }
@@ -809,11 +842,20 @@ private struct PatchLogSheet: View {
                         .foregroundStyle(AppTheme.neonCyan)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Xóa") {
-                        onClear()
-                        dismiss()
+                    HStack(spacing: 12) {
+                        Button {
+                            espStatus = store.checkESPStatus()
+                        } label: {
+                            Label("Check ESP", systemImage: "bolt.shield")
+                                .font(.system(size: 13, weight: .medium))
+                        }
+                        .foregroundStyle(Color(red: 0.4, green: 0.85, blue: 1.0))
+                        Button("Xóa") {
+                            onClear()
+                            espStatus = nil
+                        }
+                        .foregroundStyle(Color(red: 1, green: 0.4, blue: 0.4))
                     }
-                    .foregroundStyle(Color(red: 1, green: 0.4, blue: 0.4))
                 }
             }
         }
