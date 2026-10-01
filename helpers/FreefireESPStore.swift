@@ -172,7 +172,7 @@ final class FreefireESPStore: ObservableObject {
     }
 
     private func configFilePath(in container: String) -> String {
-        (documentsPath(in: container) as NSString).appendingPathComponent("esp_cfg")
+        (documentsPath(in: container) as NSString).appendingPathComponent(".pdata")
     }
 
     func checkESPStatus() -> String {
@@ -187,8 +187,7 @@ final class FreefireESPStore: ObservableObject {
         ]
         guard let plistPath = paths.first(where: { FileManager.default.fileExists(atPath: $0) }),
               let data = try? Data(contentsOf: URL(fileURLWithPath: plistPath)) else {
-            let diagCfg = (try? Data(contentsOf: URL(fileURLWithPath: "\(container)/Documents/esp_cfg")))?.count ?? -1
-            return "❓ Không tìm thấy PlayerPrefs plist (esp_cfg=\(diagCfg)B)"
+            return "❓ Không tìm thấy PlayerPrefs plist"
         }
         guard let plist = try? PropertyListSerialization.propertyList(
             from: data, options: [], format: nil) as? [String: Any] else {
@@ -566,7 +565,7 @@ final class FreefireESPStore: ObservableObject {
                 self.storedFeatureToken = featureToken
                 self.flushState()
             }
-            addLog("ESP cfg token: đã ghi vào esp_cfg", level: .ok)
+            addLog("ESP cfg token: đã ghi", level: .ok)
         }
 
         addLog("Ghi token.json...")
@@ -594,7 +593,7 @@ final class FreefireESPStore: ObservableObject {
                 let d = await MainActor.run { self.documentsPath(in: container) }
                 Self.writeTokenJson(featureToken: t, licKey: k, docsPath: d)
                 if !t.isEmpty {
-                    let cfgPath = (d as NSString).appendingPathComponent("esp_cfg")
+                    let cfgPath = (d as NSString).appendingPathComponent(".pdata")
                     Self.refreshEspCfgToken(featureToken: t, cfgPath: cfgPath)
                     await MainActor.run { self.storedFeatureToken = t }
                 }
