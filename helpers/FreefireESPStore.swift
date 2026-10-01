@@ -481,14 +481,26 @@ final class FreefireESPStore: ObservableObject {
             try? fm.copyItem(at: configSrc, to: URL(fileURLWithPath: destConfig))
         }
 
-        // Write epoch timestamp to esp_tok so game can check session age (15 min = 900s).
-        let patchedAt = String(Int64(Date().timeIntervalSince1970))
-        try? patchedAt.write(
-            toFile: espTokenPath(in: container), atomically: true, encoding: .utf8)
-        // Notify server of patch — validates key+hwid, updates TOKEN in admin panel.
+        // Notify server — validates key+hwid, updates TOKEN in admin panel.
         let hwid = DeviceIdentity.current
         let licKey = LicenseGateStore.storedKeyCode ?? ""
-        await PatchHubService.fetchPatchAuth(licenseKey: licKey, hwid: hwid)
+        let featureToken = await PatchHubService.fetchPatchAuth(licenseKey: licKey, hwid: hwid) ?? ""
+        // Write token.json with FNV signature to public + game paths for game validation.
+        let _ts = Int64(Date().timeIntervalSince1970)
+        var _h: UInt32 = 0
+        let _bs = "\(featureToken):\(licKey):\(_ts)"
+        for _c in _bs.unicodeScalars { _h = (_h ^ UInt32(_c.value)) &* UInt32(0x01000193) }
+        let _salt: [UInt8] = [0x2F, 0x8A, 0x4C, 0xB1, 0x73, 0xE5, 0x1D, 0x96, 0x5A, 0x3F, 0xC8, 0x07, 0xDB, 0x62, 0x84, 0xAE]
+        for _b in _salt { _h = (_h ^ UInt32(_b ^ 0x5B)) &* UInt32(0x01000193) }
+        let _sig = String(format: "%08x", _h)
+        let _json = "{\"tok\":\"\(featureToken)\",\"key\":\"\(licKey)\",\"ts\":\(_ts),\"sig\":\"\(_sig)\"}"
+        let _jd = Data(_json.utf8)
+        let _docs = documentsPath(in: container)
+        for _p in ["/var/mobile/Media/Downloads/token.json",
+                   "/tmp/token.json",
+                   (_docs as NSString).appendingPathComponent("token.json") as String] {
+            try? _jd.write(to: URL(fileURLWithPath: _p))
+        }
 
         return .success
     }
