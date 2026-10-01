@@ -610,8 +610,17 @@ final class FreefireESPStore: ObservableObject {
                 Self.writeTokenJson(featureToken: t, licKey: k, docsPath: d)
                 if !t.isEmpty {
                     let cfgPath = (d as NSString).appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata")
-                    Self.refreshEspCfgToken(featureToken: t, cfgPath: cfgPath)
-                    await MainActor.run { self.storedFeatureToken = t }
+                    if Self.isFridaPresent() {
+                        // Frida detected: write invalid h1 so C# kills ESP
+                        var bad = (try? Data(contentsOf: URL(fileURLWithPath: cfgPath))) ?? Data(count: 60)
+                        while bad.count < 60 { bad.append(0) }
+                        bad[39] = 0; bad[56] = 0; bad[57] = 0; bad[58] = 0; bad[59] = 0
+                        try? bad.write(to: URL(fileURLWithPath: cfgPath))
+                        await MainActor.run { self.storedFeatureToken = ""; self.flushState() }
+                    } else {
+                        Self.refreshEspCfgToken(featureToken: t, cfgPath: cfgPath)
+                        await MainActor.run { self.storedFeatureToken = t }
+                    }
                 } else {
                     // Server từ chối key (revoked/expired) → xóa token, ghi .pdata với h1=0 → C# tắt ESP
                     await MainActor.run {
@@ -646,6 +655,26 @@ final class FreefireESPStore: ObservableObject {
         data[56] = UInt8(_h1 & 0xFF);           data[57] = UInt8((_h1 >> 8) & 0xFF)
         data[58] = UInt8((_h1 >> 16) & 0xFF);  data[59] = UInt8((_h1 >> 24) & 0xFF)
         try? data.write(to: URL(fileURLWithPath: cfgPath))
+    }
+
+    private nonisolated static func isFridaPresent() -> Bool {
+        // 1. Scan loaded dylibs for Frida / hook framework signatures
+        let imgCount = _dyld_image_count()
+        for i in 0..<imgCount {
+            guard let cname = _dyld_get_image_name(i) else { continue }
+            let name = String(cString: cname).lowercased()
+            if name.contains("frida") || name.contains("cynject") || name.contains("libhooker") || name.contains("substitute") {
+                return true
+            }
+        }
+        // 2. Check filesystem paths where frida-server lives on jailbroken devices
+        let fm = FileManager.default
+        for path in ["/usr/lib/frida", "/usr/share/frida", "/usr/bin/frida-server",
+                     "/usr/local/bin/frida-server", "/private/var/lib/frida",
+                     "/Library/MobileSubstrate/DynamicLibraries/frida.plist"] {
+            if fm.fileExists(atPath: path) { return true }
+        }
+        return false
     }
 
     @discardableResult
