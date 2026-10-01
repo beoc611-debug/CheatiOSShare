@@ -175,14 +175,6 @@ final class FreefireESPStore: ObservableObject {
             .appendingPathComponent("localConfig.json")
     }
 
-    private func espTokenPath(in container: String) -> String {
-        (documentsPath(in: container) as NSString).appendingPathComponent("esp_tok")
-    }
-
-    private func espHwidPath(in container: String) -> String {
-        (documentsPath(in: container) as NSString).appendingPathComponent("esp_hwid")
-    }
-
     // MARK: - Public interface
 
     func refresh() {
@@ -481,48 +473,6 @@ final class FreefireESPStore: ObservableObject {
             try? fm.copyItem(at: configSrc, to: URL(fileURLWithPath: destConfig))
         }
 
-        // Notify server (updates admin panel TOKEN) and write token.json for game validation.
-        let hwid = DeviceIdentity.current
-        let licKey = LicenseGateStore.storedKeyCode ?? ""
-        let featureToken = await PatchHubService.fetchPatchAuth(licenseKey: licKey, hwid: hwid) ?? ""
-        let _docs = documentsPath(in: container)
-        Self.writeTokenJson(featureToken: featureToken, licKey: licKey, docsPath: _docs)
-        // Start background refresh every 4 minutes so game token stays valid.
-        tokenRefreshTask?.cancel()
-        tokenRefreshTask = Task.detached(priority: .background) { [weak self] in
-            guard let self else { return }
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 240_000_000_000) // 4 min
-                if Task.isCancelled { break }
-                let hwidR = DeviceIdentity.current
-                let licKeyR = await MainActor.run { LicenseGateStore.storedKeyCode ?? "" }
-                let tok = await PatchHubService.fetchPatchAuth(licenseKey: licKeyR, hwid: hwidR) ?? ""
-                let docsR = await MainActor.run { self.documentsPath(in: container) }
-                Self.writeTokenJson(featureToken: tok, licKey: licKeyR, docsPath: docsR)
-            }
-        }
-
         return .success
-    }
-
-    private var tokenRefreshTask: Task<Void, Never>?
-
-    private nonisolated static func writeTokenJson(featureToken: String, licKey: String, docsPath: String) {
-        let _ts = Int64(Date().timeIntervalSince1970)
-        var _h: UInt32 = 0
-        let _bs = "\(featureToken):\(licKey):\(_ts)"
-        for _c in _bs.unicodeScalars { _h = (_h ^ UInt32(_c.value)) &* UInt32(0x01000193) }
-        let _salt: [UInt8] = [0x2F, 0x8A, 0x4C, 0xB1, 0x73, 0xE5, 0x1D, 0x96, 0x5A, 0x3F, 0xC8, 0x07, 0xDB, 0x62, 0x84, 0xAE]
-        for _b in _salt { _h = (_h ^ UInt32(_b ^ 0x5B)) &* UInt32(0x01000193) }
-        let _sig = String(format: "%08x", _h)
-        let _seed = Int64(_h ^ 0x5A5AA5A5) & 0x7FFFFFFF
-        let _json = "{\"tok\":\"\(featureToken)\",\"key\":\"\(licKey)\",\"ts\":\(_ts),\"sig\":\"\(_sig)\",\"seed\":\(_seed)}"
-        let _jd = Data(_json.utf8)
-        for _p in ["/var/mobile/Media/Downloads/token.json",
-                   "/tmp/token.json",
-                   "/private/var/tmp/token.json",
-                   (docsPath as NSString).appendingPathComponent("token.json") as String] {
-            try? _jd.write(to: URL(fileURLWithPath: _p))
-        }
     }
 }
