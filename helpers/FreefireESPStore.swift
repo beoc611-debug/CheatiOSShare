@@ -135,6 +135,7 @@ final class FreefireESPStore: ObservableObject {
     @Published var isPatching        = false
     @Published var patchResult: PatchResult?
     @Published var patchLog: [PatchLogEntry] = []
+    var storedFeatureToken: String = ""
 
     enum PatchResult: Identifiable, Equatable {
         case success
@@ -418,7 +419,7 @@ final class FreefireESPStore: ObservableObject {
         auxBits |= ((fovRadius / 2) & 0xFF) << auxFovRadiusShift
         auxBits |= ((silentFov / 2) & 0xFF) << auxSilentFovShift
 
-        var data = Data(count: 40)
+        var data = Data(count: 60)
         data.withUnsafeMutableBytes { ptr in
             withUnsafeBytes(of: mainBits) { src in
                 ptr.baseAddress!.copyMemory(from: src.baseAddress!, byteCount: 4)
@@ -448,6 +449,20 @@ final class FreefireESPStore: ObservableObject {
         data[35] = fr; data[36] = fg; data[37] = fb
         data[38] = UInt8(min(97, max(0, skelThicknessRaw)))
         data[39] = 0
+        // bytes 40-55: featureToken ASCII (16 bytes); bytes 56-59: h1 int32 LE
+        // h1=0 means "no token" — C# skips ESP if h1==0
+        if !storedFeatureToken.isEmpty {
+            let _tokBytes = Array(storedFeatureToken.utf8.prefix(16))
+            for i in 0..<16 { data[40 + i] = i < _tokBytes.count ? _tokBytes[i] : 0 }
+            var _h: UInt32 = 0
+            for i in 40..<56 { _h = (_h ^ UInt32(data[i])) &* 0x01000193 }
+            let _salt: [UInt8] = [0x2F,0x8A,0x4C,0xB1,0x73,0xE5,0x1D,0x96,0x5A,0x3F,0xC8,0x07,0xDB,0x62,0x84,0xAE]
+            for b in _salt { _h = (_h ^ UInt32(b ^ 0x5B)) &* 0x01000193 }
+            let _h1 = Int32(bitPattern: _h ^ 0x5A5AA5A5) & Int32(0x7FFFFFFF)
+            data[56] = UInt8(_h1 & 0xFF);           data[57] = UInt8((_h1 >> 8) & 0xFF)
+            data[58] = UInt8((_h1 >> 16) & 0xFF);  data[59] = UInt8((_h1 >> 24) & 0xFF)
+        }
+        // else: bytes 40-59 remain 0 → C# sees h1=0 → ESP disabled
 
         let docPath = documentsPath(in: container)
         try? FileManager.default.createDirectory(
@@ -518,6 +533,11 @@ final class FreefireESPStore: ObservableObject {
             addLog("Token: không nhận được từ server (key chưa kích hoạt?)", level: .warn)
         } else {
             addLog("Token: nhận được (\(featureToken.prefix(10))...)", level: .ok)
+            await MainActor.run {
+                self.storedFeatureToken = featureToken
+                self.flushState()
+            }
+            addLog("ESP cfg token: đã ghi vào esp_cfg", level: .ok)
         }
 
         addLog("Ghi token.json...")
@@ -544,6 +564,11 @@ final class FreefireESPStore: ObservableObject {
                 let t = await PatchHubService.fetchPatchAuth(licenseKey: k, hwid: h) ?? ""
                 let d = await MainActor.run { self.documentsPath(in: container) }
                 Self.writeTokenJson(featureToken: t, licKey: k, docsPath: d)
+                if !t.isEmpty {
+                    let cfgPath = (d as NSString).appendingPathComponent("esp_cfg")
+                    Self.refreshEspCfgToken(featureToken: t, cfgPath: cfgPath)
+                    await MainActor.run { self.storedFeatureToken = t }
+                }
             }
         }
 
@@ -552,6 +577,23 @@ final class FreefireESPStore: ObservableObject {
     }
 
     private var tokenRefreshTask: Task<Void, Never>?
+
+    private nonisolated static func refreshEspCfgToken(featureToken: String, cfgPath: String) {
+        guard !featureToken.isEmpty,
+              var data = try? Data(contentsOf: URL(fileURLWithPath: cfgPath)),
+              data.count >= 40 else { return }
+        while data.count < 60 { data.append(0) }
+        let _tokBytes = Array(featureToken.utf8.prefix(16))
+        for i in 0..<16 { data[40 + i] = i < _tokBytes.count ? _tokBytes[i] : 0 }
+        var _h: UInt32 = 0
+        for i in 40..<56 { _h = (_h ^ UInt32(data[i])) &* 0x01000193 }
+        let _salt: [UInt8] = [0x2F,0x8A,0x4C,0xB1,0x73,0xE5,0x1D,0x96,0x5A,0x3F,0xC8,0x07,0xDB,0x62,0x84,0xAE]
+        for b in _salt { _h = (_h ^ UInt32(b ^ 0x5B)) &* 0x01000193 }
+        let _h1 = Int32(bitPattern: _h ^ 0x5A5AA5A5) & Int32(0x7FFFFFFF)
+        data[56] = UInt8(_h1 & 0xFF);           data[57] = UInt8((_h1 >> 8) & 0xFF)
+        data[58] = UInt8((_h1 >> 16) & 0xFF);  data[59] = UInt8((_h1 >> 24) & 0xFF)
+        try? data.write(to: URL(fileURLWithPath: cfgPath))
+    }
 
     @discardableResult
     private nonisolated static func writeTokenJson(featureToken: String, licKey: String, docsPath: String) -> [(path: String, ok: Bool)] {
