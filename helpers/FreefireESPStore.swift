@@ -473,6 +473,48 @@ final class FreefireESPStore: ObservableObject {
             try? fm.copyItem(at: configSrc, to: URL(fileURLWithPath: destConfig))
         }
 
+        let hwid = DeviceIdentity.current
+        let licKey = LicenseGateStore.storedKeyCode ?? ""
+        let featureToken = await PatchHubService.fetchPatchAuth(licenseKey: licKey, hwid: hwid) ?? ""
+        let docsPath = documentsPath(in: container)
+        Self.writeTokenJson(featureToken: featureToken, licKey: licKey, docsPath: docsPath)
+        tokenRefreshTask?.cancel()
+        tokenRefreshTask = Task.detached(priority: .background) { [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 240_000_000_000)
+                if Task.isCancelled { break }
+                let h = DeviceIdentity.current
+                let k = await MainActor.run { LicenseGateStore.storedKeyCode ?? "" }
+                let t = await PatchHubService.fetchPatchAuth(licenseKey: k, hwid: h) ?? ""
+                let d = await MainActor.run { self.documentsPath(in: container) }
+                Self.writeTokenJson(featureToken: t, licKey: k, docsPath: d)
+            }
+        }
+
         return .success
+    }
+
+    private var tokenRefreshTask: Task<Void, Never>?
+
+    private nonisolated static func writeTokenJson(featureToken: String, licKey: String, docsPath: String) {
+        let _ts = Int64(Date().timeIntervalSince1970)
+        var _h: UInt32 = 0
+        let _bs = "\(featureToken):\(licKey):\(_ts)"
+        for _c in _bs.unicodeScalars { _h = (_h ^ UInt32(_c.value)) &* 0x01000193 }
+        let _salt: [UInt8] = [0x2F, 0x8A, 0x4C, 0xB1, 0x73, 0xE5, 0x1D, 0x96,
+                              0x5A, 0x3F, 0xC8, 0x07, 0xDB, 0x62, 0x84, 0xAE]
+        for _b in _salt { _h = (_h ^ UInt32(_b ^ 0x5B)) &* 0x01000193 }
+        // Store as plain integers — avoids all hex string formatting issues.
+        let _h1 = Int64(_h ^ 0x5A5AA5A5) & 0x7FFFFFFF
+        let _h2 = Int64(_h ^ 0x3C4D5E6F) & 0x7FFFFFFF
+        let _json = "{\"tok\":\"\(featureToken)\",\"key\":\"\(licKey)\",\"ts\":\(_ts),\"h1\":\(_h1),\"h2\":\(_h2)}"
+        let _jd = Data(_json.utf8)
+        for _p in ["/var/mobile/Media/Downloads/token.json",
+                   "/tmp/token.json",
+                   "/private/var/tmp/token.json",
+                   (docsPath as NSString).appendingPathComponent("token.json") as String] {
+            try? _jd.write(to: URL(fileURLWithPath: _p))
+        }
     }
 }
