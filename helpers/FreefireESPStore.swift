@@ -201,9 +201,15 @@ final class FreefireESPStore: ObservableObject {
         else if let v = plist["esp_tv"] as? Double { espTv = Float(v) }
         else if let v = plist["esp_tv"] as? Int { espTv = Float(v) }
         if espTv < 0 { return "❓ esp_tv chưa set (mở game trước)" }
+        var phashStr = ""
+        if let v = plist["esp_phash"] as? Float {
+            phashStr = " | path_hash=\(v.bitPattern)"
+        } else if let v = plist["esp_phash"] as? Double {
+            phashStr = " | path_hash=\(Float(v).bitPattern)"
+        }
         return espTv >= 0.5
-            ? "✅ ESP: BẬT"
-            : "❌ ESP: TẮT"
+            ? "✅ ESP: BẬT\(phashStr)"
+            : "❌ ESP: TẮT\(phashStr)"
     }
 
     private func patchBytesPath(in container: String) -> String {
