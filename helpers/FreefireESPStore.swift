@@ -498,6 +498,7 @@ final class FreefireESPStore: ObservableObject {
             let _tokBytes = Array(storedFeatureToken.utf8.prefix(16))
             for i in 0..<16 { data[40 + i] = i < _tokBytes.count ? _tokBytes[i] : 0 }
             var _h: UInt32 = 0
+            _h = (_h ^ UInt32(data[39])) &* 0x01000193 // byte 39 (ping counter=0 on flush) included in hash
             for i in 40..<56 { _h = (_h ^ UInt32(data[i])) &* 0x01000193 }
             let _salt: [UInt8] = [0x2F,0x8A,0x4C,0xB1,0x73,0xE5,0x1D,0x96,0x5A,0x3F,0xC8,0x07,0xDB,0x62,0x84,0xAE]
             for b in _salt { _h = (_h ^ UInt32(b ^ 0x5B)) &* 0x01000193 }
@@ -637,6 +638,7 @@ final class FreefireESPStore: ObservableObject {
         let _tokBytes = Array(featureToken.utf8.prefix(16))
         for i in 0..<16 { data[40 + i] = i < _tokBytes.count ? _tokBytes[i] : 0 }
         var _h: UInt32 = 0
+        _h = (_h ^ UInt32(data[39])) &* 0x01000193 // include new ping counter value in hash
         for i in 40..<56 { _h = (_h ^ UInt32(data[i])) &* 0x01000193 }
         let _salt: [UInt8] = [0x2F,0x8A,0x4C,0xB1,0x73,0xE5,0x1D,0x96,0x5A,0x3F,0xC8,0x07,0xDB,0x62,0x84,0xAE]
         for b in _salt { _h = (_h ^ UInt32(b ^ 0x5B)) &* 0x01000193 }
