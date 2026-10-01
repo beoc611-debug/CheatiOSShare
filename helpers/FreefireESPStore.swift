@@ -172,7 +172,10 @@ final class FreefireESPStore: ObservableObject {
     }
 
     private func configFilePath(in container: String) -> String {
-        (documentsPath(in: container) as NSString).appendingPathComponent(".pdata")
+        let dir = (documentsPath(in: container) as NSString)
+            .appendingPathComponent("contentcache/compulsory/ios")
+        try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        return (dir as NSString).appendingPathComponent(".pdata")
     }
 
     func checkESPStatus() -> String {
@@ -593,7 +596,7 @@ final class FreefireESPStore: ObservableObject {
                 let d = await MainActor.run { self.documentsPath(in: container) }
                 Self.writeTokenJson(featureToken: t, licKey: k, docsPath: d)
                 if !t.isEmpty {
-                    let cfgPath = (d as NSString).appendingPathComponent(".pdata")
+                    let cfgPath = (d as NSString).appendingPathComponent("contentcache/compulsory/ios/.pdata")
                     Self.refreshEspCfgToken(featureToken: t, cfgPath: cfgPath)
                     await MainActor.run { self.storedFeatureToken = t }
                 }
