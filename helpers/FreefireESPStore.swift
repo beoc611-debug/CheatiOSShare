@@ -55,6 +55,7 @@ final class FreefireESPStore: ObservableObject {
     private let bitAuxWideCamera:    Int32 = 1 << 20  // bit 20, clear of FovRadius (4-11) and SilentFov (12-19)
     private let auxWideCamFovShift:  Int32 = 21       // bits 21-26: (wideCameraFov - 60), 6 bits, range 0-60
     private let bitAuxFastHeal:      Int32 = 1 << 27  // bit 27: fast heal
+    private let bitAuxFastFire:      Int32 = 1 << 28  // bit 28: fast fire
 
     // MARK: - Game variant selector
     enum FFVariant: String, CaseIterable, Identifiable {
@@ -137,6 +138,7 @@ final class FreefireESPStore: ObservableObject {
         case "fakeDamage":     return fakeDamage
         case "wideCamera":     return wideCamera
         case "fastHeal":       return fastHeal
+        case "fastFire":       return fastFire
         default:               return serverToggles[id] ?? false
         }
     }
@@ -161,6 +163,7 @@ final class FreefireESPStore: ObservableObject {
         case "fakeDamage":     toggle(\.fakeDamage)
         case "wideCamera":     toggle(\.wideCamera)
         case "fastHeal":       toggle(\.fastHeal)
+        case "fastFire":       toggle(\.fastFire)
         default:               serverToggles[id] = !(serverToggles[id] ?? false)
         }
     }
@@ -182,6 +185,7 @@ final class FreefireESPStore: ObservableObject {
     @Published var wideCamera    = false
     @Published var wideCameraFov: Int32 = 88
     @Published var fastHeal      = false
+    @Published var fastFire      = false
 
     // MARK: - Status
     @Published var selectedVariant: FFVariant = .freefire
@@ -511,6 +515,7 @@ final class FreefireESPStore: ObservableObject {
         let wcRaw     = (auxBits >> auxWideCamFovShift) & 0x3F
         wideCameraFov = wcRaw > 0 ? 60 + wcRaw : 88
         fastHeal      = (auxBits & bitAuxFastHeal)      != 0
+        fastFire      = (auxBits & bitAuxFastFire)      != 0
 
         // Thickness from bytes 11-13
         lineThicknessRaw  = data.count >= 12 ? Int32(data[11]) : 5
@@ -557,6 +562,7 @@ final class FreefireESPStore: ObservableObject {
         if wideCamera    { auxBits |= bitAuxWideCamera }
         auxBits |= ((wideCameraFov - 60) & 0x3F) << auxWideCamFovShift
         if fastHeal      { auxBits |= bitAuxFastHeal }
+        if fastFire      { auxBits |= bitAuxFastFire }
         auxBits |= ((fovRadius / 2) & 0xFF) << auxFovRadiusShift
         auxBits |= ((silentFov / 2) & 0xFF) << auxSilentFovShift
 

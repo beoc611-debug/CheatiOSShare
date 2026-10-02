@@ -582,6 +582,9 @@ struct FreefireESPHomeSection: View {
             rowDivider
             toggleRow("Hồi Máu Nhanh", icon: "cross.case.fill",
                       on: store.fastHeal, color: Color(red: 0.20, green: 0.80, blue: 0.45)) { store.toggle(\.fastHeal) }
+            rowDivider
+            toggleRow("Bắn Nhanh ×2", icon: "burst.fill",
+                      on: store.fastFire, color: Color(red: 1.00, green: 0.55, blue: 0.10)) { store.toggle(\.fastFire) }
         }
     }
 
