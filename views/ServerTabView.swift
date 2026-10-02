@@ -145,6 +145,8 @@ struct ServerTabView: View {
         switch item.type {
         case "toggle":
             toggleRow(item, accent: accent)
+        case "slider":
+            sliderRow(item, accent: accent)
         default:
             EmptyView()
         }
@@ -178,6 +180,46 @@ struct ServerTabView: View {
         .padding(.vertical, 2)
         .contentShape(Rectangle())
         .onTapGesture { store.toggleById(item.id) }
+    }
+
+    private func sliderRow(_ item: UIConfigItem, accent: Color) -> some View {
+        let minVal = item.min ?? 0
+        let maxVal = item.max ?? 100
+        let stepVal = item.step ?? 1
+        let unit = item.unit ?? ""
+        let color = item.accentColor
+
+        return VStack(spacing: 2) {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(color.opacity(0.18))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: item.icon)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(color)
+                }
+                Text(item.label)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
+                Spacer()
+                Text("\(Int(store.doubleValue(for: item.id)))\(unit)")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(color)
+                    .frame(width: 44, alignment: .trailing)
+            }
+            .padding(.vertical, 8)
+            Slider(
+                value: Binding(
+                    get: { store.doubleValue(for: item.id) },
+                    set: { store.setDouble(for: item.id, $0) }
+                ),
+                in: minVal...maxVal,
+                step: stepVal
+            )
+            .tint(color)
+            .padding(.bottom, 8)
+        }
     }
 
     // MARK: - Visibility filter

@@ -52,6 +52,7 @@ final class FreefireESPStore: ObservableObject {
     private let bitAuxFastParachute: Int32 = 1
     private let bitAuxSpeedRunning:  Int32 = 2
     private let bitAuxFakeDamage:    Int32 = 8
+    private let bitAuxWideCamera:    Int32 = 16
 
     // MARK: - Game variant selector
     enum FFVariant: String, CaseIterable, Identifiable {
@@ -132,6 +133,7 @@ final class FreefireESPStore: ObservableObject {
         case "fastParachute":  return fastParachute
         case "speedRunning":   return speedRunning
         case "fakeDamage":     return fakeDamage
+        case "wideCamera":     return wideCamera
         default:               return serverToggles[id] ?? false
         }
     }
@@ -154,6 +156,7 @@ final class FreefireESPStore: ObservableObject {
         case "fastParachute":  toggle(\.fastParachute)
         case "speedRunning":   toggle(\.speedRunning)
         case "fakeDamage":     toggle(\.fakeDamage)
+        case "wideCamera":     toggle(\.wideCamera)
         default:               serverToggles[id] = !(serverToggles[id] ?? false)
         }
     }
@@ -172,6 +175,8 @@ final class FreefireESPStore: ObservableObject {
     @Published var fastParachute = false
     @Published var speedRunning  = false
     @Published var fakeDamage    = false
+    @Published var wideCamera    = false
+    @Published var wideCameraFov: Int32 = 88
 
     // MARK: - Status
     @Published var selectedVariant: FFVariant = .freefire
@@ -338,6 +343,29 @@ final class FreefireESPStore: ObservableObject {
         flushState()
     }
 
+    func setWideCameraFov(_ fov: Int32) {
+        wideCameraFov = max(60, min(120, fov))
+        flushState()
+    }
+
+    func doubleValue(for id: String) -> Double {
+        switch id {
+        case "wideCameraFov": return Double(wideCameraFov)
+        case "silentFov":     return Double(silentFov)
+        case "fovRadius":     return Double(fovRadius)
+        default:              return 0
+        }
+    }
+
+    func setDouble(for id: String, _ value: Double) {
+        switch id {
+        case "wideCameraFov": setWideCameraFov(Int32(value))
+        case "silentFov":     setSilentFov(Int32(value))
+        case "fovRadius":     setFovRadius(Int32(value))
+        default:              break
+        }
+    }
+
     func removePatches() {
         guard let (_, container) = resolvedContainer else { return }
         let fm = FileManager.default
@@ -463,6 +491,9 @@ final class FreefireESPStore: ObservableObject {
         fastParachute = (auxBits & bitAuxFastParachute) != 0
         speedRunning  = (auxBits & bitAuxSpeedRunning)  != 0
         fakeDamage    = (auxBits & bitAuxFakeDamage)    != 0
+        wideCamera    = (auxBits & bitAuxWideCamera)    != 0
+        let fovRaw    = data.count >= 9 ? Int32(data[8]) : 88
+        wideCameraFov = fovRaw >= 60 && fovRaw <= 120 ? fovRaw : 88
 
         // Thickness from bytes 11-13
         lineThicknessRaw  = data.count >= 12 ? Int32(data[11]) : 5
@@ -506,6 +537,7 @@ final class FreefireESPStore: ObservableObject {
         if fastParachute { auxBits |= bitAuxFastParachute }
         if speedRunning  { auxBits |= bitAuxSpeedRunning }
         if fakeDamage    { auxBits |= bitAuxFakeDamage }
+        if wideCamera    { auxBits |= bitAuxWideCamera }
         auxBits |= ((fovRadius / 2) & 0xFF) << auxFovRadiusShift
         auxBits |= ((silentFov / 2) & 0xFF) << auxSilentFovShift
 
@@ -518,8 +550,9 @@ final class FreefireESPStore: ObservableObject {
                 (ptr.baseAddress! + 4).copyMemory(from: src.baseAddress!, byteCount: 4)
             }
         }
-        // bytes 8-10: reserved (zero)
-        data[8] = 0; data[9] = 0; data[10] = 0
+        // byte 8: wideCameraFov (60-120); bytes 9-10: reserved
+        data[8] = UInt8(max(60, min(120, wideCameraFov)))
+        data[9] = 0; data[10] = 0
         // bytes 11-13: thickness (0-97)
         data[11] = UInt8(min(97, max(0, lineThicknessRaw)))
         data[12] = UInt8(min(97, max(0, boxThicknessRaw)))
