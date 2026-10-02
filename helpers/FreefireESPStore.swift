@@ -111,6 +111,12 @@ final class FreefireESPStore: ObservableObject {
     // UI-only: which element is being edited in the color picker
     @Published var selectedEspElement: Int = 0
 
+    // Server-driven toggle states (keyed by UIConfigItem.id from server)
+    @Published var serverToggles: [String: Bool] = [:]
+
+    func boolValue(for id: String) -> Bool { serverToggles[id] ?? false }
+    func toggleById(_ id: String) { serverToggles[id] = !(serverToggles[id] ?? false) }
+
     // AIM tab
     @Published var silentAim    = false
     @Published var silentFov: Int32 = 200

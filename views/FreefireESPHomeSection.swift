@@ -12,6 +12,7 @@ struct FreefireESPHomeSection: View {
     @State private var statRAMUsedMB: Int = 0
     @State private var showLog = false
     @State private var showDNSSheet = false
+    @State private var uiConfig = UIConfig.empty
     @State private var showESPToast = false
     @State private var espToastIsOn = false
     @State private var pendingESPCheck = false
@@ -26,15 +27,26 @@ struct FreefireESPHomeSection: View {
                 patchButton
                 dnsButton
             } else if tab == 1 {
-                espCard
-                espColorCard
-                aimCard
+                if uiConfig.esp.isEmpty {
+                    espCard
+                    espColorCard
+                    aimCard
+                } else {
+                    ServerTabView(store: store, sections: uiConfig.esp)
+                }
             } else {
-                settingsCard
+                if uiConfig.misc.isEmpty {
+                    settingsCard
+                } else {
+                    ServerTabView(store: store, sections: uiConfig.misc)
+                }
             }
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 16)
+        .task {
+            uiConfig = await PatchHubService.fetchUIConfig()
+        }
         .onChange(of: store.isPatching) { isNowPatching in
             if !isNowPatching && wasPatching {
                 let errors = store.patchLog.filter { $0.level == .err }.count
