@@ -247,7 +247,8 @@ enum PatchHubService {
         if let code = keyCode, !code.isEmpty { req.setValue(code, forHTTPHeaderField: d(_hlk)) }
         guard let (data, response) = try? await PinnedSession.shared.data(for: req),
               let http = response as? HTTPURLResponse,
-              (200...299).contains(http.statusCode) else { return .empty }
+              (200...299).contains(http.statusCode),
+              verifyResponse(data: data, httpResponse: response) else { return .empty }
         return (try? JSONDecoder().decode(UIConfig.self, from: data)) ?? .empty
     }
 
