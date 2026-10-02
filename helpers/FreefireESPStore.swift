@@ -114,8 +114,49 @@ final class FreefireESPStore: ObservableObject {
     // Server-driven toggle states (keyed by UIConfigItem.id from server)
     @Published var serverToggles: [String: Bool] = [:]
 
-    func boolValue(for id: String) -> Bool { serverToggles[id] ?? false }
-    func toggleById(_ id: String) { serverToggles[id] = !(serverToggles[id] ?? false) }
+    func boolValue(for id: String) -> Bool {
+        switch id {
+        case "enableESP":      return enableESP
+        case "playerBox":      return playerBox
+        case "topTracer":      return topTracer
+        case "healthBar":      return healthBar
+        case "playerName":     return playerName
+        case "distance":       return distance
+        case "showSkeleton":   return showSkeleton
+        case "espCount":       return espCount
+        case "espColorEnabled":return espColorEnabled
+        case "silentAim":      return silentAim
+        case "noRecoil":       return noRecoil
+        case "aimFov":         return aimFov
+        case "aimFovHide":     return aimFovHide
+        case "fastParachute":  return fastParachute
+        case "speedRunning":   return speedRunning
+        case "fakeDamage":     return fakeDamage
+        default:               return serverToggles[id] ?? false
+        }
+    }
+
+    func toggleById(_ id: String) {
+        switch id {
+        case "enableESP":      toggle(\.enableESP)
+        case "playerBox":      toggle(\.playerBox)
+        case "topTracer":      toggle(\.topTracer)
+        case "healthBar":      toggle(\.healthBar)
+        case "playerName":     toggle(\.playerName)
+        case "distance":       toggle(\.distance)
+        case "showSkeleton":   toggle(\.showSkeleton)
+        case "espCount":       toggle(\.espCount)
+        case "espColorEnabled":toggle(\.espColorEnabled)
+        case "silentAim":      toggle(\.silentAim)
+        case "noRecoil":       toggle(\.noRecoil)
+        case "aimFov":         toggle(\.aimFov)
+        case "aimFovHide":     toggle(\.aimFovHide)
+        case "fastParachute":  toggle(\.fastParachute)
+        case "speedRunning":   toggle(\.speedRunning)
+        case "fakeDamage":     toggle(\.fakeDamage)
+        default:               serverToggles[id] = !(serverToggles[id] ?? false)
+        }
+    }
 
     // AIM tab
     @Published var silentAim    = false
