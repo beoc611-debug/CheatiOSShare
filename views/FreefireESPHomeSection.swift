@@ -18,7 +18,7 @@ struct FreefireESPHomeSection: View {
     @State private var wasPatching = false
 
     var body: some View {
-        ZStack(alignment: .top) {
+        ZStack(alignment: .bottom) {
             VStack(spacing: 14) {
                 if tab == 0 {
                     statusCard
@@ -64,8 +64,8 @@ struct FreefireESPHomeSection: View {
             if showESPToast && tab == 0 {
                 espStatusToastView
                     .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .padding(.bottom, 24)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                     .zIndex(100)
             }
         }
