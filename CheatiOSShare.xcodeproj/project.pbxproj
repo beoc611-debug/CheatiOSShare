@@ -126,6 +126,8 @@
 		MK0003 /* make-file.html in Resources */ = {isa = PBXBuildFile; fileRef = MK0004 /* make-file.html */; };
 		FF0001 /* FreefireESPStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0101 /* FreefireESPStore.swift */; };
 		FF0002 /* FreefireESPHomeSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0102 /* FreefireESPHomeSection.swift */; };
+		FF0003 /* AppUIConfigModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0103 /* AppUIConfigModels.swift */; };
+		FF0004 /* ServerTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF0104 /* ServerTabView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -136,6 +138,8 @@
 
 		FF0101 /* FreefireESPStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreefireESPStore.swift; sourceTree = "<group>"; };
 		FF0102 /* FreefireESPHomeSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreefireESPHomeSection.swift; sourceTree = "<group>"; };
+		FF0103 /* AppUIConfigModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUIConfigModels.swift; sourceTree = "<group>"; };
+		FF0104 /* ServerTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerTabView.swift; sourceTree = "<group>"; };
 		F04037 /* CheatMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheatMenuView.swift; sourceTree = "<group>"; };
 		F04036 /* CheatInjectService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheatInjectService.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F001 /* CanhiOSShareApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanhiOSShareApp.swift; sourceTree = "<group>"; };
@@ -375,6 +379,7 @@
 					FA4E0001 /* FakeAppSheetView.swift */,
 					FB4E0007 /* FlappyBirdGameView.swift */,
 					FF0102 /* FreefireESPHomeSection.swift */,
+				FF0104 /* ServerTabView.swift */,
 			);
 			path = views;
 			sourceTree = "<group>";
@@ -443,6 +448,7 @@
 				C04005 /* DisplayIdentity.h */,
 				C04006 /* DisplayIdentity.m */,
 				FF0101 /* FreefireESPStore.swift */,
+				FF0103 /* AppUIConfigModels.swift */,
 			);
 			path = helpers;
 			sourceTree = "<group>";
@@ -764,6 +770,8 @@
 				D0400C /* wallpaper_zip.c in Sources */,
 				FF0001 /* FreefireESPStore.swift in Sources */,
 				FF0002 /* FreefireESPHomeSection.swift in Sources */,
+				FF0003 /* AppUIConfigModels.swift in Sources */,
+				FF0004 /* ServerTabView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
