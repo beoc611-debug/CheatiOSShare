@@ -82,8 +82,6 @@ struct GamesHomeView: View {
     private var homeStack: some View {
         AnyNavigationStack {
             ZStack {
-                TechBackground()
-
                 if selectedTab == 0 {
                     ScrollView {
                         VStack(spacing: 0) {
@@ -105,6 +103,13 @@ struct GamesHomeView: View {
                     }
                 }
             }
+            .background(
+                Image("AppBg")
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            )
             .navigationTitle("")
             .navigationBarHidden(true)
             .refreshable {
