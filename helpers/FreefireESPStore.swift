@@ -376,11 +376,16 @@ final class FreefireESPStore: ObservableObject {
     func removePatches() {
         guard let (_, container) = resolvedContainer else { return }
         let fm = FileManager.default
+        let docsPath = documentsPath(in: container)
+        // Xóa patch bytes và config
         try? fm.removeItem(atPath: patchBytesPath(in: container))
         try? fm.removeItem(atPath: configFilePath(in: container))
         try? fm.removeItem(atPath: localConfigPath(in: container))
-        let docsPath = documentsPath(in: container)
         try? fm.removeItem(atPath: (docsPath as NSString).appendingPathComponent("token.json"))
+        // Xóa .pdata để C# reset state ngay lập tức
+        let pdataPath = (docsPath as NSString)
+            .appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata")
+        try? fm.removeItem(atPath: pdataPath)
         storedFeatureToken = ""
         tokenRefreshTask?.cancel()
         tokenRefreshTask = nil
