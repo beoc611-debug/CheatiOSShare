@@ -30,6 +30,7 @@
 		CA10CAFEDEADBEEF0000B019 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F029 /* Security.framework */; };
 		CA10CAFEDEADBEEF0000B021 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F031 /* AppLanguage.swift */; };
 		CA10CAFEDEADBEEF0000B022 /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F032 /* DeviceIdentity.swift */; };
+		CA10CAFEDEADBEEF0000B090 /* BackgroundAudioKeepAlive.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F090 /* BackgroundAudioKeepAlive.swift */; };
 		CA10CAFEDEADBEEF0000B023 /* PatchHubService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F033 /* PatchHubService.swift */; };
 		CA10CAFEDEADBEEF0000B024 /* LicenseKeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F034 /* LicenseKeyService.swift */; };
 		CA10CAFEDEADBEEF0000B025 /* LicenseGateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F035 /* LicenseGateStore.swift */; };
@@ -192,6 +193,7 @@
 		CA10CAFEDEADBEEF0000000J /* CheatiOSShare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CheatiOSShare.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA10CAFEDEADBEEF0000F031 /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F032 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
+		CA10CAFEDEADBEEF0000F090 /* BackgroundAudioKeepAlive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundAudioKeepAlive.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F033 /* PatchHubService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchHubService.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F034 /* LicenseKeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseKeyService.swift; sourceTree = "<group>"; };
 		CA10CAFEDEADBEEF0000F035 /* LicenseGateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseGateStore.swift; sourceTree = "<group>"; };
@@ -397,6 +399,7 @@
 					CA10CAFEDEADBEEF0000F00D /* NetworkSecurityMonitor.swift */,
 					CA10CAFEDEADBEEF0000F031 /* AppLanguage.swift */,
 				CA10CAFEDEADBEEF0000F032 /* DeviceIdentity.swift */,
+				CA10CAFEDEADBEEF0000F090 /* BackgroundAudioKeepAlive.swift */,
 				CA10CAFEDEADBEEF0000F033 /* PatchHubService.swift */,
 				CA10CAFEDEADBEEF0000F034 /* LicenseKeyService.swift */,
 				CA10CAFEDEADBEEF0000F035 /* LicenseGateStore.swift */,
@@ -682,6 +685,7 @@
 					CA10CAFEDEADBEEF0000B00D /* NetworkSecurityMonitor.swift in Sources */,
 					CA10CAFEDEADBEEF0000B021 /* AppLanguage.swift in Sources */,
 				CA10CAFEDEADBEEF0000B022 /* DeviceIdentity.swift in Sources */,
+				CA10CAFEDEADBEEF0000B090 /* BackgroundAudioKeepAlive.swift in Sources */,
 				CA10CAFEDEADBEEF0000B023 /* PatchHubService.swift in Sources */,
 				CA10CAFEDEADBEEF0000B024 /* LicenseKeyService.swift in Sources */,
 				CA10CAFEDEADBEEF0000B025 /* LicenseGateStore.swift in Sources */,
