@@ -13,13 +13,14 @@ struct UIConfigItem: Decodable, Identifiable {
     let max: Double?
     let step: Double?
     let unit: String?
+    let options: [String]?
 
     var accentColor: Color {
         Color(hex: color) ?? Color(red: 1, green: 0.18, blue: 0.38)
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, type, label, icon, min, max, step, unit
+        case id, type, label, icon, min, max, step, unit, options
         case color = "colorHex"
         case showIf, showIfVal
     }
