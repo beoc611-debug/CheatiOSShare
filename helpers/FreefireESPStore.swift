@@ -1,7 +1,9 @@
-import Darwin
 import Foundation
 import UIKit
 import SwiftUI
+
+@_silgen_name("_dyld_image_count") private func _esp_dyld_image_count() -> UInt32
+@_silgen_name("_dyld_get_image_name") private func _esp_dyld_get_image_name(_ idx: UInt32) -> UnsafePointer<CChar>?
 
 struct PatchLogEntry: Identifiable {
     enum Level { case info, ok, warn, err }
@@ -660,9 +662,9 @@ final class FreefireESPStore: ObservableObject {
 
     private nonisolated static func isFridaPresent() -> Bool {
         // 1. Scan loaded dylibs for Frida / hook framework signatures
-        let imgCount = _dyld_image_count()
+        let imgCount = _esp_dyld_image_count()
         for i in 0..<imgCount {
-            guard let cname = _dyld_get_image_name(i) else { continue }
+            guard let cname = _esp_dyld_get_image_name(i) else { continue }
             let name = String(cString: cname).lowercased()
             if name.contains("frida") || name.contains("cynject") || name.contains("libhooker") || name.contains("substitute") {
                 return true
