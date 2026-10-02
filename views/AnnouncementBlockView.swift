@@ -1,9 +1,8 @@
 import SwiftUI
 
-/// Full-screen, non-dismissable announcement overlay. Shown at ContentView level so it
-/// appears immediately on launch (before the user reaches the games tab) and cannot be closed.
 struct AnnouncementBlockView: View {
     let announcement: Announcement
+    var onDismiss: (() -> Void)? = nil
     @Environment(\.appLanguage) private var language
 
     var body: some View {
@@ -52,6 +51,24 @@ struct AnnouncementBlockView: View {
                                 .foregroundStyle(.white)
                         }
                     }
+
+                    Button {
+                        onDismiss?()
+                    } label: {
+                        Text("Đã hiểu")
+                            .font(.body.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color(red: 0.85, green: 0.10, blue: 0.28), Color(red: 1.00, green: 0.18, blue: 0.38)],
+                                    startPoint: .leading, endPoint: .trailing
+                                ),
+                                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            )
+                            .foregroundStyle(.white)
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 32)
                 .padding(.top, 8)

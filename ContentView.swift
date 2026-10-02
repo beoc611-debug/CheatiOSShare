@@ -21,9 +21,11 @@ struct ContentView: View {
             } else {
                 mainContent
                 if let ann = blockingAnnouncement {
-                    AnnouncementBlockView(announcement: ann)
-                        .zIndex(998)
-                        .transition(.opacity)
+                    AnnouncementBlockView(announcement: ann) {
+                        withAnimation(.easeInOut(duration: 0.3)) { blockingAnnouncement = nil }
+                    }
+                    .zIndex(998)
+                    .transition(.opacity)
                 }
                 if showSplash {
                     SplashScreenView {
