@@ -929,32 +929,32 @@ private struct ESPResultSheet: View {
 
                         if isOn {
                             stepRow(num: "1", icon: "gamecontroller.fill", color: green,
-                                    title: "Vào Free Fire bình thường",
-                                    desc: "Mở game và chơi — ESP sẽ hiện ngay khi vào trận.")
+                                    title: "Vào Free Fire và chơi bình thường",
+                                    desc: "ESP đã sẵn sàng — mở game và bắt đầu trận là thấy ngay.")
                             divider
                             stepRow(num: "2", icon: "app.badge.fill", color: Color(red: 0.55, green: 0.72, blue: 1.0),
-                                    title: "Giữ app chạy nền",
-                                    desc: "App cần chạy nền để tự động refresh token ESP mỗi 5 giây. Đừng kill app.")
+                                    title: "Giữ app này chạy nền",
+                                    desc: "Để app hoạt động ổn định, đừng tắt hoàn toàn — chỉ cần để nền là được.")
                             divider
                             stepRow(num: "3", icon: "arrow.clockwise.circle.fill", color: Color(red: 0.80, green: 0.65, blue: 1.0),
-                                    title: "Cần patch lại khi nào?",
-                                    desc: "Mỗi khi update game hoặc nếu ESP tự tắt — bấm Patch lại là xong.")
+                                    title: "Khi nào cần patch lại?",
+                                    desc: "Nếu game được cập nhật hoặc ESP tự dưng tắt thì bấm Patch lại là ổn.")
                         } else {
                             stepRow(num: "1", icon: "arrow.uturn.backward.circle.fill", color: Color(red: 1.0, green: 0.75, blue: 0.15),
-                                    title: "Bấm Patch lại",
-                                    desc: "Quay về HOME → bấm 'Patch File vào Game' một lần nữa để ghi lại file.")
+                                    title: "Quay lại và bấm Patch lại",
+                                    desc: "Đóng bảng này → bấm 'Patch File vào Game' một lần nữa.")
                             divider
                             stepRow(num: "2", icon: "gamecontroller.fill", color: Color(red: 0.55, green: 0.72, blue: 1.0),
-                                    title: "Mở Free Fire và đợi vào menu chính",
-                                    desc: "Sau khi patch xong, app sẽ tự mở game. Hãy đợi đến màn hình chọn chế độ (không cần vào trận).")
+                                    title: "Mở Free Fire, vào đến màn hình chính",
+                                    desc: "App sẽ tự mở game. Đợi vào đến màn hình lobby, không cần vào trận.")
                             divider
                             stepRow(num: "3", icon: "clock.arrow.circlepath", color: Color(red: 0.80, green: 0.65, blue: 1.0),
-                                    title: "Chờ 5–10 giây rồi quay lại",
-                                    desc: "Để game chạy vài giây cho C# đọc và xác nhận token, sau đó switch về app này.")
+                                    title: "Chờ vài giây rồi quay lại đây",
+                                    desc: "Để game chạy khoảng 10 giây rồi switch về app — bảng thông báo sẽ tự hiện.")
                             divider
-                            stepRow(num: "4", icon: "app.badge.fill", color: red,
-                                    title: "Nếu vẫn TẮT — kiểm tra key",
-                                    desc: "Key hết hạn hoặc chưa đăng ký thiết bị sẽ không nhận token. Kiểm tra ngày hết hạn key ở cuối màn hình.")
+                            stepRow(num: "4", icon: "creditcard.fill", color: red,
+                                    title: "Vẫn TẮT? Kiểm tra tài khoản Premium",
+                                    desc: "Có thể tài khoản đã hết hạn hoặc chưa kích hoạt trên thiết bị này. Xem thông tin key ở cuối màn hình chính.")
                         }
                     }
                     .background(Color.white.opacity(0.05))
