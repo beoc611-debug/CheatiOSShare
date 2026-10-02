@@ -20,21 +20,19 @@ struct FreefireESPHomeSection: View {
     @State private var patchErrorMsg = ""
 
     var body: some View {
-        Group {
+        VStack(spacing: 14) {
             if tab == 0 {
-                VStack(spacing: 14) {
-                    statusCard
-                    patchButton
-                    dnsButton
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
+                statusCard
+                patchButton
+                dnsButton
             } else if tab == 1 {
                 ServerTabView(store: store, sections: store.uiConfig.esp)
             } else {
                 ServerTabView(store: store, sections: store.uiConfig.misc)
             }
         }
+        .padding(.horizontal, tab == 0 ? 16 : 0)
+        .padding(.bottom, tab == 0 ? 16 : 0)
         .task(id: tab) {
             if (tab == 1 || tab == 2) && store.uiConfig.isEmpty {
                 await store.fetchUIConfig()
