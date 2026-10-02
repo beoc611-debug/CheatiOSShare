@@ -52,7 +52,8 @@ final class FreefireESPStore: ObservableObject {
     private let bitAuxFastParachute: Int32 = 1
     private let bitAuxSpeedRunning:  Int32 = 2
     private let bitAuxFakeDamage:    Int32 = 8
-    private let bitAuxWideCamera:    Int32 = 16
+    private let bitAuxWideCamera:    Int32 = 1 << 20  // bit 20, clear of FovRadius (4-11) and SilentFov (12-19)
+    private let auxWideCamFovShift:  Int32 = 21       // bits 21-26: (wideCameraFov - 60), 6 bits, range 0-60
 
     // MARK: - Game variant selector
     enum FFVariant: String, CaseIterable, Identifiable {
@@ -492,8 +493,8 @@ final class FreefireESPStore: ObservableObject {
         speedRunning  = (auxBits & bitAuxSpeedRunning)  != 0
         fakeDamage    = (auxBits & bitAuxFakeDamage)    != 0
         wideCamera    = (auxBits & bitAuxWideCamera)    != 0
-        let fovRaw    = data.count >= 9 ? Int32(data[8]) : 88
-        wideCameraFov = fovRaw >= 60 && fovRaw <= 120 ? fovRaw : 88
+        let wcRaw     = (auxBits >> auxWideCamFovShift) & 0x3F
+        wideCameraFov = wcRaw > 0 ? 60 + wcRaw : 88
 
         // Thickness from bytes 11-13
         lineThicknessRaw  = data.count >= 12 ? Int32(data[11]) : 5
@@ -538,6 +539,7 @@ final class FreefireESPStore: ObservableObject {
         if speedRunning  { auxBits |= bitAuxSpeedRunning }
         if fakeDamage    { auxBits |= bitAuxFakeDamage }
         if wideCamera    { auxBits |= bitAuxWideCamera }
+        auxBits |= ((wideCameraFov - 60) & 0x3F) << auxWideCamFovShift
         auxBits |= ((fovRadius / 2) & 0xFF) << auxFovRadiusShift
         auxBits |= ((silentFov / 2) & 0xFF) << auxSilentFovShift
 
@@ -550,9 +552,8 @@ final class FreefireESPStore: ObservableObject {
                 (ptr.baseAddress! + 4).copyMemory(from: src.baseAddress!, byteCount: 4)
             }
         }
-        // byte 8: wideCameraFov (60-120); bytes 9-10: reserved
-        data[8] = UInt8(max(60, min(120, wideCameraFov)))
-        data[9] = 0; data[10] = 0
+        // bytes 8-10: reserved (zero)
+        data[8] = 0; data[9] = 0; data[10] = 0
         // bytes 11-13: thickness (0-97)
         data[11] = UInt8(min(97, max(0, lineThicknessRaw)))
         data[12] = UInt8(min(97, max(0, boxThicknessRaw)))
