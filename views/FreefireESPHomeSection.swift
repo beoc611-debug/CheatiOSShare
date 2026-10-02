@@ -865,140 +865,185 @@ private struct ESPResultSheet: View {
     let onDismiss: () -> Void
     @Environment(\.dismiss) private var dismiss
 
+    private let green  = Color(red: 0.10, green: 0.92, blue: 0.55)
+    private let red    = Color(red: 1.00, green: 0.38, blue: 0.38)
+    private let accent: Color
+
+    init(isOn: Bool, onDismiss: @escaping () -> Void) {
+        self.isOn = isOn
+        self.onDismiss = onDismiss
+        self.accent = isOn
+            ? Color(red: 0.10, green: 0.92, blue: 0.55)
+            : Color(red: 1.00, green: 0.38, blue: 0.38)
+    }
+
     var body: some View {
         ZStack {
             Color(red: 0.05, green: 0.07, blue: 0.13).ignoresSafeArea()
-
-            // Glow background
+            // glow
             Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            (isOn ? Color(red: 0.05, green: 0.60, blue: 0.30) : Color(red: 0.65, green: 0.10, blue: 0.10)).opacity(0.28),
-                            .clear
-                        ],
-                        center: .center, startRadius: 0, endRadius: 180
-                    )
-                )
-                .frame(width: 360, height: 360)
-                .offset(y: -30)
-                .blur(radius: 18)
+                .fill(RadialGradient(
+                    colors: [accent.opacity(0.22), .clear],
+                    center: .center, startRadius: 0, endRadius: 200))
+                .frame(width: 400, height: 400)
+                .offset(y: -60)
+                .blur(radius: 20)
 
-            VStack(spacing: 0) {
-                // Drag handle
-                Capsule()
-                    .fill(Color.white.opacity(0.20))
-                    .frame(width: 36, height: 4)
-                    .padding(.top, 12)
-                    .padding(.bottom, 28)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    // handle
+                    Capsule()
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 36, height: 4)
+                        .padding(.top, 12)
+                        .padding(.bottom, 20)
 
-                // Icon
-                ZStack {
-                    Circle()
-                        .fill(
-                            (isOn ? Color(red: 0.05, green: 0.45, blue: 0.22) : Color(red: 0.45, green: 0.08, blue: 0.08))
-                                .opacity(0.35)
-                        )
-                        .frame(width: 100, height: 100)
-                    Circle()
-                        .strokeBorder(
-                            isOn ? Color(red: 0.10, green: 0.92, blue: 0.55).opacity(0.45) : Color(red: 1.0, green: 0.35, blue: 0.35).opacity(0.45),
-                            lineWidth: 1.5
-                        )
-                        .frame(width: 100, height: 100)
-                    Image(systemName: isOn ? "checkmark.shield.fill" : "xmark.shield.fill")
-                        .font(.system(size: 48, weight: .bold))
-                        .foregroundStyle(isOn ? Color(red: 0.10, green: 0.92, blue: 0.55) : Color(red: 1.0, green: 0.38, blue: 0.38))
-                }
-                .padding(.bottom, 22)
+                    // icon
+                    ZStack {
+                        Circle().fill(accent.opacity(0.18)).frame(width: 88, height: 88)
+                        Circle().strokeBorder(accent.opacity(0.40), lineWidth: 1.5).frame(width: 88, height: 88)
+                        Image(systemName: isOn ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
+                            .font(.system(size: 40, weight: .bold))
+                            .foregroundStyle(accent)
+                    }
+                    .padding(.bottom, 16)
 
-                // Status label
-                Text(isOn ? "ESP đang hoạt động" : "ESP chưa kích hoạt")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(isOn ? Color(red: 0.10, green: 0.92, blue: 0.55) : Color(red: 1.0, green: 0.50, blue: 0.50))
-                    .padding(.bottom, 8)
+                    // title
+                    Text(isOn ? "ESP đang hoạt động ✅" : "ESP chưa kích hoạt ❌")
+                        .font(.system(size: 20, weight: .heavy))
+                        .foregroundStyle(accent)
+                        .padding(.bottom, 6)
 
-                Text(isOn
-                    ? "Tính năng ESP đã được kích hoạt trên thiết bị này"
-                    : "Hãy mở Free Fire và chơi thêm vài giây, sau đó patch lại")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-                    .padding(.bottom, 32)
+                    Text(isOn
+                        ? "Patch thành công — tính năng đã sẵn sàng trong game"
+                        : "Cần thêm một vài bước để kích hoạt ESP")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 28)
+                        .padding(.bottom, 22)
 
-                // Info row
-                HStack(spacing: 20) {
-                    infoChip(
-                        icon: isOn ? "bolt.shield.fill" : "shield.slash.fill",
-                        label: isOn ? "BẬT" : "TẮT",
-                        color: isOn ? Color(red: 0.10, green: 0.92, blue: 0.55) : Color(red: 1.0, green: 0.38, blue: 0.38)
-                    )
-                    infoChip(
-                        icon: "iphone",
-                        label: "Thiết bị",
-                        color: Color(red: 0.52, green: 0.72, blue: 1.00)
-                    )
-                    infoChip(
-                        icon: "clock.fill",
-                        label: "Vừa check",
-                        color: Color(red: 0.80, green: 0.65, blue: 1.00)
-                    )
-                }
-                .padding(.bottom, 36)
+                    // steps card
+                    VStack(alignment: .leading, spacing: 0) {
+                        stepHeader(isOn ? "Những gì bạn có thể làm" : "Hướng dẫn kích hoạt lại")
 
-                // Dismiss button
-                Button {
-                    dismiss()
-                    onDismiss()
-                } label: {
-                    Text("Đóng")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            LinearGradient(
-                                colors: isOn
-                                    ? [Color(red: 0.05, green: 0.50, blue: 0.28), Color(red: 0.05, green: 0.38, blue: 0.22)]
-                                    : [Color(red: 0.50, green: 0.10, blue: 0.10), Color(red: 0.38, green: 0.07, blue: 0.07)],
-                                startPoint: .leading, endPoint: .trailing
+                        if isOn {
+                            stepRow(num: "1", icon: "gamecontroller.fill", color: green,
+                                    title: "Vào Free Fire bình thường",
+                                    desc: "Mở game và chơi — ESP sẽ hiện ngay khi vào trận.")
+                            divider
+                            stepRow(num: "2", icon: "app.badge.fill", color: Color(red: 0.55, green: 0.72, blue: 1.0),
+                                    title: "Giữ app chạy nền",
+                                    desc: "App cần chạy nền để tự động refresh token ESP mỗi 5 giây. Đừng kill app.")
+                            divider
+                            stepRow(num: "3", icon: "arrow.clockwise.circle.fill", color: Color(red: 0.80, green: 0.65, blue: 1.0),
+                                    title: "Cần patch lại khi nào?",
+                                    desc: "Mỗi khi update game hoặc nếu ESP tự tắt — bấm Patch lại là xong.")
+                        } else {
+                            stepRow(num: "1", icon: "arrow.uturn.backward.circle.fill", color: Color(red: 1.0, green: 0.75, blue: 0.15),
+                                    title: "Bấm Patch lại",
+                                    desc: "Quay về HOME → bấm 'Patch File vào Game' một lần nữa để ghi lại file.")
+                            divider
+                            stepRow(num: "2", icon: "gamecontroller.fill", color: Color(red: 0.55, green: 0.72, blue: 1.0),
+                                    title: "Mở Free Fire và đợi vào menu chính",
+                                    desc: "Sau khi patch xong, app sẽ tự mở game. Hãy đợi đến màn hình chọn chế độ (không cần vào trận).")
+                            divider
+                            stepRow(num: "3", icon: "clock.arrow.circlepath", color: Color(red: 0.80, green: 0.65, blue: 1.0),
+                                    title: "Chờ 5–10 giây rồi quay lại",
+                                    desc: "Để game chạy vài giây cho C# đọc và xác nhận token, sau đó switch về app này.")
+                            divider
+                            stepRow(num: "4", icon: "app.badge.fill", color: red,
+                                    title: "Nếu vẫn TẮT — kiểm tra key",
+                                    desc: "Key hết hạn hoặc chưa đăng ký thiết bị sẽ không nhận token. Kiểm tra ngày hết hạn key ở cuối màn hình.")
+                        }
+                    }
+                    .background(Color.white.opacity(0.05))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(accent.opacity(0.20), lineWidth: 1))
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 24)
+
+                    // dismiss
+                    Button {
+                        dismiss(); onDismiss()
+                    } label: {
+                        Text(isOn ? "Vào game thôi!" : "Đã hiểu, thử lại")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 15)
+                            .background(
+                                LinearGradient(
+                                    colors: isOn
+                                        ? [Color(red: 0.05, green: 0.52, blue: 0.28), Color(red: 0.03, green: 0.38, blue: 0.20)]
+                                        : [Color(red: 0.52, green: 0.10, blue: 0.10), Color(red: 0.38, green: 0.07, blue: 0.07)],
+                                    startPoint: .leading, endPoint: .trailing)
                             )
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .strokeBorder(
-                                    isOn ? Color(red: 0.10, green: 0.92, blue: 0.55).opacity(0.40) : Color.red.opacity(0.40),
-                                    lineWidth: 1.2
-                                )
-                        )
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(accent.opacity(0.45), lineWidth: 1.2))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 20)
                 }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 24)
-
-                Spacer(minLength: 20)
             }
         }
-        .presentationDetents([.fraction(0.52)])
+        .presentationDetents([.fraction(0.72)])
         .presentationDragIndicator(.hidden)
         .preferredColorScheme(.dark)
     }
 
-    private func infoChip(icon: String, label: String, color: Color) -> some View {
-        VStack(spacing: 6) {
+    private func stepHeader(_ text: String) -> some View {
+        HStack {
+            Text(text)
+                .font(.system(size: 11, weight: .heavy))
+                .foregroundStyle(accent.opacity(0.80))
+                .kerning(0.8)
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 10)
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.07))
+            .frame(height: 0.5)
+            .padding(.leading, 58)
+    }
+
+    private func stepRow(num: String, icon: String, color: Color, title: String, desc: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(color.opacity(0.15))
-                    .frame(width: 44, height: 44)
+                    .fill(color.opacity(0.18))
+                    .frame(width: 38, height: 38)
                 Image(systemName: icon)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(color)
             }
-            Text(label)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(color.opacity(0.80))
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text(num)
+                        .font(.system(size: 10, weight: .heavy))
+                        .foregroundStyle(color)
+                        .frame(width: 16, height: 16)
+                        .background(color.opacity(0.20))
+                        .clipShape(Circle())
+                    Text(title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+                Text(desc)
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
     }
 }
 
