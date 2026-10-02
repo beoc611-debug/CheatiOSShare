@@ -16,6 +16,7 @@ struct FreefireESPHomeSection: View {
     @State private var showESPToast = false
     @State private var espToastIsOn = false
     @State private var pendingESPCheck = false
+    @State private var gameOpenPending = false
     @State private var wasPatching = false
     @State private var showPatchErrorSheet = false
     @State private var patchErrorMsg = ""
@@ -42,7 +43,10 @@ struct FreefireESPHomeSection: View {
                 let errors = store.patchLog.filter { $0.level == .err }.count
                 if errors == 0 && !store.patchLog.isEmpty {
                     pendingESPCheck = true
+                    gameOpenPending = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        guard gameOpenPending else { return }
+                        gameOpenPending = false
                         openGame()
                     }
                 }
@@ -50,6 +54,7 @@ struct FreefireESPHomeSection: View {
             wasPatching = isNowPatching
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            gameOpenPending = false  // user đã về app → cancel pending openGame
             guard pendingESPCheck else { return }
             pendingESPCheck = false
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
