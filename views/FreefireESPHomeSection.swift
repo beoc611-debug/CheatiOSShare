@@ -30,7 +30,11 @@ struct FreefireESPHomeSection: View {
             } else if tab == 1 {
                 ServerTabView(store: store, sections: uiConfig?.esp ?? [])
             } else {
-                ServerTabView(store: store, sections: uiConfig?.misc ?? [])
+                settingsCard
+                let miscSections = uiConfig?.misc ?? []
+                if !miscSections.isEmpty {
+                    ServerTabView(store: store, sections: miscSections)
+                }
             }
         }
         .padding(.horizontal, 16)
@@ -573,6 +577,43 @@ struct FreefireESPHomeSection: View {
             rowDivider
             toggleRow("Fake Dame", icon: "bolt.fill",
                       on: store.fakeDamage, color: Color(red: 1.00, green: 0.22, blue: 0.22)) { store.toggle(\.fakeDamage) }
+            rowDivider
+            camXaRow
+            rowDivider
+            toggleRow("Hồi Máu Nhanh", icon: "cross.case.fill",
+                      on: store.fastHeal, color: Color(red: 0.20, green: 0.80, blue: 0.45)) { store.toggle(\.fastHeal) }
+        }
+    }
+
+    private var camXaRow: some View {
+        VStack(spacing: 0) {
+            toggleRow("Cam Xa", icon: "camera.viewfinder",
+                      on: store.wideCamera, color: Color(red: 0.30, green: 0.65, blue: 1.00)) { store.toggle(\.wideCamera) }
+            if store.wideCamera {
+                VStack(spacing: 6) {
+                    HStack {
+                        Text("Chỉnh độ xa")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Color(red: 0.65, green: 0.75, blue: 0.90))
+                        Spacer()
+                        Text("\(store.wideCameraFov)")
+                            .font(.system(size: 12, weight: .bold).monospacedDigit())
+                            .foregroundStyle(Color(red: 0.30, green: 0.65, blue: 1.00))
+                    }
+                    Slider(
+                        value: Binding(
+                            get: { Double(store.wideCameraFov) },
+                            set: { store.setWideCameraFov(Int32($0)) }
+                        ),
+                        in: 60...120,
+                        step: 1
+                    )
+                    .tint(Color(red: 0.30, green: 0.65, blue: 1.00))
+                }
+                .padding(.horizontal, 14)
+                .padding(.top, 10)
+                .padding(.bottom, 8)
+            }
         }
     }
 

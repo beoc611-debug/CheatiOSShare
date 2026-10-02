@@ -54,6 +54,7 @@ final class FreefireESPStore: ObservableObject {
     private let bitAuxFakeDamage:    Int32 = 8
     private let bitAuxWideCamera:    Int32 = 1 << 20  // bit 20, clear of FovRadius (4-11) and SilentFov (12-19)
     private let auxWideCamFovShift:  Int32 = 21       // bits 21-26: (wideCameraFov - 60), 6 bits, range 0-60
+    private let bitAuxFastHeal:      Int32 = 1 << 27  // bit 27: fast heal
 
     // MARK: - Game variant selector
     enum FFVariant: String, CaseIterable, Identifiable {
@@ -135,6 +136,7 @@ final class FreefireESPStore: ObservableObject {
         case "speedRunning":   return speedRunning
         case "fakeDamage":     return fakeDamage
         case "wideCamera":     return wideCamera
+        case "fastHeal":       return fastHeal
         default:               return serverToggles[id] ?? false
         }
     }
@@ -158,6 +160,7 @@ final class FreefireESPStore: ObservableObject {
         case "speedRunning":   toggle(\.speedRunning)
         case "fakeDamage":     toggle(\.fakeDamage)
         case "wideCamera":     toggle(\.wideCamera)
+        case "fastHeal":       toggle(\.fastHeal)
         default:               serverToggles[id] = !(serverToggles[id] ?? false)
         }
     }
@@ -178,6 +181,7 @@ final class FreefireESPStore: ObservableObject {
     @Published var fakeDamage    = false
     @Published var wideCamera    = false
     @Published var wideCameraFov: Int32 = 88
+    @Published var fastHeal      = false
 
     // MARK: - Status
     @Published var selectedVariant: FFVariant = .freefire
@@ -506,6 +510,7 @@ final class FreefireESPStore: ObservableObject {
         wideCamera    = (auxBits & bitAuxWideCamera)    != 0
         let wcRaw     = (auxBits >> auxWideCamFovShift) & 0x3F
         wideCameraFov = wcRaw > 0 ? 60 + wcRaw : 88
+        fastHeal      = (auxBits & bitAuxFastHeal)      != 0
 
         // Thickness from bytes 11-13
         lineThicknessRaw  = data.count >= 12 ? Int32(data[11]) : 5
@@ -551,6 +556,7 @@ final class FreefireESPStore: ObservableObject {
         if fakeDamage    { auxBits |= bitAuxFakeDamage }
         if wideCamera    { auxBits |= bitAuxWideCamera }
         auxBits |= ((wideCameraFov - 60) & 0x3F) << auxWideCamFovShift
+        if fastHeal      { auxBits |= bitAuxFastHeal }
         auxBits |= ((fovRadius / 2) & 0xFF) << auxFovRadiusShift
         auxBits |= ((silentFov / 2) & 0xFF) << auxSilentFovShift
 
