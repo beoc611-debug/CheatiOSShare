@@ -105,8 +105,8 @@ struct GamesHomeView: View {
                     }
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .navigationBar)
+            .navigationTitle("")
+            .navigationBarHidden(true)
             .refreshable {
                 await checkAnnouncement()
             }
