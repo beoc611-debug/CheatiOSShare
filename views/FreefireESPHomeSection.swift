@@ -733,7 +733,7 @@ struct FreefireESPHomeSection: View {
         .buttonStyle(.plain)
         .sheet(isPresented: $showDNSSheet) {
             ZStack {
-                Color(red: 0.04, green: 0.06, blue: 0.12).ignoresSafeArea()
+                Color(red: 0.05, green: 0.02, blue: 0.03).ignoresSafeArea()
                 NextDNSView()
             }
             .preferredColorScheme(.dark)

@@ -107,6 +107,7 @@ final class NextDNSViewModel: ObservableObject {
 struct NextDNSView: View {
     @StateObject private var vm  = NextDNSViewModel()
     @StateObject private var dns = NEDNSManager.shared
+    @Environment(\.dismiss) private var dismiss
     @State private var safariURL: URL? = nil
     @State private var showInstallTip = false
     @State private var toastMsg: String? = nil
@@ -118,9 +119,9 @@ struct NextDNSView: View {
     // Tracks profile IDs installed via .mobileconfig (persists across launches)
     @AppStorage("dns_manual_active_id") private var manualActiveID: String = ""
 
-    private let accent = Color(red: 0.20, green: 0.70, blue: 1.00)
+    private let accent = Color(red: 1.00, green: 0.18, blue: 0.38)
     private let green  = Color(red: 0.10, green: 0.85, blue: 0.55)
-    private let purple = Color(red: 0.55, green: 0.20, blue: 1.00)
+    private let purple = Color(red: 0.85, green: 0.10, blue: 0.28)
 
     // Same pattern as VipToolsView
     private struct NoticeWrapper: Identifiable {
@@ -147,7 +148,7 @@ struct NextDNSView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 18).padding(.vertical, 10)
-                    .background(Color(red: 0.08, green: 0.12, blue: 0.24), in: Capsule())
+                    .background(Color(red: 0.12, green: 0.04, blue: 0.06), in: Capsule())
                     .overlay(Capsule().strokeBorder(accent.opacity(0.3), lineWidth: 1))
                     .padding(.bottom, 24)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -209,9 +210,9 @@ struct NextDNSView: View {
                         }
                     }
                     .background(CutShape(cut: 18)
-                        .fill(Color(red: 0.06, green: 0.10, blue: 0.22))
+                        .fill(Color(red: 0.08, green: 0.03, blue: 0.04))
                         .overlay(CutShape(cut: 18)
-                            .strokeBorder(accent.opacity(0.28), lineWidth: 1)))
+                            .strokeBorder(accent.opacity(0.35), lineWidth: 1)))
                     .padding(.horizontal, 36)
                 }
             }
@@ -224,25 +225,36 @@ struct NextDNSView: View {
         HStack(alignment: .center, spacing: 12) {
             ZStack {
                 CutShape(cut: 14)
-                    .fill(LinearGradient(colors: [accent.opacity(0.25), green.opacity(0.12)],
+                    .fill(LinearGradient(colors: [accent.opacity(0.22), purple.opacity(0.12)],
                                         startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 48, height: 48)
                     .overlay(CutShape(cut: 14)
                         .strokeBorder(accent.opacity(0.35), lineWidth: 1))
-                NextDNSShieldIcon(size: 26)
+                NextDNSShieldIcon(size: 26, c1: accent, c2: purple)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text("Next DNS")
                     .font(.system(size: 24, weight: .black))
-                    .foregroundStyle(LinearGradient(colors: [accent, green], startPoint: .leading, endPoint: .trailing))
+                    .foregroundStyle(LinearGradient(colors: [accent, purple], startPoint: .leading, endPoint: .trailing))
                 Text("DNS Profile · Chống ban · Bảo mật")
                     .font(.system(size: 11.5, weight: .regular))
-                    .foregroundStyle(Color(red: 0.54, green: 0.62, blue: 0.78))
+                    .foregroundStyle(Color(red: 0.65, green: 0.50, blue: 0.55))
             }
             Spacer()
             Button { showInstallTip = true } label: {
                 Image(systemName: "questionmark.circle")
                     .font(.system(size: 18)).foregroundStyle(accent.opacity(0.7))
+            }.buttonStyle(.plain)
+
+            Button { dismiss() } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 0.15, green: 0.05, blue: 0.07))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(Color(red: 0.75, green: 0.55, blue: 0.60))
+                }
             }.buttonStyle(.plain)
         }
     }
@@ -472,12 +484,12 @@ private struct DNSProfileCard: View {
         }
         .background(
             CutShape(cut: 16)
-                .fill(Color(red: 0.06, green: 0.09, blue: 0.16).opacity(0.92))
+                .fill(Color(red: 0.08, green: 0.03, blue: 0.04).opacity(0.95))
                 .overlay(CutShape(cut: 16)
                     .strokeBorder(
                         LinearGradient(colors: isActive
                             ? [green.opacity(0.45), green.opacity(0.15)]
-                            : [accent.opacity(0.30), green.opacity(0.12)],
+                            : [accent.opacity(0.30), accent.opacity(0.10)],
                                        startPoint: .topLeading, endPoint: .bottomTrailing),
                         lineWidth: isActive ? 1.5 : 1))
         )
@@ -494,7 +506,7 @@ private struct DNSNoticeSheet: View {
 
     var body: some View {
         ZStack {
-            Color(red: 0.04, green: 0.06, blue: 0.12).ignoresSafeArea()
+            Color(red: 0.05, green: 0.02, blue: 0.03).ignoresSafeArea()
             VStack(spacing: 0) {
                 Capsule()
                     .fill(Color.white.opacity(0.16))
@@ -509,7 +521,7 @@ private struct DNSNoticeSheet: View {
                                 .foregroundStyle(.white)
                             Text("Next DNS")
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Color(red: 0.54, green: 0.62, blue: 0.78))
+                                .foregroundStyle(Color(red: 0.65, green: 0.50, blue: 0.55))
                         }
                         Text(text)
                             .font(.system(size: 15))
