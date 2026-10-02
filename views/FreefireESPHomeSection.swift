@@ -632,7 +632,7 @@ struct FreefireESPHomeSection: View {
             }
 
             if detected == nil {
-                HStack(spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 10)
                             .fill(Color(red: 1.0, green: 0.65, blue: 0.10).opacity(0.18))
@@ -641,13 +641,17 @@ struct FreefireESPHomeSection: View {
                             .font(.system(size: 16, weight: .bold))
                             .foregroundStyle(Color(red: 1.0, green: 0.70, blue: 0.10))
                     }
-                    VStack(alignment: .leading, spacing: 3) {
+                    VStack(alignment: .leading, spacing: 5) {
                         Text("Không tìm thấy \(store.selectedVariant.rawValue)")
                             .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(Color(red: 1.0, green: 0.80, blue: 0.35))
                         Text("Hãy cài game lên thiết bị trước khi sử dụng tính năng này.")
                             .font(.system(size: 12, weight: .regular))
                             .foregroundStyle(Color(red: 0.70, green: 0.65, blue: 0.50))
+                        Text("⚠︎ Có khả năng thiết bị của bạn không nằm trong danh sách hỗ trợ của phiên bản iOS này.")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Color(red: 1.0, green: 0.70, blue: 0.10).opacity(0.80))
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer()
                 }
