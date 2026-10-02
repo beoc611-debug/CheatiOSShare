@@ -432,37 +432,24 @@ private struct DNSProfileCard: View {
 
                 Spacer(minLength: 0)
 
-                // Bật / Tắt button
-                Button { isActive ? onDeactivate() : onActivate() } label: {
+                // Tải xuống button
+                Button { onBottom() } label: {
                     ZStack {
                         CutShape(cut: 10)
-                            .fill(isActive
-                                ? LinearGradient(colors: [red.opacity(0.22), red.opacity(0.10)],
-                                                 startPoint: .topLeading, endPoint: .bottomTrailing)
-                                : LinearGradient(colors: [accent.opacity(0.22), green.opacity(0.14)],
-                                                 startPoint: .topLeading, endPoint: .bottomTrailing))
-                            .frame(width: 56, height: 40)
+                            .fill(LinearGradient(
+                                colors: [accent.opacity(0.22), green.opacity(0.14)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 64, height: 40)
                             .overlay(CutShape(cut: 10)
-                                .strokeBorder((isActive ? red : accent).opacity(0.40), lineWidth: 1))
-                        if isActivating {
-                            ProgressView().tint(accent).scaleEffect(0.75)
-                        } else if isActive {
-                            VStack(spacing: 1) {
-                                Image(systemName: "wifi.slash")
-                                    .font(.system(size: 13)).foregroundStyle(red)
-                                Text("T\u{1EAF}t").font(.system(size: 9, weight: .bold)).foregroundStyle(red)
-                            }
-                        } else {
-                            VStack(spacing: 1) {
-                                Image(systemName: "wifi")
-                                    .font(.system(size: 13)).foregroundStyle(accent)
-                                Text("B\u{1EAD}t").font(.system(size: 9, weight: .bold)).foregroundStyle(accent)
-                            }
+                                .strokeBorder(accent.opacity(0.40), lineWidth: 1))
+                        VStack(spacing: 1) {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.system(size: 13)).foregroundStyle(accent)
+                            Text("Tải về").font(.system(size: 9, weight: .bold)).foregroundStyle(accent)
                         }
                     }
                 }
                 .buttonStyle(.plain)
-                .disabled(isActivating)
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
 
