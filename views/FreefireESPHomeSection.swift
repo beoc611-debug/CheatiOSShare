@@ -18,58 +18,48 @@ struct FreefireESPHomeSection: View {
     @State private var wasPatching = false
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            VStack(spacing: 14) {
-                if tab == 0 {
-                    statusCard
-                    patchButton
-                    dnsButton
-                } else if tab == 1 {
-                    espCard
-                    espColorCard
-                    aimCard
-                } else {
-                    settingsCard
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
-            .onChange(of: store.isPatching) { isNowPatching in
-                if !isNowPatching && wasPatching {
-                    let errors = store.patchLog.filter { $0.level == .err }.count
-                    if errors == 0 && !store.patchLog.isEmpty {
-                        pendingESPCheck = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            openGame()
-                        }
-                    }
-                }
-                wasPatching = isNowPatching
-            }
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-                guard pendingESPCheck else { return }
-                pendingESPCheck = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    let statusStr = store.checkESPStatus() ?? ""
-                    espToastIsOn = statusStr.hasPrefix("✅")
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                        showESPToast = true
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-                        withAnimation(.easeOut(duration: 0.35)) { showESPToast = false }
-                    }
-                }
-            }
-
-            if showESPToast && tab == 0 {
-                espStatusToastView
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 24)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .zIndex(100)
+        VStack(spacing: 14) {
+            if tab == 0 {
+                statusCard
+                patchButton
+                dnsButton
+            } else if tab == 1 {
+                espCard
+                espColorCard
+                aimCard
+            } else {
+                settingsCard
             }
         }
-        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: showESPToast)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 16)
+        .onChange(of: store.isPatching) { isNowPatching in
+            if !isNowPatching && wasPatching {
+                let errors = store.patchLog.filter { $0.level == .err }.count
+                if errors == 0 && !store.patchLog.isEmpty {
+                    pendingESPCheck = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        openGame()
+                    }
+                }
+            }
+            wasPatching = isNowPatching
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            guard pendingESPCheck else { return }
+            pendingESPCheck = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                let statusStr = store.checkESPStatus() ?? ""
+                espToastIsOn = statusStr.hasPrefix("✅")
+                showESPToast = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+                    showESPToast = false
+                }
+            }
+        }
+        .sheet(isPresented: $showESPToast) {
+            ESPResultSheet(isOn: espToastIsOn, onDismiss: { showESPToast = false })
+        }
     }
 
     // MARK: - Open game helper
@@ -93,61 +83,6 @@ struct FreefireESPHomeSection: View {
                 UIApplication.shared.open(url); return
             }
         }
-    }
-
-    // MARK: - ESP toast overlay
-
-    private var espStatusToastView: some View {
-        let isOn = espToastIsOn
-        return HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(isOn ? Color(red: 0.04, green: 0.20, blue: 0.12) : Color(red: 0.20, green: 0.04, blue: 0.04))
-                    .frame(width: 42, height: 42)
-                Image(systemName: isOn ? "checkmark.shield.fill" : "xmark.shield.fill")
-                    .font(.system(size: 21, weight: .bold))
-                    .foregroundStyle(isOn ? Color(red: 0.10, green: 0.92, blue: 0.55) : Color(red: 1.0, green: 0.38, blue: 0.38))
-            }
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Kết quả kích hoạt ESP")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.50))
-                Text(isOn ? "ESP đang hoạt động trên thiết bị" : "ESP chưa kích hoạt — thử patch lại")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(isOn ? Color(red: 0.10, green: 0.92, blue: 0.55) : Color(red: 1.0, green: 0.55, blue: 0.55))
-            }
-            Spacer()
-            Button {
-                withAnimation(.easeOut(duration: 0.3)) { showESPToast = false }
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.40))
-                    .frame(width: 26, height: 26)
-                    .background(Color.white.opacity(0.10))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(
-            ZStack {
-                Color(red: 0.05, green: 0.07, blue: 0.14)
-                (isOn ? Color(red: 0.03, green: 0.16, blue: 0.08) : Color(red: 0.16, green: 0.03, blue: 0.03)).opacity(0.85)
-            }
-        )
-        .clipShape(CutShape(cut: 14))
-        .overlay(
-            CutShape(cut: 14).strokeBorder(
-                isOn ? Color(red: 0.10, green: 0.92, blue: 0.55).opacity(0.50) : Color(red: 1.0, green: 0.38, blue: 0.38).opacity(0.50),
-                lineWidth: 1.3
-            )
-        )
-        .shadow(
-            color: isOn ? Color(red: 0.10, green: 0.92, blue: 0.55).opacity(0.40) : Color.red.opacity(0.35),
-            radius: 18, y: 6
-        )
     }
 
     // MARK: - Status card
@@ -920,6 +855,150 @@ struct FreefireESPHomeSection: View {
             .overlay(Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 0.5))
         }
         .padding(.vertical, 11)
+    }
+}
+
+// MARK: - ESP Result Sheet
+
+private struct ESPResultSheet: View {
+    let isOn: Bool
+    let onDismiss: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            Color(red: 0.05, green: 0.07, blue: 0.13).ignoresSafeArea()
+
+            // Glow background
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            (isOn ? Color(red: 0.05, green: 0.60, blue: 0.30) : Color(red: 0.65, green: 0.10, blue: 0.10)).opacity(0.28),
+                            .clear
+                        ],
+                        center: .center, startRadius: 0, endRadius: 180
+                    )
+                )
+                .frame(width: 360, height: 360)
+                .offset(y: -30)
+                .blur(radius: 18)
+
+            VStack(spacing: 0) {
+                // Drag handle
+                Capsule()
+                    .fill(Color.white.opacity(0.20))
+                    .frame(width: 36, height: 4)
+                    .padding(.top, 12)
+                    .padding(.bottom, 28)
+
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(
+                            (isOn ? Color(red: 0.05, green: 0.45, blue: 0.22) : Color(red: 0.45, green: 0.08, blue: 0.08))
+                                .opacity(0.35)
+                        )
+                        .frame(width: 100, height: 100)
+                    Circle()
+                        .strokeBorder(
+                            isOn ? Color(red: 0.10, green: 0.92, blue: 0.55).opacity(0.45) : Color(red: 1.0, green: 0.35, blue: 0.35).opacity(0.45),
+                            lineWidth: 1.5
+                        )
+                        .frame(width: 100, height: 100)
+                    Image(systemName: isOn ? "checkmark.shield.fill" : "xmark.shield.fill")
+                        .font(.system(size: 48, weight: .bold))
+                        .foregroundStyle(isOn ? Color(red: 0.10, green: 0.92, blue: 0.55) : Color(red: 1.0, green: 0.38, blue: 0.38))
+                }
+                .padding(.bottom, 22)
+
+                // Status label
+                Text(isOn ? "ESP đang hoạt động" : "ESP chưa kích hoạt")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(isOn ? Color(red: 0.10, green: 0.92, blue: 0.55) : Color(red: 1.0, green: 0.50, blue: 0.50))
+                    .padding(.bottom, 8)
+
+                Text(isOn
+                    ? "Tính năng ESP đã được kích hoạt trên thiết bị này"
+                    : "Hãy mở Free Fire và chơi thêm vài giây, sau đó patch lại")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                    .padding(.bottom, 32)
+
+                // Info row
+                HStack(spacing: 20) {
+                    infoChip(
+                        icon: isOn ? "bolt.shield.fill" : "shield.slash.fill",
+                        label: isOn ? "BẬT" : "TẮT",
+                        color: isOn ? Color(red: 0.10, green: 0.92, blue: 0.55) : Color(red: 1.0, green: 0.38, blue: 0.38)
+                    )
+                    infoChip(
+                        icon: "iphone",
+                        label: "Thiết bị",
+                        color: Color(red: 0.52, green: 0.72, blue: 1.00)
+                    )
+                    infoChip(
+                        icon: "clock.fill",
+                        label: "Vừa check",
+                        color: Color(red: 0.80, green: 0.65, blue: 1.00)
+                    )
+                }
+                .padding(.bottom, 36)
+
+                // Dismiss button
+                Button {
+                    dismiss()
+                    onDismiss()
+                } label: {
+                    Text("Đóng")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            LinearGradient(
+                                colors: isOn
+                                    ? [Color(red: 0.05, green: 0.50, blue: 0.28), Color(red: 0.05, green: 0.38, blue: 0.22)]
+                                    : [Color(red: 0.50, green: 0.10, blue: 0.10), Color(red: 0.38, green: 0.07, blue: 0.07)],
+                                startPoint: .leading, endPoint: .trailing
+                            )
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .strokeBorder(
+                                    isOn ? Color(red: 0.10, green: 0.92, blue: 0.55).opacity(0.40) : Color.red.opacity(0.40),
+                                    lineWidth: 1.2
+                                )
+                        )
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 24)
+
+                Spacer(minLength: 20)
+            }
+        }
+        .presentationDetents([.fraction(0.52)])
+        .presentationDragIndicator(.hidden)
+        .preferredColorScheme(.dark)
+    }
+
+    private func infoChip(icon: String, label: String, color: Color) -> some View {
+        VStack(spacing: 6) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(color.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(color)
+            }
+            Text(label)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(color.opacity(0.80))
+        }
     }
 }
 
