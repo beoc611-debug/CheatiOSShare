@@ -1,5 +1,6 @@
 import SwiftUI
 import Darwin
+import UIKit
 
 struct FreefireESPHomeSection: View {
     @ObservedObject var store: FreefireESPStore
@@ -11,23 +12,142 @@ struct FreefireESPHomeSection: View {
     @State private var statRAMUsedMB: Int = 0
     @State private var showLog = false
     @State private var showDNSSheet = false
+    @State private var showESPToast = false
+    @State private var espToastIsOn = false
+    @State private var pendingESPCheck = false
+    @State private var wasPatching = false
 
     var body: some View {
-        VStack(spacing: 14) {
-            if tab == 0 {
-                statusCard
-                patchButton
-                dnsButton
-            } else if tab == 1 {
-                espCard
-                espColorCard
-                aimCard
-            } else {
-                settingsCard
+        ZStack(alignment: .top) {
+            VStack(spacing: 14) {
+                if tab == 0 {
+                    statusCard
+                    patchButton
+                    dnsButton
+                } else if tab == 1 {
+                    espCard
+                    espColorCard
+                    aimCard
+                } else {
+                    settingsCard
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
+            .onChange(of: store.isPatching) { isNowPatching in
+                if !isNowPatching && wasPatching {
+                    let errors = store.patchLog.filter { $0.level == .err }.count
+                    if errors == 0 && !store.patchLog.isEmpty {
+                        pendingESPCheck = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            openGame()
+                        }
+                    }
+                }
+                wasPatching = isNowPatching
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                guard pendingESPCheck else { return }
+                pendingESPCheck = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    let statusStr = store.checkESPStatus() ?? ""
+                    espToastIsOn = statusStr.hasPrefix("✅")
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                        showESPToast = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                        withAnimation(.easeOut(duration: 0.35)) { showESPToast = false }
+                    }
+                }
+            }
+
+            if showESPToast && tab == 0 {
+                espStatusToastView
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(100)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 16)
+        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: showESPToast)
+    }
+
+    // MARK: - Open game helper
+
+    private func openGame() {
+        let bundleID = store.selectedVariant == .freefire
+            ? (store.detectedBundleID ?? "com.dts.freefireth")
+            : (store.detectedMAXBundleID ?? "com.dts.freefiremax")
+        // Private API (works on TrollStore / sideloaded)
+        if let wsClass = NSClassFromString("LSApplicationWorkspace"),
+           let ws = (wsClass as AnyObject).perform(NSSelectorFromString("defaultWorkspace"))?.takeUnretainedValue() {
+            let sel = NSSelectorFromString("openApplicationWithBundleID:")
+            if (ws as AnyObject).responds(to: sel) {
+                _ = (ws as AnyObject).perform(sel, with: bundleID)
+                return
+            }
+        }
+        // URL scheme fallback
+        for scheme in ["freefire://", "garena://"] {
+            if let url = URL(string: scheme), UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url); return
+            }
+        }
+    }
+
+    // MARK: - ESP toast overlay
+
+    private var espStatusToastView: some View {
+        let isOn = espToastIsOn
+        return HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(isOn ? Color(red: 0.04, green: 0.20, blue: 0.12) : Color(red: 0.20, green: 0.04, blue: 0.04))
+                    .frame(width: 42, height: 42)
+                Image(systemName: isOn ? "checkmark.shield.fill" : "xmark.shield.fill")
+                    .font(.system(size: 21, weight: .bold))
+                    .foregroundStyle(isOn ? Color(red: 0.10, green: 0.92, blue: 0.55) : Color(red: 1.0, green: 0.38, blue: 0.38))
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Kết quả kích hoạt ESP")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.50))
+                Text(isOn ? "ESP đang hoạt động trên thiết bị" : "ESP chưa kích hoạt — thử patch lại")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(isOn ? Color(red: 0.10, green: 0.92, blue: 0.55) : Color(red: 1.0, green: 0.55, blue: 0.55))
+            }
+            Spacer()
+            Button {
+                withAnimation(.easeOut(duration: 0.3)) { showESPToast = false }
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.40))
+                    .frame(width: 26, height: 26)
+                    .background(Color.white.opacity(0.10))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            ZStack {
+                Color(red: 0.05, green: 0.07, blue: 0.14)
+                (isOn ? Color(red: 0.03, green: 0.16, blue: 0.08) : Color(red: 0.16, green: 0.03, blue: 0.03)).opacity(0.85)
+            }
+        )
+        .clipShape(CutShape(cut: 14))
+        .overlay(
+            CutShape(cut: 14).strokeBorder(
+                isOn ? Color(red: 0.10, green: 0.92, blue: 0.55).opacity(0.50) : Color(red: 1.0, green: 0.38, blue: 0.38).opacity(0.50),
+                lineWidth: 1.3
+            )
+        )
+        .shadow(
+            color: isOn ? Color(red: 0.10, green: 0.92, blue: 0.55).opacity(0.40) : Color.red.opacity(0.35),
+            radius: 18, y: 6
+        )
     }
 
     // MARK: - Status card
@@ -613,7 +733,11 @@ struct FreefireESPHomeSection: View {
         .alert(item: $store.patchResult) { result in
             switch result {
             case .success:
-                return Alert(title: Text("Patch thành công"), message: Text("Đang mở game..."), dismissButton: .default(Text("OK")))
+                return Alert(
+                    title: Text("Patch thành công"),
+                    message: Text("Đang mở Free Fire... Chơi vài giây rồi quay lại — app sẽ tự báo ESP có hoạt động không."),
+                    dismissButton: .default(Text("OK"))
+                )
             case .failure(let msg):
                 return Alert(title: Text("Patch thất bại"), message: Text(msg), dismissButton: .default(Text("OK")))
             }
