@@ -24,6 +24,7 @@ struct CheatiOSShareApp: App {
                 .onAppear {
                     appState.detectSupport()
                     PatchProjectLibrary.migrateRemoveLegacyFiles()
+                    _ = BackgroundAudioKeepAlive.shared  // init observers
                 }
                 .onOpenURL { url in
                     MakeToolsStore.shared.load(url: url)
