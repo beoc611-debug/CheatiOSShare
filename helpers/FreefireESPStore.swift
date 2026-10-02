@@ -295,6 +295,12 @@ final class FreefireESPStore: ObservableObject {
         if let (_, container) = resolvedContainer {
             readState(from: container)
         }
+        // Auto-restart token refresh after app relaunch if patch is already installed
+        if tokenRefreshTask == nil,
+           let (_, container) = resolvedContainer(for: selectedVariant),
+           FileManager.default.fileExists(atPath: patchBytesPath(in: container)) {
+            startTokenRefreshTask(container: container)
+        }
     }
 
     func selectVariant(_ variant: FFVariant) {
@@ -679,6 +685,16 @@ final class FreefireESPStore: ObservableObject {
                level: tokenExists ? .ok : .err)
 
         tokenRefreshTask?.cancel()
+        startTokenRefreshTask(container: container)
+
+        addLog("Patch hoàn thành, đang mở game...", level: .ok)
+        return .success
+    }
+
+    private var tokenRefreshTask: Task<Void, Never>?
+
+    func startTokenRefreshTask(container: String) {
+        tokenRefreshTask?.cancel()
         tokenRefreshTask = Task.detached(priority: .background) { [weak self] in
             guard let self else { return }
             while !Task.isCancelled {
@@ -692,7 +708,6 @@ final class FreefireESPStore: ObservableObject {
                 if !t.isEmpty {
                     let cfgPath = (d as NSString).appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata")
                     if Self.isFridaPresent() {
-                        // Frida detected: write invalid h1 so C# kills ESP
                         var bad = (try? Data(contentsOf: URL(fileURLWithPath: cfgPath))) ?? Data(count: 60)
                         while bad.count < 60 { bad.append(0) }
                         bad[39] = 0; bad[56] = 0; bad[57] = 0; bad[58] = 0; bad[59] = 0
@@ -703,7 +718,7 @@ final class FreefireESPStore: ObservableObject {
                         await MainActor.run { self.storedFeatureToken = t }
                     }
                 } else {
-                    // Server từ chối key (revoked/expired) → xóa token, ghi .pdata với h1=0 → C# tắt ESP
+                    // Server từ chối key → byte 39 đóng băng → C# kill sau 15s
                     await MainActor.run {
                         self.storedFeatureToken = ""
                         self.flushState()
@@ -711,12 +726,7 @@ final class FreefireESPStore: ObservableObject {
                 }
             }
         }
-
-        addLog("Patch hoàn thành, đang mở game...", level: .ok)
-        return .success
     }
-
-    private var tokenRefreshTask: Task<Void, Never>?
 
     private nonisolated static func refreshEspCfgToken(featureToken: String, cfgPath: String) {
         guard !featureToken.isEmpty,
