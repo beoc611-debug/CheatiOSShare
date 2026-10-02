@@ -10,12 +10,14 @@ struct FreefireESPHomeSection: View {
     @State private var statRAMPct: Int = 0
     @State private var statRAMUsedMB: Int = 0
     @State private var showLog = false
+    @State private var showDNSSheet = false
 
     var body: some View {
         VStack(spacing: 14) {
             if tab == 0 {
                 statusCard
                 patchButton
+                dnsButton
             } else if tab == 1 {
                 espCard
                 espColorCard
@@ -618,6 +620,38 @@ struct FreefireESPHomeSection: View {
         }
         .sheet(isPresented: $showLog) {
             PatchLogSheet(store: store, entries: store.patchLog) { store.clearLog() }
+        }
+    }
+
+    // MARK: - DNS button
+
+    private var dnsButton: some View {
+        Button { showDNSSheet = true } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .font(.system(size: 15, weight: .bold))
+                Text("Download DNS")
+                    .font(.system(size: 15, weight: .bold)).kerning(0.2)
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 15)
+            .background(
+                LinearGradient(
+                    colors: [Color(red: 0.10, green: 0.55, blue: 1.00), Color(red: 0.05, green: 0.78, blue: 0.62)],
+                    startPoint: .leading, endPoint: .trailing)
+                .clipShape(CutShape(cut: 14))
+            )
+            .overlay(CutShape(cut: 14).strokeBorder(Color(red: 0.10, green: 0.75, blue: 1.0).opacity(0.55), lineWidth: 1.2))
+            .shadow(color: Color(red: 0.10, green: 0.65, blue: 1.0).opacity(0.38), radius: 14, y: 4)
+        }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showDNSSheet) {
+            ZStack {
+                Color(red: 0.04, green: 0.06, blue: 0.12).ignoresSafeArea()
+                NextDNSView()
+            }
+            .preferredColorScheme(.dark)
         }
     }
 
