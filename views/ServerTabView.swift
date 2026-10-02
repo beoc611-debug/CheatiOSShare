@@ -21,16 +21,93 @@ struct ServerTabView: View {
     // MARK: - Empty
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "antenna.radiowaves.left.and.right.slash")
-                .font(.system(size: 32, weight: .light))
-                .foregroundStyle(AppTheme.techGlow.opacity(0.4))
-            Text("Đang tải cấu hình...")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(Color(red: 0.55, green: 0.45, blue: 0.50))
+        let red  = Color(red: 1.00, green: 0.18, blue: 0.38)
+        let rose = Color(red: 0.85, green: 0.10, blue: 0.28)
+        let dark = Color(red: 0.10, green: 0.04, blue: 0.06)
+
+        return VStack(spacing: 20) {
+            Spacer().frame(height: 8)
+
+            // Icon
+            ZStack {
+                Circle()
+                    .fill(red.opacity(0.12))
+                    .frame(width: 72, height: 72)
+                Circle()
+                    .strokeBorder(red.opacity(0.25), lineWidth: 1)
+                    .frame(width: 72, height: 72)
+                Image(systemName: "lock.shield.fill")
+                    .font(.system(size: 28, weight: .semibold))
+                    .foregroundStyle(red.opacity(0.75))
+            }
+
+            VStack(spacing: 6) {
+                Text("Tính năng tạm thời bị khóa")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(Color(red: 0.90, green: 0.85, blue: 0.87))
+                Text("Liên hệ admin hoặc theo dõi nhóm\nđể nhận thông báo khi mở lại.")
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundStyle(Color(red: 0.55, green: 0.48, blue: 0.52))
+                    .multilineTextAlignment(.center)
+            }
+
+            VStack(spacing: 12) {
+                // Nút liên hệ admin
+                Button {
+                    if let url = URL(string: "https://t.me/canhioscrack") {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "paperplane.fill")
+                            .font(.system(size: 14, weight: .bold))
+                        Text("Liên hệ Admin")
+                            .font(.system(size: 15, weight: .bold))
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        LinearGradient(colors: [rose, red], startPoint: .leading, endPoint: .trailing)
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(red.opacity(0.45), lineWidth: 1)
+                    )
+                    .shadow(color: red.opacity(0.30), radius: 10, y: 4)
+                }
+                .buttonStyle(.plain)
+
+                // Nút tham gia nhóm
+                Button {
+                    if let url = URL(string: "https://t.me/crackcyipa") {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "bell.badge.fill")
+                            .font(.system(size: 14, weight: .bold))
+                        Text("Tham gia nhóm nhận thông báo")
+                            .font(.system(size: 15, weight: .bold))
+                    }
+                    .foregroundStyle(red)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(dark.clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous)))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(red.opacity(0.35), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16)
+
+            Spacer().frame(height: 8)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 48)
+        .padding(.vertical, 24)
     }
 
     // MARK: - Section card
