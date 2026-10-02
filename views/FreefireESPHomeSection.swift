@@ -31,10 +31,6 @@ struct FreefireESPHomeSection: View {
                 ServerTabView(store: store, sections: uiConfig?.esp ?? [])
             } else {
                 settingsCard
-                let miscSections = uiConfig?.misc ?? []
-                if !miscSections.isEmpty {
-                    ServerTabView(store: store, sections: miscSections)
-                }
             }
         }
         .padding(.horizontal, 16)
