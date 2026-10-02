@@ -572,11 +572,7 @@ final class FreefireESPStore: ObservableObject {
         let (fr, fg, fb) = colorToBytes(fovColor)
         data[35] = fr; data[36] = fg; data[37] = fb
         data[38] = UInt8(min(97, max(0, skelThicknessRaw)))
-        // byte 39: device-name binding checksum
-        let _devName = UIDevice.current.name
-        var _bindByte: UInt8 = 0x37
-        for c in _devName.utf8 { _bindByte = _bindByte &+ c }
-        data[39] = _bindByte
+        data[39] = 0 // ping counter — reset to 0 on full flush; incremented by refreshEspCfgToken
         // bytes 40-55: featureToken ASCII (16 bytes); bytes 56-59: h1 int32 LE
         // h1=0 means "no token" — C# skips ESP if h1==0
         if !storedFeatureToken.isEmpty {
