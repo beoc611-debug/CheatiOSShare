@@ -30,13 +30,9 @@ struct FreefireESPHomeSection: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
             } else if tab == 1 {
-                ScrollView {
-                    ServerTabView(store: store, sections: store.uiConfig.esp)
-                }
+                ServerTabView(store: store, sections: store.uiConfig.esp)
             } else {
-                ScrollView {
-                    ServerTabView(store: store, sections: store.uiConfig.misc)
-                }
+                ServerTabView(store: store, sections: store.uiConfig.misc)
             }
         }
         .task(id: tab) {
