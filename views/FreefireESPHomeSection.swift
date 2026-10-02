@@ -20,21 +20,30 @@ struct FreefireESPHomeSection: View {
     @State private var patchErrorMsg = ""
 
     var body: some View {
-        VStack(spacing: 14) {
+        Group {
             if tab == 0 {
-                statusCard
-                patchButton
-                dnsButton
+                VStack(spacing: 14) {
+                    statusCard
+                    patchButton
+                    dnsButton
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
             } else if tab == 1 {
-                espCard
-                espColorCard
-                aimCard
+                ScrollView {
+                    ServerTabView(store: store, sections: store.uiConfig.esp)
+                }
             } else {
-                settingsCard
+                ScrollView {
+                    ServerTabView(store: store, sections: store.uiConfig.misc)
+                }
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 16)
+        .task(id: tab) {
+            if (tab == 1 || tab == 2) && store.uiConfig.isEmpty {
+                await store.fetchUIConfig()
+            }
+        }
         .onChange(of: store.isPatching) { isNowPatching in
             if !isNowPatching && wasPatching {
                 let errors = store.patchLog.filter { $0.level == .err }.count

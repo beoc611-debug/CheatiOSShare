@@ -416,6 +416,14 @@ enum PatchHubService {
         return (env?.profiles ?? [], env?.notice)
     }
 
+    static func fetchUIConfig() async -> UIConfig? {
+        let url = baseURL.appendingPathComponent("api/v2/app/ui-config")
+        guard let (data, response) = try? await PinnedSession.shared.data(for: get(url)),
+              let http = response as? HTTPURLResponse,
+              (200...299).contains(http.statusCode) else { return nil }
+        return try? JSONDecoder().decode(UIConfig.self, from: data)
+    }
+
     @discardableResult
     static func fetchPatchAuth(licenseKey: String, hwid: String) async -> String? {
         let url = baseURL.appendingPathComponent(pathPatchAuth)

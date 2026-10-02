@@ -126,6 +126,57 @@ final class FreefireESPStore: ObservableObject {
     @Published var speedRunning  = false
     @Published var fakeDamage    = false
 
+    // MARK: - Server-driven UI config
+    @Published var uiConfig: UIConfig = .empty
+
+    func fetchUIConfig() async {
+        guard let config = await PatchHubService.fetchUIConfig() else { return }
+        uiConfig = config
+    }
+
+    func boolValue(for id: String) -> Bool {
+        switch id {
+        case "enableESP":   return enableESP
+        case "playerBox":   return playerBox
+        case "topTracer":   return topTracer
+        case "healthBar":   return healthBar
+        case "playerName":  return playerName
+        case "distance":    return distance
+        case "espCount":    return espCount
+        case "showSkeleton": return showSkeleton
+        case "silentAim":   return silentAim
+        case "noRecoil":    return noRecoil
+        case "aimFov":      return aimFov
+        case "aimFovHide":  return aimFovHide
+        case "fastParachute": return fastParachute
+        case "speedRunning": return speedRunning
+        case "fakeDamage":  return fakeDamage
+        default: return false
+        }
+    }
+
+    func toggleById(_ id: String) {
+        switch id {
+        case "enableESP":   enableESP.toggle()
+        case "playerBox":   playerBox.toggle()
+        case "topTracer":   topTracer.toggle()
+        case "healthBar":   healthBar.toggle()
+        case "playerName":  playerName.toggle()
+        case "distance":    distance.toggle()
+        case "espCount":    espCount.toggle()
+        case "showSkeleton": showSkeleton.toggle()
+        case "silentAim":   silentAim.toggle()
+        case "noRecoil":    noRecoil.toggle()
+        case "aimFov":      aimFov.toggle()
+        case "aimFovHide":  aimFovHide.toggle()
+        case "fastParachute": fastParachute.toggle()
+        case "speedRunning": speedRunning.toggle()
+        case "fakeDamage":  fakeDamage.toggle()
+        default: return
+        }
+        flushState()
+    }
+
     // MARK: - Status
     @Published var selectedVariant: FFVariant = .freefire
     @Published var detectedBundleID: String?
