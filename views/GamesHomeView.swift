@@ -166,8 +166,8 @@ struct GamesHomeView: View {
                         .font(.system(size: 30, weight: .black))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [Color(red: 1.00, green: 0.85, blue: 0.35),
-                                         Color(red: 1.00, green: 0.65, blue: 0.10)],
+                                colors: [Color(red: 1.00, green: 0.40, blue: 0.60),
+                                         Color(red: 0.90, green: 0.10, blue: 0.30)],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
@@ -198,7 +198,7 @@ struct GamesHomeView: View {
 
                 Text("Tr\u{1EE3} th\u{1EE7} game \u{00B7} An to\u{00E0}n \u{00B7} \u{1ED4}n \u{0111}\u{1ECB}nh")
                     .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(Color(red: 0.75, green: 0.65, blue: 0.45))
+                    .foregroundStyle(Color(red: 0.78, green: 0.50, blue: 0.58))
             }
 
             Spacer()
@@ -457,11 +457,11 @@ struct GamesHomeView: View {
             VStack(spacing: 5) {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: active ? .bold : .regular))
-                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.52, green: 0.46, blue: 0.32))
-                    .shadow(color: active ? AppTheme.techGlow.opacity(0.60) : .clear, radius: 8)
+                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.48, green: 0.35, blue: 0.40))
+                    .shadow(color: active ? AppTheme.techGlow.opacity(0.65) : .clear, radius: 8)
                 Text(label)
                     .font(.system(size: 10, weight: active ? .bold : .medium))
-                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.52, green: 0.46, blue: 0.32))
+                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.48, green: 0.35, blue: 0.40))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)
@@ -480,11 +480,11 @@ struct GamesHomeView: View {
             VStack(spacing: 5) {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: active ? .bold : .regular))
-                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.52, green: 0.46, blue: 0.32))
-                    .shadow(color: active ? AppTheme.techGlow.opacity(0.60) : .clear, radius: 8)
+                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.48, green: 0.35, blue: 0.40))
+                    .shadow(color: active ? AppTheme.techGlow.opacity(0.65) : .clear, radius: 8)
                 Text(label)
                     .font(.system(size: 10, weight: active ? .bold : .medium))
-                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.52, green: 0.46, blue: 0.32))
+                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.48, green: 0.35, blue: 0.40))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)

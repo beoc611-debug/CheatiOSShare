@@ -613,18 +613,18 @@ struct FreefireESPHomeSection: View {
                         ZStack {
                             LinearGradient(
                                 colors: store.isPatching
-                                    ? [Color(red: 0.20, green: 0.16, blue: 0.05), Color(red: 0.14, green: 0.11, blue: 0.03)]
-                                    : [Color(red: 0.90, green: 0.58, blue: 0.05), Color(red: 1.00, green: 0.76, blue: 0.18)],
+                                    ? [Color(red: 0.18, green: 0.04, blue: 0.07), Color(red: 0.12, green: 0.03, blue: 0.05)]
+                                    : [Color(red: 0.85, green: 0.10, blue: 0.28), Color(red: 1.00, green: 0.28, blue: 0.50)],
                                 startPoint: .leading, endPoint: .trailing)
                             if !store.isPatching {
-                                LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .top, endPoint: .center)
+                                LinearGradient(colors: [.white.opacity(0.14), .clear], startPoint: .top, endPoint: .center)
                             }
                         }.clipShape(CutShape(cut: 14))
                     )
                     .overlay(CutShape(cut: 14).strokeBorder(
-                        store.isPatching ? AppTheme.techGlow.opacity(0.25) : AppTheme.neonCyan.opacity(0.55),
+                        store.isPatching ? AppTheme.techGlow.opacity(0.20) : AppTheme.neonCyan.opacity(0.55),
                         lineWidth: 1.2))
-                    .shadow(color: store.isPatching ? .clear : AppTheme.techGlow.opacity(0.45), radius: 16, y: 4)
+                    .shadow(color: store.isPatching ? .clear : AppTheme.techGlow.opacity(0.50), radius: 16, y: 4)
                 }
                 .buttonStyle(.plain)
                 .disabled(store.isPatching || detected == nil)
@@ -723,12 +723,12 @@ struct FreefireESPHomeSection: View {
             .padding(.vertical, 15)
             .background(
                 LinearGradient(
-                    colors: [Color(red: 0.10, green: 0.55, blue: 1.00), Color(red: 0.05, green: 0.78, blue: 0.62)],
+                    colors: [Color(red: 0.55, green: 0.05, blue: 0.20), Color(red: 0.75, green: 0.12, blue: 0.35)],
                     startPoint: .leading, endPoint: .trailing)
                 .clipShape(CutShape(cut: 14))
             )
-            .overlay(CutShape(cut: 14).strokeBorder(Color(red: 0.10, green: 0.75, blue: 1.0).opacity(0.55), lineWidth: 1.2))
-            .shadow(color: Color(red: 0.10, green: 0.65, blue: 1.0).opacity(0.38), radius: 14, y: 4)
+            .overlay(CutShape(cut: 14).strokeBorder(Color(red: 1.00, green: 0.25, blue: 0.50).opacity(0.45), lineWidth: 1.2))
+            .shadow(color: Color(red: 0.85, green: 0.10, blue: 0.28).opacity(0.35), radius: 14, y: 4)
         }
         .buttonStyle(.plain)
         .sheet(isPresented: $showDNSSheet) {

@@ -23,18 +23,18 @@ enum AppTheme {
     static let emptyIconSize: CGFloat = 30
     static let selectionIconSize: CGFloat = 18
 
-    // MARK: Gold palette
-    static let cyberBase      = Color(red: 0.06, green: 0.04, blue: 0.01)
-    static let techGlow       = Color(red: 1.00, green: 0.76, blue: 0.18)   // gold
-    static let neonPurple     = Color(red: 0.90, green: 0.58, blue: 0.05)   // amber
-    static let neonCyan       = Color(red: 1.00, green: 0.90, blue: 0.40)   // bright gold
-    static let techCardFill   = Color(red: 0.10, green: 0.08, blue: 0.03)
+    // MARK: Red / Dark-Rose palette
+    static let cyberBase      = Color(red: 0.05, green: 0.02, blue: 0.03)
+    static let techGlow       = Color(red: 1.00, green: 0.18, blue: 0.38)   // neon red-rose
+    static let neonPurple     = Color(red: 0.85, green: 0.10, blue: 0.28)   // deep crimson
+    static let neonCyan       = Color(red: 1.00, green: 0.45, blue: 0.62)   // hot pink
+    static let techCardFill   = Color(red: 0.08, green: 0.03, blue: 0.04)
 
     static var techCardStroke: LinearGradient {
         LinearGradient(
             colors: [
-                Color(red: 1.00, green: 0.76, blue: 0.18).opacity(0.50),
-                Color(red: 0.90, green: 0.58, blue: 0.05).opacity(0.30)
+                Color(red: 1.00, green: 0.18, blue: 0.38).opacity(0.55),
+                Color(red: 0.85, green: 0.10, blue: 0.28).opacity(0.30)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -125,7 +125,7 @@ struct TechCardModifier: ViewModifier {
             .background(.ultraThinMaterial)
             .clipShape(CutShape(cut: cut))
             .overlay(CutShape(cut: cut).strokeBorder(AppTheme.techCardStroke, lineWidth: 1))
-            .shadow(color: AppTheme.techGlow.opacity(0.10), radius: 18, y: 5)
+            .shadow(color: AppTheme.techGlow.opacity(0.18), radius: 18, y: 5)
     }
 }
 
