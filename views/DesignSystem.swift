@@ -30,16 +30,14 @@ enum AppTheme {
     static let neonCyan       = Color(red: 1.00, green: 0.45, blue: 0.62)   // hot pink
     static let techCardFill   = Color(red: 0.08, green: 0.03, blue: 0.04)
 
-    static var techCardStroke: LinearGradient {
-        LinearGradient(
-            colors: [
-                Color(red: 1.00, green: 0.18, blue: 0.38).opacity(0.55),
-                Color(red: 0.85, green: 0.10, blue: 0.28).opacity(0.30)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
+    static let techCardStroke = LinearGradient(
+        colors: [
+            Color(red: 1.00, green: 0.18, blue: 0.38).opacity(0.55),
+            Color(red: 0.85, green: 0.10, blue: 0.28).opacity(0.30)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
 
     static let rowPalette: [Color] = [
         Color(red: 1.00, green: 0.56, blue: 0.24),
@@ -102,15 +100,11 @@ struct CutShape: InsettableShape {
 
 struct TechBackground: View {
     var body: some View {
-        GeometryReader { geo in
-            Image("AppBg")
-                .resizable()
-                .scaledToFill()
-                .frame(width: geo.size.width, height: geo.size.height)
-                .clipped()
-        }
-        .ignoresSafeArea()
-        .allowsHitTesting(false)
+        Image("AppBg")
+            .resizable()
+            .scaledToFill()
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
     }
 }
 
@@ -122,7 +116,6 @@ struct TechCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(AppTheme.techCardFill)
-            .background(.ultraThinMaterial)
             .clipShape(CutShape(cut: cut))
             .overlay(CutShape(cut: cut).strokeBorder(AppTheme.techCardStroke, lineWidth: 1))
             .shadow(color: AppTheme.techGlow.opacity(0.18), radius: 18, y: 5)

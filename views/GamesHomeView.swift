@@ -472,7 +472,7 @@ struct GamesHomeView: View {
     private func ffTabItem(icon: String, label: String, ffIndex: Int) -> some View {
         let active = ffTab == ffIndex
         return Button {
-            withAnimation(.spring(response: 0.22, dampingFraction: 0.75)) {
+            withAnimation(.easeInOut(duration: 0.18)) {
                 ffTab = ffIndex
                 selectedTab = 0
             }
