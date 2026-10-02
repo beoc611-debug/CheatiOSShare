@@ -16,6 +16,8 @@ struct FreefireESPHomeSection: View {
     @State private var espToastIsOn = false
     @State private var pendingESPCheck = false
     @State private var wasPatching = false
+    @State private var showPatchErrorSheet = false
+    @State private var patchErrorMsg = ""
 
     var body: some View {
         VStack(spacing: 14) {
@@ -57,8 +59,20 @@ struct FreefireESPHomeSection: View {
                 }
             }
         }
+        .onReceive(store.$patchResult) { result in
+            guard let result = result else { return }
+            if case .failure(let msg) = result {
+                patchErrorMsg = msg
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showPatchErrorSheet = true
+                }
+            }
+        }
         .sheet(isPresented: $showESPToast) {
             ESPResultSheet(isOn: espToastIsOn, onDismiss: { showESPToast = false })
+        }
+        .sheet(isPresented: $showPatchErrorSheet) {
+            PatchErrorSheet(message: patchErrorMsg, onDismiss: { showPatchErrorSheet = false })
         }
     }
 
@@ -618,10 +632,30 @@ struct FreefireESPHomeSection: View {
             }
 
             if detected == nil {
-                Text("Không tìm thấy \(store.selectedVariant.rawValue) — hãy cài game trước")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Color(red: 0.55, green: 0.45, blue: 0.68))
-                    .multilineTextAlignment(.center)
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color(red: 1.0, green: 0.65, blue: 0.10).opacity(0.18))
+                            .frame(width: 38, height: 38)
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(Color(red: 1.0, green: 0.70, blue: 0.10))
+                    }
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Không tìm thấy \(store.selectedVariant.rawValue)")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(Color(red: 1.0, green: 0.80, blue: 0.35))
+                        Text("Hãy cài game lên thiết bị trước khi sử dụng tính năng này.")
+                            .font(.system(size: 12, weight: .regular))
+                            .foregroundStyle(Color(red: 0.70, green: 0.65, blue: 0.50))
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(Color(red: 1.0, green: 0.65, blue: 0.10).opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color(red: 1.0, green: 0.70, blue: 0.10).opacity(0.30), lineWidth: 1))
             }
 
             if !store.patchLog.isEmpty {
@@ -663,18 +697,6 @@ struct FreefireESPHomeSection: View {
                     .overlay(CutShape(cut: 10).strokeBorder(AppTheme.neonCyan.opacity(0.22), lineWidth: 0.8))
                 }
                 .buttonStyle(.plain)
-            }
-        }
-        .alert(item: $store.patchResult) { result in
-            switch result {
-            case .success:
-                return Alert(
-                    title: Text("Patch thành công"),
-                    message: Text("Đang mở Free Fire... Chơi vài giây rồi quay lại — app sẽ tự báo ESP có hoạt động không."),
-                    dismissButton: .default(Text("OK"))
-                )
-            case .failure(let msg):
-                return Alert(title: Text("Patch thất bại"), message: Text(msg), dismissButton: .default(Text("OK")))
             }
         }
         .sheet(isPresented: $showLog) {
@@ -858,6 +880,127 @@ struct FreefireESPHomeSection: View {
     }
 }
 
+// MARK: - Patch Error Sheet
+
+private struct PatchErrorSheet: View {
+    let message: String
+    let onDismiss: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    private let orange = Color(red: 1.00, green: 0.65, blue: 0.10)
+
+    var body: some View {
+        ZStack {
+            Color(red: 0.06, green: 0.07, blue: 0.13).ignoresSafeArea()
+            Circle()
+                .fill(RadialGradient(colors: [orange.opacity(0.18), .clear],
+                                     center: .center, startRadius: 0, endRadius: 180))
+                .frame(width: 360, height: 360).offset(y: -60).blur(radius: 20)
+
+            VStack(spacing: 0) {
+                Capsule().fill(Color.white.opacity(0.18)).frame(width: 36, height: 4)
+                    .padding(.top, 12).padding(.bottom, 20)
+
+                ZStack {
+                    Circle().fill(orange.opacity(0.18)).frame(width: 80, height: 80)
+                    Circle().strokeBorder(orange.opacity(0.40), lineWidth: 1.5).frame(width: 80, height: 80)
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 36, weight: .bold)).foregroundStyle(orange)
+                }
+                .padding(.bottom, 14)
+
+                Text("Patch thất bại")
+                    .font(.system(size: 20, weight: .heavy)).foregroundStyle(orange)
+                    .padding(.bottom, 6)
+                Text("Đã xảy ra lỗi khi ghi file vào game")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                    .padding(.bottom, 20)
+
+                // Steps card
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        Text("CÓ THỂ LÀM GÌ?")
+                            .font(.system(size: 11, weight: .heavy)).foregroundStyle(orange.opacity(0.80)).kerning(0.8)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 10)
+
+                    stepRow(num: "1", icon: "arrow.uturn.backward.circle.fill",
+                            color: Color(red: 1.0, green: 0.75, blue: 0.15),
+                            title: "Thử bấm Patch lại",
+                            desc: "Đóng bảng này và bấm 'Patch File vào Game' một lần nữa.")
+                    divider
+                    stepRow(num: "2", icon: "gamecontroller.fill",
+                            color: Color(red: 0.55, green: 0.72, blue: 1.0),
+                            title: "Mở Free Fire trước, rồi quay lại patch",
+                            desc: "Đảm bảo game đã khởi động ít nhất một lần để hệ thống nhận dạng đúng đường dẫn.")
+                    divider
+                    stepRow(num: "3", icon: "trash.circle.fill",
+                            color: Color(red: 0.80, green: 0.40, blue: 1.0),
+                            title: "Xoá dữ liệu game rồi mở lại",
+                            desc: "Vào Cài đặt → Cổng ứng dụng → Free Fire → Xoá dữ liệu app → mở lại game một lần rồi thử patch.")
+                    if !message.isEmpty && !message.hasPrefix("Không tìm") {
+                        divider
+                        HStack(alignment: .top, spacing: 10) {
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 14)).foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                                .padding(.top, 1)
+                            Text(message)
+                                .font(.system(size: 12)).foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.horizontal, 14).padding(.vertical, 12)
+                    }
+                }
+                .background(Color.white.opacity(0.05))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(orange.opacity(0.20), lineWidth: 1))
+                .padding(.horizontal, 16).padding(.bottom, 24)
+
+                Button { dismiss(); onDismiss() } label: {
+                    Text("Đã hiểu")
+                        .font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
+                        .frame(maxWidth: .infinity).padding(.vertical, 15)
+                        .background(LinearGradient(
+                            colors: [Color(red: 0.50, green: 0.30, blue: 0.05), Color(red: 0.38, green: 0.22, blue: 0.03)],
+                            startPoint: .leading, endPoint: .trailing))
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(orange.opacity(0.45), lineWidth: 1.2))
+                }
+                .buttonStyle(.plain).padding(.horizontal, 16).padding(.bottom, 20)
+            }
+        }
+        .presentationDetents([.fraction(0.72)])
+        .presentationDragIndicator(.hidden)
+        .preferredColorScheme(.dark)
+    }
+
+    private var divider: some View {
+        Rectangle().fill(Color.white.opacity(0.07)).frame(height: 0.5).padding(.leading, 58)
+    }
+
+    private func stepRow(num: String, icon: String, color: Color, title: String, desc: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10).fill(color.opacity(0.18)).frame(width: 38, height: 38)
+                Image(systemName: icon).font(.system(size: 16, weight: .semibold)).foregroundStyle(color)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text(num).font(.system(size: 10, weight: .heavy)).foregroundStyle(color)
+                        .frame(width: 16, height: 16).background(color.opacity(0.20)).clipShape(Circle())
+                    Text(title).font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
+                }
+                Text(desc).font(.system(size: 12)).foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 14).padding(.vertical, 12)
+    }
+}
+
 // MARK: - ESP Result Sheet
 
 private struct ESPResultSheet: View {
@@ -933,8 +1076,8 @@ private struct ESPResultSheet: View {
                                     desc: "ESP đã sẵn sàng — mở game và bắt đầu trận là thấy ngay.")
                             divider
                             stepRow(num: "2", icon: "app.badge.fill", color: Color(red: 0.55, green: 0.72, blue: 1.0),
-                                    title: "Giữ app này chạy nền",
-                                    desc: "Để app hoạt động ổn định, đừng tắt hoàn toàn — chỉ cần để nền là được.")
+                                    title: "Không tắt app bằng đa nhiệm",
+                                    desc: "Khi chơi game, đừng vuốt lên bỏ app trong màn hình đa nhiệm. Chỉ cần nhấn Home hoặc chuyển sang game là đủ.")
                             divider
                             stepRow(num: "3", icon: "arrow.clockwise.circle.fill", color: Color(red: 0.80, green: 0.65, blue: 1.0),
                                     title: "Khi nào cần patch lại?",
