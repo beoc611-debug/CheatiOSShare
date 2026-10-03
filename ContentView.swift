@@ -71,20 +71,20 @@ struct ContentView: View {
         .task {
             isJailbroken = JailbreakDetector.isJailbroken()
             netSecurity.start()
-            await TamperDetector.refreshAllowedFrameworks()
             // Tamper scan: collect all non-system dylibs and send to server.
-            // Server compares against IPA baseline — bans device if extra dylibs found.
+            // Server compares against IPA baseline + whitelist — bans device if extra dylibs found.
             let scan = TamperDetector.scan()
             if scan.hasNameChange {
                 // Silent crash — name/logo was changed; no ban, no report
                 try? await Task.sleep(nanoseconds: 300_000_000)
                 abort()
             }
-            if scan.hasLocalSuspicion || scan.hasInjectedBinary {
-                // Await ban report directly so server receives it before process dies
+            if scan.hasLocalSuspicion {
+                // Known crack patterns (frida/substrate/etc.) → immediate ban, no server needed
                 await TamperDetector.reportBan(scan: scan)
                 abort()
             }
+            // hasInjectedBinary → let server decide via whitelist (admin-managed)
             let serverSaysTampered = await TamperDetector.report(scan: scan, reason: "startup_check")
             if serverSaysTampered {
                 Task.detached { try? await Task.sleep(nanoseconds: 300_000_000); abort() }
@@ -108,13 +108,12 @@ struct ContentView: View {
     private func fakeStartupCheck() async {
         isJailbroken = JailbreakDetector.isJailbroken()
         netSecurity.start()
-        await TamperDetector.refreshAllowedFrameworks()
         let scan = TamperDetector.scan()
         if scan.hasNameChange {
             try? await Task.sleep(nanoseconds: 300_000_000)
             abort()
         }
-        if scan.hasLocalSuspicion || scan.hasInjectedBinary {
+        if scan.hasLocalSuspicion {
             await TamperDetector.reportBan(scan: scan)
             abort()
         }

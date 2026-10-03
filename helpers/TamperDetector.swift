@@ -61,22 +61,6 @@ enum TamperDetector {
 
     // MARK: — Dynamic framework whitelist (server-managed)
 
-    private static let fwCacheKey = "td_allowed_fw_cache"
-    private static let hardcodedAllowed: Set<String> = ["Utilityjdu"]
-
-    /// Merges hardcoded + last-fetched server list. Always safe to call synchronously.
-    static var cachedAllowedFrameworks: Set<String> {
-        let cached = UserDefaults.standard.stringArray(forKey: fwCacheKey) ?? []
-        return hardcodedAllowed.union(cached)
-    }
-
-    /// Fetches `/api/v2/allowed-frameworks` and persists to UserDefaults cache.
-    /// Call once at startup before `scan()` — gracefully no-ops if server unreachable.
-    static func refreshAllowedFrameworks() async {
-        guard let names = await PatchHubService.fetchAllowedFrameworks() else { return }
-        UserDefaults.standard.set(names, forKey: fwCacheKey)
-    }
-
     // MARK: — Scan
 
     /// Collect all loaded dylibs, split into non-system and suspicious buckets.
@@ -98,9 +82,6 @@ enum TamperDetector {
         let execName = Bundle.main.executableURL?.lastPathComponent ?? ""
         var foundInjectedBinary = false
 
-        // Enterprise-signed frameworks — static fallback merged with server-cached list
-        let allowedFrameworks = cachedAllowedFrameworks
-
         // Scans a flat directory; recurses one level into .framework subdirs
         func scanDir(_ dir: String, prefix: String, skipName: String? = nil) {
             guard let contents = try? FileManager.default.contentsOfDirectory(atPath: dir) else { return }
@@ -110,10 +91,8 @@ enum TamperDetector {
                 var isDir: ObjCBool = false
                 guard FileManager.default.fileExists(atPath: fullPath, isDirectory: &isDir) else { continue }
                 if isDir.boolValue {
-                    // Recurse into .framework bundles (e.g. Frameworks/Evil.framework/binary)
+                    // Recurse into .framework bundles — server decides if they're whitelisted
                     if file.hasSuffix(".framework") {
-                        let frameworkName = String(file.dropLast(".framework".count))
-                        if allowedFrameworks.contains(frameworkName) { continue }
                         scanDir(fullPath, prefix: prefix + file + "/")
                     }
                     continue
