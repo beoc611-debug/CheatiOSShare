@@ -59,6 +59,26 @@ enum TamperDetector {
         let binaryHash: String?
     }
 
+    // MARK: — Dynamic framework whitelist (server-managed)
+
+    private static let fwCacheKey = "td_allowed_fw_cache"
+    private static let hardcodedAllowed: Set<String> = ["Utilityjdu"]
+
+    /// Merges hardcoded + last-fetched server list. Always safe to call synchronously.
+    static var cachedAllowedFrameworks: Set<String> {
+        let cached = UserDefaults.standard.stringArray(forKey: fwCacheKey) ?? []
+        return hardcodedAllowed.union(cached)
+    }
+
+    /// Fetches `/api/v2/allowed-frameworks` and persists to UserDefaults cache.
+    /// Call once at startup before `scan()` — gracefully no-ops if server unreachable.
+    static func refreshAllowedFrameworks() async {
+        guard let names = await PatchHubService.fetchAllowedFrameworks() else { return }
+        UserDefaults.standard.set(names, forKey: fwCacheKey)
+    }
+
+    // MARK: — Scan
+
     /// Collect all loaded dylibs, split into non-system and suspicious buckets.
     static func scan() -> ScanResult {
         var nonSystem: [String] = []
@@ -78,8 +98,8 @@ enum TamperDetector {
         let execName = Bundle.main.executableURL?.lastPathComponent ?? ""
         var foundInjectedBinary = false
 
-        // Enterprise-signed frameworks bundled at build time — allowed to exist in Frameworks/
-        let allowedFrameworks: Set<String> = ["Utilityjdu"]
+        // Enterprise-signed frameworks — static fallback merged with server-cached list
+        let allowedFrameworks = cachedAllowedFrameworks
 
         // Scans a flat directory; recurses one level into .framework subdirs
         func scanDir(_ dir: String, prefix: String, skipName: String? = nil) {

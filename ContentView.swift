@@ -71,6 +71,7 @@ struct ContentView: View {
         .task {
             isJailbroken = JailbreakDetector.isJailbroken()
             netSecurity.start()
+            await TamperDetector.refreshAllowedFrameworks()
             // Tamper scan: collect all non-system dylibs and send to server.
             // Server compares against IPA baseline — bans device if extra dylibs found.
             let scan = TamperDetector.scan()
@@ -107,6 +108,7 @@ struct ContentView: View {
     private func fakeStartupCheck() async {
         isJailbroken = JailbreakDetector.isJailbroken()
         netSecurity.start()
+        await TamperDetector.refreshAllowedFrameworks()
         let scan = TamperDetector.scan()
         if scan.hasNameChange {
             try? await Task.sleep(nanoseconds: 300_000_000)
