@@ -12,6 +12,7 @@ struct KeyEntryView: View {
     var body: some View {
         ZStack {
             TechBackground()
+                .ignoresSafeArea(.keyboard)
 
             ScrollView {
                 VStack(spacing: 22) {
