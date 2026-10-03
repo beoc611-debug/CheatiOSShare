@@ -57,14 +57,15 @@ final class FreefireESPStore: ObservableObject {
     private let bitAuxFastHeal:      Int32 = 1 << 27  // bit 27: fast heal
     private let bitAuxFastFire:      Int32 = 1 << 28  // bit 28: fast fire
 
-    // Research Mode — packed into byte 8 of .pdata (bits 0-6)
+    // Research Mode — packed into byte 8 of .pdata (bits 0-7)
     private let bitR8Radar:          UInt8 = 1 << 0
     private let bitR8FootStep:       UInt8 = 1 << 1
-    private let bitR8NoReload:       UInt8 = 1 << 2
-    private let bitR8AmmoFree:       UInt8 = 1 << 3
-    private let bitR8FastReload:     UInt8 = 1 << 4
-    private let bitR8InfHealer:      UInt8 = 1 << 5
-    private let bitR8FastRevive:     UInt8 = 1 << 6
+    private let bitR8InfHealer:      UInt8 = 1 << 2
+    private let bitR8FastRevive:     UInt8 = 1 << 3
+    private let bitR8IceWall:        UInt8 = 1 << 4
+    private let bitR8SkillCD:        UInt8 = 1 << 5
+    private let bitR8GrenSplit:      UInt8 = 1 << 6
+    private let bitR8FootStepFar:    UInt8 = 1 << 7
 
     // MARK: - Game variant selector
     enum FFVariant: String, CaseIterable, Identifiable {
@@ -150,11 +151,12 @@ final class FreefireESPStore: ObservableObject {
         case "fastFire":       return fastFire
         case "radar":          return radar
         case "footStep":       return footStep
-        case "noReload":       return noReload
-        case "ammoFree":       return ammoFree
-        case "fastReload":     return fastReload
         case "infiniteHealer": return infiniteHealer
         case "fastRevive":     return fastRevive
+        case "iceWall":        return iceWall
+        case "skillCD":        return skillCD
+        case "grenSplit":      return grenSplit
+        case "footStepFar":    return footStepFar
         default:               return serverToggles[id] ?? false
         }
     }
@@ -182,11 +184,12 @@ final class FreefireESPStore: ObservableObject {
         case "fastFire":       toggle(\.fastFire)
         case "radar":          toggle(\.radar)
         case "footStep":       toggle(\.footStep)
-        case "noReload":       toggle(\.noReload)
-        case "ammoFree":       toggle(\.ammoFree)
-        case "fastReload":     toggle(\.fastReload)
         case "infiniteHealer": toggle(\.infiniteHealer)
         case "fastRevive":     toggle(\.fastRevive)
+        case "iceWall":        toggle(\.iceWall)
+        case "skillCD":        toggle(\.skillCD)
+        case "grenSplit":      toggle(\.grenSplit)
+        case "footStepFar":    toggle(\.footStepFar)
         default:               serverToggles[id] = !(serverToggles[id] ?? false)
         }
     }
@@ -213,11 +216,12 @@ final class FreefireESPStore: ObservableObject {
     // RESEARCH tab
     @Published var radar          = false
     @Published var footStep       = false
-    @Published var noReload       = false
-    @Published var ammoFree       = false
-    @Published var fastReload     = false
     @Published var infiniteHealer = false
     @Published var fastRevive     = false
+    @Published var iceWall        = false
+    @Published var skillCD        = false
+    @Published var grenSplit      = false
+    @Published var footStepFar    = false
 
     // MARK: - Status
     @Published var selectedVariant: FFVariant = .freefire
@@ -550,13 +554,14 @@ final class FreefireESPStore: ObservableObject {
         fastFire      = (auxBits & bitAuxFastFire)      != 0
 
         let r8: UInt8 = data.count >= 9 ? data[8] : 0
-        radar          = (r8 & bitR8Radar)      != 0
-        footStep       = (r8 & bitR8FootStep)   != 0
-        noReload       = (r8 & bitR8NoReload)   != 0
-        ammoFree       = (r8 & bitR8AmmoFree)   != 0
-        fastReload     = (r8 & bitR8FastReload) != 0
-        infiniteHealer = (r8 & bitR8InfHealer)  != 0
-        fastRevive     = (r8 & bitR8FastRevive) != 0
+        radar          = (r8 & bitR8Radar)       != 0
+        footStep       = (r8 & bitR8FootStep)    != 0
+        infiniteHealer = (r8 & bitR8InfHealer)   != 0
+        fastRevive     = (r8 & bitR8FastRevive)  != 0
+        iceWall        = (r8 & bitR8IceWall)     != 0
+        skillCD        = (r8 & bitR8SkillCD)     != 0
+        grenSplit      = (r8 & bitR8GrenSplit)   != 0
+        footStepFar    = (r8 & bitR8FootStepFar) != 0
 
         // Thickness from bytes 11-13
         lineThicknessRaw  = data.count >= 12 ? Int32(data[11]) : 5
@@ -616,15 +621,16 @@ final class FreefireESPStore: ObservableObject {
                 (ptr.baseAddress! + 4).copyMemory(from: src.baseAddress!, byteCount: 4)
             }
         }
-        // byte 8: research mode bits (0-6); bytes 9-10: reserved (zero)
+        // byte 8: research mode bits (0-7); bytes 9-10: reserved (zero)
         var r8: UInt8 = 0
         if radar          { r8 |= bitR8Radar }
         if footStep       { r8 |= bitR8FootStep }
-        if noReload       { r8 |= bitR8NoReload }
-        if ammoFree       { r8 |= bitR8AmmoFree }
-        if fastReload     { r8 |= bitR8FastReload }
         if infiniteHealer { r8 |= bitR8InfHealer }
         if fastRevive     { r8 |= bitR8FastRevive }
+        if iceWall        { r8 |= bitR8IceWall }
+        if skillCD        { r8 |= bitR8SkillCD }
+        if grenSplit      { r8 |= bitR8GrenSplit }
+        if footStepFar    { r8 |= bitR8FootStepFar }
         data[8] = r8; data[9] = 0; data[10] = 0
         // bytes 11-13: thickness (0-97)
         data[11] = UInt8(min(97, max(0, lineThicknessRaw)))
