@@ -57,6 +57,15 @@ final class FreefireESPStore: ObservableObject {
     private let bitAuxFastHeal:      Int32 = 1 << 27  // bit 27: fast heal
     private let bitAuxFastFire:      Int32 = 1 << 28  // bit 28: fast fire
 
+    // Research Mode — packed into byte 8 of .pdata (bits 0-6)
+    private let bitR8Radar:          UInt8 = 1 << 0
+    private let bitR8FootStep:       UInt8 = 1 << 1
+    private let bitR8NoReload:       UInt8 = 1 << 2
+    private let bitR8AmmoFree:       UInt8 = 1 << 3
+    private let bitR8FastReload:     UInt8 = 1 << 4
+    private let bitR8InfHealer:      UInt8 = 1 << 5
+    private let bitR8FastRevive:     UInt8 = 1 << 6
+
     // MARK: - Game variant selector
     enum FFVariant: String, CaseIterable, Identifiable {
         case freefire    = "Free Fire"
@@ -139,6 +148,13 @@ final class FreefireESPStore: ObservableObject {
         case "wideCamera":     return wideCamera
         case "fastHeal":       return fastHeal
         case "fastFire":       return fastFire
+        case "radar":          return radar
+        case "footStep":       return footStep
+        case "noReload":       return noReload
+        case "ammoFree":       return ammoFree
+        case "fastReload":     return fastReload
+        case "infiniteHealer": return infiniteHealer
+        case "fastRevive":     return fastRevive
         default:               return serverToggles[id] ?? false
         }
     }
@@ -164,6 +180,13 @@ final class FreefireESPStore: ObservableObject {
         case "wideCamera":     toggle(\.wideCamera)
         case "fastHeal":       toggle(\.fastHeal)
         case "fastFire":       toggle(\.fastFire)
+        case "radar":          toggle(\.radar)
+        case "footStep":       toggle(\.footStep)
+        case "noReload":       toggle(\.noReload)
+        case "ammoFree":       toggle(\.ammoFree)
+        case "fastReload":     toggle(\.fastReload)
+        case "infiniteHealer": toggle(\.infiniteHealer)
+        case "fastRevive":     toggle(\.fastRevive)
         default:               serverToggles[id] = !(serverToggles[id] ?? false)
         }
     }
@@ -186,6 +209,15 @@ final class FreefireESPStore: ObservableObject {
     @Published var wideCameraFov: Int32 = 88
     @Published var fastHeal      = false
     @Published var fastFire      = false
+
+    // RESEARCH tab
+    @Published var radar          = false
+    @Published var footStep       = false
+    @Published var noReload       = false
+    @Published var ammoFree       = false
+    @Published var fastReload     = false
+    @Published var infiniteHealer = false
+    @Published var fastRevive     = false
 
     // MARK: - Status
     @Published var selectedVariant: FFVariant = .freefire
@@ -517,6 +549,15 @@ final class FreefireESPStore: ObservableObject {
         fastHeal      = (auxBits & bitAuxFastHeal)      != 0
         fastFire      = (auxBits & bitAuxFastFire)      != 0
 
+        let r8: UInt8 = data.count >= 9 ? data[8] : 0
+        radar          = (r8 & bitR8Radar)      != 0
+        footStep       = (r8 & bitR8FootStep)   != 0
+        noReload       = (r8 & bitR8NoReload)   != 0
+        ammoFree       = (r8 & bitR8AmmoFree)   != 0
+        fastReload     = (r8 & bitR8FastReload) != 0
+        infiniteHealer = (r8 & bitR8InfHealer)  != 0
+        fastRevive     = (r8 & bitR8FastRevive) != 0
+
         // Thickness from bytes 11-13
         lineThicknessRaw  = data.count >= 12 ? Int32(data[11]) : 5
         boxThicknessRaw   = data.count >= 13 ? Int32(data[12]) : 5
@@ -575,8 +616,16 @@ final class FreefireESPStore: ObservableObject {
                 (ptr.baseAddress! + 4).copyMemory(from: src.baseAddress!, byteCount: 4)
             }
         }
-        // bytes 8-10: reserved (zero)
-        data[8] = 0; data[9] = 0; data[10] = 0
+        // byte 8: research mode bits (0-6); bytes 9-10: reserved (zero)
+        var r8: UInt8 = 0
+        if radar          { r8 |= bitR8Radar }
+        if footStep       { r8 |= bitR8FootStep }
+        if noReload       { r8 |= bitR8NoReload }
+        if ammoFree       { r8 |= bitR8AmmoFree }
+        if fastReload     { r8 |= bitR8FastReload }
+        if infiniteHealer { r8 |= bitR8InfHealer }
+        if fastRevive     { r8 |= bitR8FastRevive }
+        data[8] = r8; data[9] = 0; data[10] = 0
         // bytes 11-13: thickness (0-97)
         data[11] = UInt8(min(97, max(0, lineThicknessRaw)))
         data[12] = UInt8(min(97, max(0, boxThicknessRaw)))

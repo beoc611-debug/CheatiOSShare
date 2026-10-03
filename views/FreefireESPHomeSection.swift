@@ -31,6 +31,7 @@ struct FreefireESPHomeSection: View {
                 ServerTabView(store: store, sections: uiConfig?.esp ?? [])
             } else {
                 settingsCard
+                researchCard
             }
         }
         .padding(.horizontal, 16)
@@ -581,6 +582,46 @@ struct FreefireESPHomeSection: View {
             rowDivider
             toggleRow("Bắn Nhanh ×2", icon: "burst.fill",
                       on: store.fastFire, color: Color(red: 1.00, green: 0.55, blue: 0.10)) { store.toggle(\.fastFire) }
+        }
+    }
+
+    // MARK: - Research Mode card
+
+    private var researchCard: some View {
+        let accent = Color(red: 0.55, green: 0.90, blue: 0.55)
+        return espGroup(title: "RESEARCH MODE", icon: "flask.fill", color: accent) {
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Color(red: 1.0, green: 0.80, blue: 0.20))
+                Text("Chế độ thử nghiệm — chưa đảm bảo hoạt động")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color(red: 0.70, green: 0.70, blue: 0.55))
+                Spacer()
+            }
+            .padding(.horizontal, 4)
+            .padding(.bottom, 8)
+            rowDivider
+            toggleRow("Radar Địch", icon: "map.fill",
+                      on: store.radar, color: Color(red: 0.20, green: 0.88, blue: 1.00)) { store.toggle(\.radar) }
+            rowDivider
+            toggleRow("Dấu Chân Địch", icon: "shoeprints.fill",
+                      on: store.footStep, color: Color(red: 0.30, green: 1.00, blue: 0.65)) { store.toggle(\.footStep) }
+            rowDivider
+            toggleRow("Không Nạp Đạn", icon: "bolt.slash.fill",
+                      on: store.noReload, color: Color(red: 1.00, green: 0.60, blue: 0.10)) { store.toggle(\.noReload) }
+            rowDivider
+            toggleRow("Đạn Vô Hạn", icon: "sparkles",
+                      on: store.ammoFree, color: Color(red: 1.00, green: 0.90, blue: 0.10)) { store.toggle(\.ammoFree) }
+            rowDivider
+            toggleRow("Nạp Đạn Nhanh", icon: "arrow.clockwise.circle.fill",
+                      on: store.fastReload, color: Color(red: 0.40, green: 0.70, blue: 1.00)) { store.toggle(\.fastReload) }
+            rowDivider
+            toggleRow("Hồi Máu Liên Tục", icon: "heart.circle.fill",
+                      on: store.infiniteHealer, color: Color(red: 0.95, green: 0.35, blue: 0.55)) { store.toggle(\.infiniteHealer) }
+            rowDivider
+            toggleRow("Hồi Đồng Đội Nhanh", icon: "person.2.fill",
+                      on: store.fastRevive, color: Color(red: 0.75, green: 0.45, blue: 1.00)) { store.toggle(\.fastRevive) }
         }
     }
 
