@@ -4,6 +4,8 @@ struct ServerTabView: View {
     @ObservedObject var store: FreefireESPStore
     let sections: [UIConfigSection]
 
+    private static let espElements = ["Line", "Box", "Health", "Name", "Distance", "Count", "Skeleton", "FOV"]
+
     var body: some View {
         if sections.isEmpty {
             emptyState
@@ -156,8 +158,189 @@ struct ServerTabView: View {
             sliderRow(item, accent: accent)
         case "segment":
             segmentRow(item, accent: accent)
+        case "colorPicker":
+            colorPickerRow(item, accent: accent)
         default:
             EmptyView()
+        }
+    }
+
+    // MARK: - ESP color helpers
+
+    private func espCurrentColor() -> Color {
+        switch store.selectedEspElement {
+        case 0: return store.lineColor
+        case 1: return store.boxColor
+        case 2: return store.healthColor
+        case 3: return store.nameColor
+        case 4: return store.distColor
+        case 5: return store.countColor
+        case 6: return store.skeletonColor
+        default: return store.fovColor
+        }
+    }
+
+    private func espCurrentColorBinding() -> Binding<Color> {
+        Binding(
+            get: { self.espCurrentColor() },
+            set: { newColor in
+                switch self.store.selectedEspElement {
+                case 0: self.store.lineColor     = newColor
+                case 1: self.store.boxColor      = newColor
+                case 2: self.store.healthColor   = newColor
+                case 3: self.store.nameColor     = newColor
+                case 4: self.store.distColor     = newColor
+                case 5: self.store.countColor    = newColor
+                case 6: self.store.skeletonColor = newColor
+                default: self.store.fovColor     = newColor
+                }
+                self.store.flushStatePublic()
+            }
+        )
+    }
+
+    @ViewBuilder
+    private func colorPickerRow(_ item: UIConfigItem, accent: Color) -> some View {
+        let color = item.accentColor
+        VStack(spacing: 0) {
+            // Element selector
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(color.opacity(0.18)).frame(width: 38, height: 38)
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(color)
+                }
+                Text("Element")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
+                Spacer()
+                Circle()
+                    .fill(espCurrentColor())
+                    .frame(width: 20, height: 20)
+                    .overlay(Circle().strokeBorder(Color.white.opacity(0.3), lineWidth: 1))
+                HStack(spacing: 0) {
+                    Button {
+                        store.selectedEspElement = (store.selectedEspElement + Self.espElements.count - 1) % Self.espElements.count
+                    } label: {
+                        Image(systemName: "chevron.up")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(color)
+                            .frame(width: 28, height: 30)
+                    }.buttonStyle(.plain)
+                    Text(Self.espElements[store.selectedEspElement])
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(minWidth: 54)
+                    Button {
+                        store.selectedEspElement = (store.selectedEspElement + 1) % Self.espElements.count
+                    } label: {
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(color)
+                            .frame(width: 28, height: 30)
+                    }.buttonStyle(.plain)
+                }
+                .background(Color.white.opacity(0.08))
+                .clipShape(Capsule())
+                .overlay(Capsule().strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5))
+            }
+            .padding(.vertical, 11)
+
+            rowDivider
+
+            // Color wheel picker
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(espCurrentColor().opacity(0.3)).frame(width: 38, height: 38)
+                    Image(systemName: "circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(espCurrentColor())
+                }
+                ColorPicker(
+                    Self.espElements[store.selectedEspElement],
+                    selection: espCurrentColorBinding(),
+                    supportsOpacity: false
+                )
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
+            }
+            .padding(.vertical, 8)
+
+            // Health info note (no separate thickness)
+            if store.selectedEspElement == 2 {
+                rowDivider
+                HStack(spacing: 14) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 9)
+                            .fill(Color.white.opacity(0.07)).frame(width: 38, height: 38)
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
+                    }
+                    Text("Health bar width tự theo Box")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
+                    Spacer()
+                }
+                .padding(.vertical, 8)
+            }
+
+            // Thickness slider (Line=0, Box=1, Name=3, Skeleton=6)
+            if store.selectedEspElement == 0 || store.selectedEspElement == 1
+                || store.selectedEspElement == 3 || store.selectedEspElement == 6 {
+                rowDivider
+                let isName = store.selectedEspElement == 3
+                let elemName = Self.espElements[store.selectedEspElement]
+                let thickBinding = Binding<Double>(
+                    get: {
+                        if self.store.selectedEspElement == 0 { return Double(self.store.lineThicknessRaw) }
+                        if self.store.selectedEspElement == 3 { return Double(self.store.nameThicknessRaw) }
+                        if self.store.selectedEspElement == 6 { return Double(self.store.skelThicknessRaw) }
+                        return Double(self.store.boxThicknessRaw)
+                    },
+                    set: { v in
+                        let raw = Int32(v)
+                        if self.store.selectedEspElement == 0 { self.store.lineThicknessRaw = raw }
+                        else if self.store.selectedEspElement == 3 { self.store.nameThicknessRaw = raw }
+                        else if self.store.selectedEspElement == 6 { self.store.skelThicknessRaw = raw }
+                        else { self.store.boxThicknessRaw = raw }
+                        self.store.flushStatePublic()
+                    }
+                )
+                let rawVal: Int32 = store.selectedEspElement == 0 ? store.lineThicknessRaw
+                    : (store.selectedEspElement == 3 ? store.nameThicknessRaw
+                    : (store.selectedEspElement == 6 ? store.skelThicknessRaw : store.boxThicknessRaw))
+                let displayVal = isName
+                    ? String(format: "%.1fx", 1.0 + Double(rawVal) * 0.02)
+                    : String(format: "%.1f px", 0.5 + Double(rawVal) * 0.2)
+
+                VStack(spacing: 2) {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 9)
+                                .fill(color.opacity(0.18)).frame(width: 38, height: 38)
+                            Image(systemName: isName ? "textformat.size" : "lineweight")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(color)
+                        }
+                        Text(isName ? "Name size" : "\(elemName) thickness")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(Color(red: 0.52, green: 0.60, blue: 0.78))
+                        Spacer()
+                        Text(displayVal)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(color)
+                            .frame(width: 52, alignment: .trailing)
+                    }
+                    .padding(.vertical, 8)
+                    Slider(value: thickBinding, in: 1...97, step: 1)
+                        .tint(color)
+                        .padding(.bottom, 8)
+                }
+            }
         }
     }
 
@@ -297,10 +480,16 @@ struct ServerTabView: View {
 
     private func visibleItems(in section: UIConfigSection) -> [UIConfigItem] {
         section.items.filter { item in
-            guard let showIf = item.showIf, !showIf.isEmpty else { return true }
-            let parentOn = store.boolValue(for: showIf)
-            let expectedVal = item.showIfVal ?? "true"
-            return expectedVal == "true" ? parentOn : !parentOn
+            if let showIf = item.showIf, !showIf.isEmpty {
+                let parentOn = store.boolValue(for: showIf)
+                let expectedVal = item.showIfVal ?? "true"
+                if !(expectedVal == "true" ? parentOn : !parentOn) { return false }
+            }
+            if let eq = item.showIfEquals {
+                let currentVal = Int(store.doubleValue(for: eq.id))
+                if currentVal != eq.value { return false }
+            }
+            return true
         }
     }
 }

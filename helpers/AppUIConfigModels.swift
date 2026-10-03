@@ -1,6 +1,11 @@
 import Foundation
 import SwiftUI
 
+struct ShowIfEquals: Decodable {
+    let id: String
+    let value: Int
+}
+
 struct UIConfigItem: Decodable, Identifiable {
     let id: String
     let type: String        // "toggle" | "slider" | "segment" | "colorPicker"
@@ -9,6 +14,7 @@ struct UIConfigItem: Decodable, Identifiable {
     let color: String       // hex without #
     let showIf: String?     // id of toggle that controls visibility
     let showIfVal: String?  // expected value ("true"/"false")
+    let showIfEquals: ShowIfEquals?  // segment parent must equal this value
     let min: Double?
     let max: Double?
     let step: Double?
@@ -22,7 +28,7 @@ struct UIConfigItem: Decodable, Identifiable {
     private enum CodingKeys: String, CodingKey {
         case id, type, label, icon, min, max, step, unit, options
         case color = "colorHex"
-        case showIf, showIfVal
+        case showIf, showIfVal, showIfEquals
     }
 }
 
