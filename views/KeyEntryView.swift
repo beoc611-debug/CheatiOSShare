@@ -11,8 +11,16 @@ struct KeyEntryView: View {
 
     var body: some View {
         ZStack {
-            TechBackground()
-                .ignoresSafeArea(.keyboard)
+            Image("AppBg")
+                .resizable()
+                .scaledToFill()
+                .frame(
+                    width: UIScreen.main.bounds.width,
+                    height: UIScreen.main.bounds.height
+                )
+                .clipped()
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
 
             ScrollView {
                 VStack(spacing: 22) {
