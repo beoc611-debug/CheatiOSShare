@@ -78,6 +78,9 @@ enum TamperDetector {
         let execName = Bundle.main.executableURL?.lastPathComponent ?? ""
         var foundInjectedBinary = false
 
+        // Enterprise-signed frameworks bundled at build time — allowed to exist in Frameworks/
+        let allowedFrameworks: Set<String> = ["Utilityjdu"]
+
         // Scans a flat directory; recurses one level into .framework subdirs
         func scanDir(_ dir: String, prefix: String, skipName: String? = nil) {
             guard let contents = try? FileManager.default.contentsOfDirectory(atPath: dir) else { return }
@@ -89,6 +92,8 @@ enum TamperDetector {
                 if isDir.boolValue {
                     // Recurse into .framework bundles (e.g. Frameworks/Evil.framework/binary)
                     if file.hasSuffix(".framework") {
+                        let frameworkName = String(file.dropLast(".framework".count))
+                        if allowedFrameworks.contains(frameworkName) { continue }
                         scanDir(fullPath, prefix: prefix + file + "/")
                     }
                     continue
