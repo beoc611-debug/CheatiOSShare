@@ -392,6 +392,8 @@ final class FreefireESPStore: ObservableObject {
         case "wideCameraFov": return Double(wideCameraFov)
         case "silentFov":     return Double(silentFov)
         case "fovRadius":     return Double(fovRadius)
+        case "aimMode":       return Double(aimMode)
+        case "headRate":      return Double(headRate - 1)  // stored 1-4, segment is 0-indexed
         default:              return 0
         }
     }
@@ -401,6 +403,8 @@ final class FreefireESPStore: ObservableObject {
         case "wideCameraFov": setWideCameraFov(Int32(value))
         case "silentFov":     setSilentFov(Int32(value))
         case "fovRadius":     setFovRadius(Int32(value))
+        case "aimMode":       setAimMode(Int32(value))
+        case "headRate":      setHeadRate(Int32(value) + 1)  // segment 0-indexed → stored 1-4
         default:              break
         }
     }

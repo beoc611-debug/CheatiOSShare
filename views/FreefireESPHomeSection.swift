@@ -30,8 +30,7 @@ struct FreefireESPHomeSection: View {
             } else if tab == 1 {
                 ServerTabView(store: store, sections: uiConfig?.esp ?? [])
             } else {
-                settingsCard
-                researchCard
+                ServerTabView(store: store, sections: uiConfig?.misc ?? [])
             }
         }
         .padding(.horizontal, 16)
