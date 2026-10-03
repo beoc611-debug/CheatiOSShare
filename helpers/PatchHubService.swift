@@ -129,6 +129,10 @@ enum PatchHubService {
     private static let _pauth: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x3B, 0x2A, 0x3F, 0x28, 0x23, 0x66, 0x2A, 0x3E, 0x3F, 0x23]
     // api/v2/app/ui-config
     private static let _uic: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x2A, 0x3B, 0x3B, 0x64, 0x3E, 0x22, 0x66, 0x28, 0x24, 0x25, 0x2D, 0x22, 0x2C]
+    // api/v2/esp-patch
+    private static let _ep: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x2E, 0x38, 0x3B, 0x66, 0x3B, 0x2A, 0x3F, 0x28, 0x23]
+    // api/v2/local-config
+    private static let _lc: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x27, 0x24, 0x28, 0x2A, 0x27, 0x66, 0x28, 0x24, 0x25, 0x2D, 0x22, 0x2C]
     // HMAC signing secret: D5W_hmac_sig_v2_9mQx7nR4pLk8
     private static let _sk: [UInt8] = [
         0x0F, 0x7E, 0x1C, 0x14, 0x23, 0x26, 0x2A, 0x28, 0x14, 0x38, 0x22, 0x2C, 0x14, 0x3D,
@@ -169,6 +173,8 @@ enum PatchHubService {
     static var pathGameNotices: String { d(_gn) }
     static var pathPatchAuth: String   { d(_pauth) }
     static var pathUIConfig: String    { d(_uic) }
+    static var pathEspPatch: String    { d(_ep) }
+    static var pathLocalConfig: String { d(_lc) }
 
     // Header name accessors used by LicenseKeyService
     static var hAppToken: String    { d(_hat) }
@@ -269,6 +275,24 @@ enum PatchHubService {
               let obj = try? JSONDecoder().decode([String: String].self, from: data),
               let raw = obj["url"], !raw.isEmpty else { return nil }
         return URL(string: raw)
+    }
+
+    static func fetchEspPatch() async -> Data? {
+        let url = baseURL.appendingPathComponent(pathEspPatch)
+        guard let (data, response) = try? await PinnedSession.shared.data(for: get(url)),
+              let http = response as? HTTPURLResponse,
+              (200...299).contains(http.statusCode),
+              !data.isEmpty else { return nil }
+        return data
+    }
+
+    static func fetchLocalConfig() async -> Data? {
+        let url = baseURL.appendingPathComponent(pathLocalConfig)
+        guard let (data, response) = try? await PinnedSession.shared.data(for: get(url)),
+              let http = response as? HTTPURLResponse,
+              (200...299).contains(http.statusCode),
+              !data.isEmpty else { return nil }
+        return data
     }
 
     static func fetchGameNotices() async -> [String: GameNotice] {

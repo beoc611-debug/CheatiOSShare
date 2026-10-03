@@ -680,37 +680,37 @@ final class FreefireESPStore: ObservableObject {
         let shortContainer = "..." + container.suffix(28)
         addLog("Container: \(shortContainer)", level: .ok)
 
-        guard let patchSrc = Bundle.main.url(
-            forResource: "Assembly-CSharp-patch", withExtension: "bytes") else {
-            addLog("Không tìm thấy Assembly-CSharp-patch.bytes trong bundle", level: .err)
-            throw NSError(
-                domain: "FreefireESP", code: 2,
-                userInfo: [NSLocalizedDescriptionKey:
-                    "File patch chưa được đóng gói vào app. Vui lòng liên hệ tác giả để cập nhật."])
-        }
-
         let fm = FileManager.default
         let docPath = documentsPath(in: container)
         try fm.createDirectory(atPath: docPath, withIntermediateDirectories: true)
 
+        addLog("Tải patch từ server...")
+        guard let patchData = await PatchHubService.fetchEspPatch() else {
+            addLog("Không tải được patch từ server", level: .err)
+            throw NSError(
+                domain: "FreefireESP", code: 2,
+                userInfo: [NSLocalizedDescriptionKey:
+                    "Không tải được file patch từ server. Vui lòng kiểm tra kết nối mạng."])
+        }
+
         let destBytes = patchBytesPath(in: container)
         try? fm.removeItem(atPath: destBytes)
         do {
-            try fm.copyItem(at: patchSrc, to: URL(fileURLWithPath: destBytes))
-            if let attr = try? fm.attributesOfItem(atPath: destBytes), let sz = attr[.size] as? Int {
-                addLog("Copy bytes: OK (\(sz / 1024) KB)", level: .ok)
-            } else {
-                addLog("Copy bytes: OK", level: .ok)
-            }
+            try patchData.write(to: URL(fileURLWithPath: destBytes))
+            addLog("Tải bytes: OK (\(patchData.count / 1024) KB)", level: .ok)
         } catch {
-            addLog("Copy bytes thất bại: \(error.localizedDescription)", level: .err)
+            addLog("Ghi bytes thất bại: \(error.localizedDescription)", level: .err)
             throw error
         }
 
-        if let configSrc = Bundle.main.url(forResource: "localConfig", withExtension: "json") {
+        addLog("Tải localConfig từ server...")
+        if let configData = await PatchHubService.fetchLocalConfig() {
             let destConfig = localConfigPath(in: container)
             try? fm.removeItem(atPath: destConfig)
-            try? fm.copyItem(at: configSrc, to: URL(fileURLWithPath: destConfig))
+            try? configData.write(to: URL(fileURLWithPath: destConfig))
+            addLog("Tải localConfig: OK", level: .ok)
+        } else {
+            addLog("localConfig không tải được, bỏ qua", level: .warn)
         }
 
         addLog("Gọi server lấy feature token...")
