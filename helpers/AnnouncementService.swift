@@ -47,7 +47,11 @@ enum AnnouncementService {
             url: PatchHubService.baseURL.appendingPathComponent(PatchHubService.pathNotice),
             resolvingAgainstBaseURL: false
         )!
-        components.queryItems = [URLQueryItem(name: "build", value: String(AppInfo.buildNumber))]
+        let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
+        components.queryItems = [
+            URLQueryItem(name: "build", value: String(AppInfo.buildNumber)),
+            URLQueryItem(name: "version", value: appVersion)
+        ]
         guard let url = components.url else { return .none }
         var request = URLRequest(url: url)
         request.setValue(PatchHubService.clientToken, forHTTPHeaderField: "X-App-Token")
