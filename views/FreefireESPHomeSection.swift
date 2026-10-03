@@ -35,8 +35,13 @@ struct FreefireESPHomeSection: View {
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 16)
+        .onAppear {
+            let cached = PatchHubService.cachedUIConfig()
+            if !cached.isEmpty { uiConfig = cached }
+        }
         .task {
-            uiConfig = await PatchHubService.fetchUIConfig()
+            let fresh = await PatchHubService.fetchUIConfig()
+            if !fresh.isEmpty { uiConfig = fresh }
         }
         .onChange(of: store.isPatching) { isNowPatching in
             if !isNowPatching && wasPatching {

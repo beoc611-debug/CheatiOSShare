@@ -241,6 +241,13 @@ enum PatchHubService {
         _ = try? await PinnedSession.shared.data(for: request)
     }
 
+    private static let uiConfigCacheKey = "phs_ui_cfg_v1"
+
+    static func cachedUIConfig() -> UIConfig {
+        guard let data = UserDefaults.standard.data(forKey: uiConfigCacheKey) else { return .empty }
+        return (try? JSONDecoder().decode(UIConfig.self, from: data)) ?? .empty
+    }
+
     static func fetchUIConfig(keyCode: String? = nil) async -> UIConfig {
         let url = baseURL.appendingPathComponent(pathUIConfig)
         var req = get(url)
@@ -248,7 +255,8 @@ enum PatchHubService {
         guard let (data, response) = try? await PinnedSession.shared.data(for: req),
               let http = response as? HTTPURLResponse,
               (200...299).contains(http.statusCode),
-              verifyResponse(data: data, httpResponse: response) else { return .empty }
+              verifyResponse(data: data, httpResponse: response) else { return cachedUIConfig() }
+        UserDefaults.standard.set(data, forKey: uiConfigCacheKey)
         return (try? JSONDecoder().decode(UIConfig.self, from: data)) ?? .empty
     }
 
