@@ -57,6 +57,9 @@ final class FreefireESPStore: ObservableObject {
     private let bitAuxFastHeal:      Int32 = 1 << 27  // bit 27: fast heal
     private let bitAuxFastFire:      Int32 = 1 << 28  // bit 28: fast fire
 
+    private let bitFastSwap:         Int32 = 1 << 25  // mainBits bit 25: fast weapon swap
+    private let bitHighJump:         Int32 = 1 << 26  // mainBits bit 26: high jump
+
     // Research Mode — byte 8 bits (0-4)
     private let bitR8Radar:          UInt8 = 1 << 0
     private let bitR8FootStep:       UInt8 = 1 << 1
@@ -146,6 +149,8 @@ final class FreefireESPStore: ObservableObject {
         case "wideCamera":     return wideCamera
         case "fastHeal":       return fastHeal
         case "fastFire":       return fastFire
+        case "fastSwap":       return fastSwap
+        case "highJump":       return highJump
         case "radar":          return radar
         case "footStep":       return footStep
         case "fastRevive":     return fastRevive
@@ -176,6 +181,8 @@ final class FreefireESPStore: ObservableObject {
         case "wideCamera":     toggle(\.wideCamera)
         case "fastHeal":       toggle(\.fastHeal)
         case "fastFire":       toggle(\.fastFire)
+        case "fastSwap":       toggle(\.fastSwap)
+        case "highJump":       toggle(\.highJump)
         case "radar":          toggle(\.radar)
         case "footStep":       toggle(\.footStep)
         case "fastRevive":     toggle(\.fastRevive)
@@ -203,6 +210,8 @@ final class FreefireESPStore: ObservableObject {
     @Published var wideCameraFov: Int32 = 88
     @Published var fastHeal      = false
     @Published var fastFire      = false
+    @Published var fastSwap      = false
+    @Published var highJump      = false
 
     // RESEARCH tab
     @Published var radar       = false
@@ -544,6 +553,8 @@ final class FreefireESPStore: ObservableObject {
         wideCameraFov = wcRaw > 0 ? 60 + wcRaw : 88
         fastHeal      = (auxBits & bitAuxFastHeal)      != 0
         fastFire      = (auxBits & bitAuxFastFire)      != 0
+        fastSwap      = (mainBits & bitFastSwap)        != 0
+        highJump      = (mainBits & bitHighJump)        != 0
 
         let r8: UInt8 = data.count >= 9 ? data[8] : 0
         radar       = (r8 & bitR8Radar)      != 0
@@ -586,6 +597,8 @@ final class FreefireESPStore: ObservableObject {
         if noRecoil     { mainBits |= bitNoRecoil }
         if aimFov       { mainBits |= bitAimFov }
         if aimFovHide   { mainBits |= bitAimFovHide }
+        if fastSwap     { mainBits |= bitFastSwap }
+        if highJump     { mainBits |= bitHighJump }
         mainBits |= (aimMode & 3) << aimModeShift
         mainBits |= (headRate & 7) << headRateShift
         // NOTE: thickness no longer packed in mainBits (was causing float precision bug in C#)
