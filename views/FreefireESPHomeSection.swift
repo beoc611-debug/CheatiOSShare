@@ -40,8 +40,12 @@ struct FreefireESPHomeSection: View {
             if !cached.isEmpty { uiConfig = cached }
         }
         .task {
-            let fresh = await PatchHubService.fetchUIConfig()
-            if !fresh.isEmpty { uiConfig = fresh }
+            while !Task.isCancelled {
+                if let fresh = await PatchHubService.fetchUIConfig() {
+                    uiConfig = fresh
+                }
+                try? await Task.sleep(nanoseconds: 60_000_000_000)
+            }
         }
         .onChange(of: store.isPatching) { isNowPatching in
             if !isNowPatching && wasPatching {

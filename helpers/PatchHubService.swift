@@ -248,14 +248,16 @@ enum PatchHubService {
         return (try? JSONDecoder().decode(UIConfig.self, from: data)) ?? .empty
     }
 
-    static func fetchUIConfig(keyCode: String? = nil) async -> UIConfig {
+    // Returns nil when server is unreachable (caller keeps current state).
+    // Returns .empty when server explicitly returns no sections (show lock screen).
+    static func fetchUIConfig(keyCode: String? = nil) async -> UIConfig? {
         let url = baseURL.appendingPathComponent(pathUIConfig)
         var req = get(url)
         if let code = keyCode, !code.isEmpty { req.setValue(code, forHTTPHeaderField: d(_hlk)) }
         guard let (data, response) = try? await PinnedSession.shared.data(for: req),
               let http = response as? HTTPURLResponse,
               (200...299).contains(http.statusCode),
-              verifyResponse(data: data, httpResponse: response) else { return cachedUIConfig() }
+              verifyResponse(data: data, httpResponse: response) else { return nil }
         UserDefaults.standard.set(data, forKey: uiConfigCacheKey)
         return (try? JSONDecoder().decode(UIConfig.self, from: data)) ?? .empty
     }
