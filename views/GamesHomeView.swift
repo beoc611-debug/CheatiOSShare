@@ -83,8 +83,8 @@ struct GamesHomeView: View {
         AnyNavigationStack {
             ZStack {
                 if selectedTab == 0 {
-                    ScrollView {
-                        VStack(spacing: 0) {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(spacing: 0, pinnedViews: []) {
                             cyberHeader
                                 .padding(.horizontal, 20)
                                 .padding(.top, 8)
@@ -94,12 +94,15 @@ struct GamesHomeView: View {
                                 deviceInfoCard
                                     .padding(.horizontal, 16)
                                     .padding(.bottom, 14)
+                                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
                             }
 
                             FreefireESPHomeSection(store: ffESP, tab: ffTab)
+                                .transition(.opacity)
 
                             Spacer(minLength: 32)
                         }
+                        .animation(.spring(response: 0.34, dampingFraction: 0.82), value: ffTab)
                     }
                 }
             }
@@ -477,7 +480,9 @@ struct GamesHomeView: View {
     private func ffTabItem(icon: String, label: String, ffIndex: Int) -> some View {
         let active = ffTab == ffIndex
         return Button {
-            withAnimation(.easeInOut(duration: 0.18)) {
+            let gen = UIImpactFeedbackGenerator(style: .light)
+            gen.impactOccurred()
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
                 ffTab = ffIndex
                 selectedTab = 0
             }

@@ -10,7 +10,6 @@ struct FreefireESPHomeSection: View {
     @State private var statCPU: Int = 0
     @State private var statRAMPct: Int = 0
     @State private var statRAMUsedMB: Int = 0
-    @State private var showLog = false
     @State private var showDNSSheet = false
     @State private var uiConfig: UIConfig? = nil
     @State private var showESPToast = false
@@ -210,7 +209,7 @@ struct FreefireESPHomeSection: View {
         .task {
             while !Task.isCancelled {
                 updateSystemStats()
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
             }
         }
     }
@@ -380,49 +379,6 @@ struct FreefireESPHomeSection: View {
                 .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color(red: 1.0, green: 0.70, blue: 0.10).opacity(0.30), lineWidth: 1))
             }
 
-            if !store.patchLog.isEmpty {
-                Button { showLog = true } label: {
-                    HStack(spacing: 7) {
-                        Image(systemName: "doc.text.magnifyingglass")
-                            .font(.system(size: 13, weight: .semibold))
-                        Text("Xem log patch")
-                            .font(.system(size: 13, weight: .semibold))
-                        Spacer()
-                        let errors = store.patchLog.filter { $0.level == .err }.count
-                        let warns  = store.patchLog.filter { $0.level == .warn }.count
-                        if errors > 0 {
-                            Text("\(errors) lỗi").font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(Color(red: 1, green: 0.3, blue: 0.3))
-                                .padding(.horizontal, 7).padding(.vertical, 2)
-                                .background(Color(red: 1, green: 0.3, blue: 0.3).opacity(0.15))
-                                .clipShape(Capsule())
-                        } else if warns > 0 {
-                            Text("\(warns) cảnh báo").font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(Color(red: 1, green: 0.75, blue: 0.1))
-                                .padding(.horizontal, 7).padding(.vertical, 2)
-                                .background(Color(red: 1, green: 0.75, blue: 0.1).opacity(0.15))
-                                .clipShape(Capsule())
-                        } else {
-                            Text("OK").font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(Color(red: 0.1, green: 0.9, blue: 0.52))
-                                .padding(.horizontal, 7).padding(.vertical, 2)
-                                .background(Color(red: 0.1, green: 0.9, blue: 0.52).opacity(0.15))
-                                .clipShape(Capsule())
-                        }
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
-                    }
-                    .foregroundStyle(AppTheme.neonCyan.opacity(0.85))
-                    .padding(.horizontal, 14).padding(.vertical, 11)
-                    .background(AppTheme.neonCyan.opacity(0.07))
-                    .clipShape(CutShape(cut: 10))
-                    .overlay(CutShape(cut: 10).strokeBorder(AppTheme.neonCyan.opacity(0.22), lineWidth: 0.8))
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .sheet(isPresented: $showLog) {
-            PatchLogSheet(store: store, entries: store.patchLog) { store.clearLog() }
         }
     }
 
@@ -431,8 +387,14 @@ struct FreefireESPHomeSection: View {
     private var dnsButton: some View {
         Button { showDNSSheet = true } label: {
             HStack(spacing: 10) {
-                Image(systemName: "antenna.radiowaves.left.and.right")
-                    .font(.system(size: 15, weight: .bold))
+                ZStack {
+                    Image(systemName: "shield.fill")
+                        .font(.system(size: 17, weight: .bold))
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 8, weight: .black))
+                        .foregroundStyle(Color(red: 0.55, green: 0.05, blue: 0.20))
+                        .offset(y: 1)
+                }
                 Text("Download DNS")
                     .font(.system(size: 15, weight: .bold)).kerning(0.2)
             }
@@ -770,156 +732,3 @@ private struct ESPResultSheet: View {
     }
 }
 
-// MARK: - Patch Log Sheet
-
-private struct PatchLogSheet: View {
-    let store: FreefireESPStore
-    let entries: [PatchLogEntry]
-    let onClear: () -> Void
-    @Environment(\.dismiss) private var dismiss
-    @State private var espStatus: String? = nil
-
-    var body: some View {
-        NavigationView {
-            ZStack {
-                Color(red: 0.06, green: 0.07, blue: 0.12).ignoresSafeArea()
-
-                VStack(spacing: 0) {
-                    // ESP status banner
-                    if let status = espStatus {
-                        let isOn = status.hasPrefix("✅")
-                        HStack(spacing: 8) {
-                            Text(status)
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(isOn
-                                    ? Color(red: 0.10, green: 0.95, blue: 0.55)
-                                    : Color(red: 1.0, green: 0.55, blue: 0.55))
-                            Spacer()
-                            Button {
-                                espStatus = store.checkESPStatus()
-                            } label: {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundStyle(Color(red: 0.5, green: 0.65, blue: 1.0))
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(
-                            isOn
-                                ? Color(red: 0.05, green: 0.22, blue: 0.12)
-                                : Color(red: 0.22, green: 0.06, blue: 0.06)
-                        )
-                    }
-
-                    if entries.isEmpty && espStatus == nil {
-                        Spacer()
-                        VStack(spacing: 12) {
-                            Image(systemName: "doc.text")
-                                .font(.system(size: 36))
-                                .foregroundStyle(Color(red: 0.35, green: 0.40, blue: 0.55))
-                            Text("Không có log")
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundStyle(Color(red: 0.40, green: 0.48, blue: 0.65))
-                        }
-                        Spacer()
-                    } else {
-                        ScrollView {
-                            LazyVStack(spacing: 0) {
-                                ForEach(entries) { entry in
-                                    logRow(entry)
-                                    Rectangle()
-                                        .fill(Color.white.opacity(0.05))
-                                        .frame(height: 0.5)
-                                        .padding(.leading, 44)
-                                }
-                            }
-                            .padding(.vertical, 8)
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Log Patch")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Đóng") { dismiss() }
-                        .foregroundStyle(AppTheme.neonCyan)
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: 12) {
-                        Button {
-                            espStatus = store.checkESPStatus()
-                        } label: {
-                            Label("Check ESP", systemImage: "bolt.shield")
-                                .font(.system(size: 13, weight: .medium))
-                        }
-                        .foregroundStyle(Color(red: 0.4, green: 0.85, blue: 1.0))
-                        Button("Xóa") {
-                            onClear()
-                            espStatus = nil
-                        }
-                        .foregroundStyle(Color(red: 1, green: 0.4, blue: 0.4))
-                    }
-                }
-            }
-        }
-        .preferredColorScheme(.dark)
-    }
-
-    private func logRow(_ entry: PatchLogEntry) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            ZStack {
-                Circle()
-                    .fill(iconBg(entry.level))
-                    .frame(width: 28, height: 28)
-                Image(systemName: iconName(entry.level))
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(iconColor(entry.level))
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(entry.text)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(textColor(entry.level))
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(entry.time)
-                    .font(.system(size: 10, weight: .regular))
-                    .foregroundStyle(Color(red: 0.38, green: 0.44, blue: 0.58))
-            }
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 9)
-    }
-
-    private func iconName(_ level: PatchLogEntry.Level) -> String {
-        switch level {
-        case .ok:   return "checkmark"
-        case .err:  return "xmark"
-        case .warn: return "exclamationmark"
-        case .info: return "info"
-        }
-    }
-
-    private func iconColor(_ level: PatchLogEntry.Level) -> Color {
-        switch level {
-        case .ok:   return Color(red: 0.10, green: 0.90, blue: 0.52)
-        case .err:  return Color(red: 1.00, green: 0.30, blue: 0.30)
-        case .warn: return Color(red: 1.00, green: 0.75, blue: 0.10)
-        case .info: return Color(red: 0.45, green: 0.65, blue: 1.00)
-        }
-    }
-
-    private func iconBg(_ level: PatchLogEntry.Level) -> Color {
-        iconColor(level).opacity(0.15)
-    }
-
-    private func textColor(_ level: PatchLogEntry.Level) -> Color {
-        switch level {
-        case .ok:   return Color(red: 0.88, green: 0.95, blue: 0.90)
-        case .err:  return Color(red: 1.00, green: 0.60, blue: 0.60)
-        case .warn: return Color(red: 1.00, green: 0.88, blue: 0.55)
-        case .info: return Color(red: 0.70, green: 0.78, blue: 0.92)
-        }
-    }
-}

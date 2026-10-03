@@ -124,14 +124,9 @@ struct ContentView: View {
         case .maintenance(let notice):
             maintenanceNotice = notice
             blockingAnnouncement = nil
-        case .announcement(let ann):
+        case .announcement:
             maintenanceNotice = nil
-            var shownIDs = Set(shownIDsRaw.split(separator: ",").map(String.init))
-            if !shownIDs.contains(ann.id) {
-                shownIDs.insert(ann.id)
-                shownIDsRaw = shownIDs.joined(separator: ",")
-                blockingAnnouncement = ann
-            }
+            blockingAnnouncement = nil
         case .none:
             maintenanceNotice = nil
             blockingAnnouncement = nil

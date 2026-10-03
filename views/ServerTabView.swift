@@ -113,21 +113,23 @@ struct ServerTabView: View {
 
     private func sectionCard(_ section: UIConfigSection) -> some View {
         let visible = visibleItems(in: section)
+        let accent = section.accentColor
         return VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Image(systemName: section.icon)
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(section.accentColor)
+                    .foregroundStyle(accent)
                 Text(section.title.uppercased())
                     .font(.system(size: 11, weight: .heavy))
-                    .foregroundStyle(section.accentColor.opacity(0.85))
+                    .foregroundStyle(accent.opacity(0.85))
                     .kerning(1.0)
                 Spacer()
             }
             .padding(.bottom, 10)
 
-            ForEach(visible.indices, id: \.self) { idx in
-                itemRow(visible[idx], accent: section.accentColor)
+            ForEach(Array(visible.enumerated()), id: \.element.id) { idx, item in
+                itemRow(item, accent: accent)
+                    .transition(.opacity)
                 if idx < visible.count - 1 {
                     rowDivider
                 }
@@ -352,19 +354,26 @@ struct ServerTabView: View {
                 RoundedRectangle(cornerRadius: 9)
                     .fill(isOn ? color.opacity(0.22) : Color.white.opacity(0.07))
                     .frame(width: 38, height: 38)
-                    .animation(.easeInOut(duration: 0.10), value: isOn)
                 Image(systemName: item.icon)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(isOn ? color : Color(red: 0.40, green: 0.48, blue: 0.65))
-                    .animation(.easeInOut(duration: 0.10), value: isOn)
+                    .scaleEffect(isOn ? 1.08 : 1.0)
             }
+            .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isOn)
             Text(item.label)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(isOn ? .white : Color(red: 0.52, green: 0.60, blue: 0.78))
-                .animation(.easeInOut(duration: 0.10), value: isOn)
+                .animation(.easeInOut(duration: 0.15), value: isOn)
             Spacer()
             HStack(spacing: 0) {
-                Button { if isOn { store.toggleById(item.id) } } label: {
+                Button {
+                    if isOn {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.72)) {
+                            store.toggleById(item.id)
+                        }
+                    }
+                } label: {
                     Text("Tắt")
                         .font(.system(size: 12, weight: !isOn ? .bold : .medium))
                         .foregroundStyle(!isOn ? .white : Color(red: 0.45, green: 0.55, blue: 0.75))
@@ -372,10 +381,17 @@ struct ServerTabView: View {
                         .background(!isOn
                             ? AnyView(Capsule().fill(Color(red: 0.30, green: 0.32, blue: 0.45)))
                             : AnyView(Color.clear))
-                        .animation(.easeInOut(duration: 0.10), value: isOn)
+                        .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isOn)
                 }
                 .buttonStyle(.plain)
-                Button { if !isOn { store.toggleById(item.id) } } label: {
+                Button {
+                    if !isOn {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.72)) {
+                            store.toggleById(item.id)
+                        }
+                    }
+                } label: {
                     Text("Bật")
                         .font(.system(size: 12, weight: isOn ? .bold : .medium))
                         .foregroundStyle(isOn ? .white : Color(red: 0.45, green: 0.55, blue: 0.75))
@@ -383,7 +399,7 @@ struct ServerTabView: View {
                         .background(isOn
                             ? AnyView(Capsule().fill(color.opacity(0.85)))
                             : AnyView(Color.clear))
-                        .animation(.easeInOut(duration: 0.10), value: isOn)
+                        .animation(.spring(response: 0.28, dampingFraction: 0.72), value: isOn)
                 }
                 .buttonStyle(.plain)
             }
