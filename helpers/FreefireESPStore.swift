@@ -57,7 +57,7 @@ final class FreefireESPStore: ObservableObject {
     private let bitAuxFastHeal:      Int32 = 1 << 27  // bit 27: fast heal
     private let bitAuxFastFire:      Int32 = 1 << 28  // bit 28: fast fire
 
-    // Research Mode — packed into byte 8 of .pdata (bits 0-7)
+    // Research Mode — byte 8 bits (0-7)
     private let bitR8Radar:          UInt8 = 1 << 0
     private let bitR8FootStep:       UInt8 = 1 << 1
     private let bitR8InfHealer:      UInt8 = 1 << 2
@@ -66,6 +66,10 @@ final class FreefireESPStore: ObservableObject {
     private let bitR8SkillCD:        UInt8 = 1 << 5
     private let bitR8GrenSplit:      UInt8 = 1 << 6
     private let bitR8FootStepFar:    UInt8 = 1 << 7
+    // Research Mode — byte 9 bits (0-2)
+    private let bitR9ShootMove:      UInt8 = 1 << 0
+    private let bitR9HighJump:       UInt8 = 1 << 1
+    private let bitR9MultiJump:      UInt8 = 1 << 2
 
     // MARK: - Game variant selector
     enum FFVariant: String, CaseIterable, Identifiable {
@@ -157,6 +161,9 @@ final class FreefireESPStore: ObservableObject {
         case "skillCD":        return skillCD
         case "grenSplit":      return grenSplit
         case "footStepFar":    return footStepFar
+        case "shootMove":      return shootMove
+        case "highJump":       return highJump
+        case "multiJump":      return multiJump
         default:               return serverToggles[id] ?? false
         }
     }
@@ -190,6 +197,9 @@ final class FreefireESPStore: ObservableObject {
         case "skillCD":        toggle(\.skillCD)
         case "grenSplit":      toggle(\.grenSplit)
         case "footStepFar":    toggle(\.footStepFar)
+        case "shootMove":      toggle(\.shootMove)
+        case "highJump":       toggle(\.highJump)
+        case "multiJump":      toggle(\.multiJump)
         default:               serverToggles[id] = !(serverToggles[id] ?? false)
         }
     }
@@ -222,6 +232,9 @@ final class FreefireESPStore: ObservableObject {
     @Published var skillCD        = false
     @Published var grenSplit      = false
     @Published var footStepFar    = false
+    @Published var shootMove      = false
+    @Published var highJump       = false
+    @Published var multiJump      = false
 
     // MARK: - Status
     @Published var selectedVariant: FFVariant = .freefire
@@ -562,6 +575,10 @@ final class FreefireESPStore: ObservableObject {
         skillCD        = (r8 & bitR8SkillCD)     != 0
         grenSplit      = (r8 & bitR8GrenSplit)   != 0
         footStepFar    = (r8 & bitR8FootStepFar) != 0
+        let r9: UInt8 = data.count >= 10 ? data[9] : 0
+        shootMove      = (r9 & bitR9ShootMove)   != 0
+        highJump       = (r9 & bitR9HighJump)    != 0
+        multiJump      = (r9 & bitR9MultiJump)   != 0
 
         // Thickness from bytes 11-13
         lineThicknessRaw  = data.count >= 12 ? Int32(data[11]) : 5
@@ -621,7 +638,7 @@ final class FreefireESPStore: ObservableObject {
                 (ptr.baseAddress! + 4).copyMemory(from: src.baseAddress!, byteCount: 4)
             }
         }
-        // byte 8: research mode bits (0-7); bytes 9-10: reserved (zero)
+        // byte 8: research mode bits (0-7)
         var r8: UInt8 = 0
         if radar          { r8 |= bitR8Radar }
         if footStep       { r8 |= bitR8FootStep }
@@ -631,7 +648,13 @@ final class FreefireESPStore: ObservableObject {
         if skillCD        { r8 |= bitR8SkillCD }
         if grenSplit      { r8 |= bitR8GrenSplit }
         if footStepFar    { r8 |= bitR8FootStepFar }
-        data[8] = r8; data[9] = 0; data[10] = 0
+        data[8] = r8
+        // byte 9: research mode byte 9 bits (0-2); byte 10: reserved
+        var r9: UInt8 = 0
+        if shootMove { r9 |= bitR9ShootMove }
+        if highJump  { r9 |= bitR9HighJump }
+        if multiJump { r9 |= bitR9MultiJump }
+        data[9] = r9; data[10] = 0
         // bytes 11-13: thickness (0-97)
         data[11] = UInt8(min(97, max(0, lineThicknessRaw)))
         data[12] = UInt8(min(97, max(0, boxThicknessRaw)))

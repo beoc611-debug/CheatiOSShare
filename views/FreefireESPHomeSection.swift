@@ -625,6 +625,15 @@ struct FreefireESPHomeSection: View {
             rowDivider
             toggleRow("Tăng Tầm Dấu Chân", icon: "scope",
                       on: store.footStepFar, color: Color(red: 0.55, green: 1.00, blue: 0.45)) { store.toggle(\.footStepFar) }
+            rowDivider
+            toggleRow("Vừa Đi Nhanh Vừa Bắn", icon: "figure.run",
+                      on: store.shootMove, color: Color(red: 1.00, green: 0.55, blue: 0.80)) { store.toggle(\.shootMove) }
+            rowDivider
+            toggleRow("Nhảy Cao", icon: "arrow.up.circle.fill",
+                      on: store.highJump, color: Color(red: 0.60, green: 0.85, blue: 1.00)) { store.toggle(\.highJump) }
+            rowDivider
+            toggleRow("Đa Nhảy (3 lần)", icon: "arrow.up.arrow.up.circle.fill",
+                      on: store.multiJump, color: Color(red: 0.85, green: 0.60, blue: 1.00)) { store.toggle(\.multiJump) }
         }
     }
 
