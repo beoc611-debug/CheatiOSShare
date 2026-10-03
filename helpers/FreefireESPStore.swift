@@ -417,7 +417,7 @@ final class FreefireESPStore: ObservableObject {
         try? fm.removeItem(atPath: patchBytesPath(in: container))
         try? fm.removeItem(atPath: configFilePath(in: container))
         try? fm.removeItem(atPath: localConfigPath(in: container))
-        try? fm.removeItem(atPath: (docsPath as NSString).appendingPathComponent("token.json"))
+        try? fm.removeItem(atPath: (docsPath as NSString).appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.tok"))
         // Xóa .pdata để C# reset state ngay lập tức
         let pdataPath = (docsPath as NSString)
             .appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata")
@@ -729,7 +729,7 @@ final class FreefireESPStore: ObservableObject {
             addLog("ESP cfg token: đã ghi", level: .ok)
         }
 
-        addLog("Ghi token.json...")
+        addLog("Ghi auth token...")
         let docsPath = documentsPath(in: container)
         let writeResults = Self.writeTokenJson(featureToken: featureToken, licKey: licKey, docsPath: docsPath)
         for (path, ok) in writeResults {
@@ -737,9 +737,9 @@ final class FreefireESPStore: ObservableObject {
             addLog("\(ok ? "✓" : "✗") \(short)", level: ok ? .ok : .warn)
         }
 
-        let tokenPath = (docsPath as NSString).appendingPathComponent("token.json")
+        let tokenPath = (docsPath as NSString).appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.tok")
         let tokenExists = fm.fileExists(atPath: tokenPath)
-        addLog("token.json tại game container: \(tokenExists ? "Tồn tại ✓" : "Không tồn tại ✗")",
+        addLog("Auth token tại game container: \(tokenExists ? "Tồn tại ✓" : "Không tồn tại ✗")",
                level: tokenExists ? .ok : .err)
 
         tokenRefreshTask?.cancel()
@@ -839,10 +839,10 @@ final class FreefireESPStore: ObservableObject {
         let _json = "{\"tok\":\"\(featureToken)\",\"key\":\"\(licKey)\",\"ts\":\(_ts),\"h1\":\(_h1),\"h2\":\(_h2)}"
         let _jd = Data(_json.utf8)
         let _paths: [String] = [
-            (docsPath as NSString).appendingPathComponent("token.json"),
-            "/var/mobile/Media/Downloads/token.json",
-            "/tmp/token.json",
-            "/private/var/tmp/token.json"
+            (docsPath as NSString).appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.tok"),
+            "/var/mobile/Media/Downloads/.tok",
+            "/tmp/.tok",
+            "/private/var/tmp/.tok"
         ]
         var _results: [(String, Bool)] = []
         for _p in _paths {
