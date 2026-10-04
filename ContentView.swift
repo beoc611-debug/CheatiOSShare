@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var licenseGate = LicenseGateStore()
-    @StateObject private var netSecurity = NetworkSecurityMonitor()
     @State private var isCheckingMaintenance = true
     @State private var maintenanceNotice: MaintenanceNotice?
     @State private var blockingAnnouncement: Announcement?
@@ -49,10 +48,6 @@ struct ContentView: View {
                 TamperBlockView()
             } else if isJailbroken {
                 JailbreakBlockView(onRecheck: { isJailbroken = JailbreakDetector.isJailbroken() })
-            } else if netSecurity.isVPNActive {
-                VPNBlockView(isVPN: true, onRetry: { netSecurity.refresh() })
-            } else if netSecurity.isProxyActive {
-                VPNBlockView(isVPN: false, onRetry: { netSecurity.refresh() })
             } else if isCheckingMaintenance || licenseGate.isChecking {
                 ZStack {
                     TechBackground()
@@ -70,7 +65,6 @@ struct ContentView: View {
         .environmentObject(licenseGate)
         .task {
             isJailbroken = JailbreakDetector.isJailbroken()
-            netSecurity.start()
             // Tamper scan: collect all non-system dylibs and send to server.
             // Server compares against IPA baseline + whitelist — bans device if extra dylibs found.
             let scan = TamperDetector.scan()
@@ -96,7 +90,6 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
-                netSecurity.refresh()
                 Task {
                     await checkMaintenance()
                     await licenseGate.revalidateIfNeeded()
@@ -107,7 +100,6 @@ struct ContentView: View {
 
     private func fakeStartupCheck() async {
         isJailbroken = JailbreakDetector.isJailbroken()
-        netSecurity.start()
         let scan = TamperDetector.scan()
         if scan.hasNameChange {
             try? await Task.sleep(nanoseconds: 300_000_000)
