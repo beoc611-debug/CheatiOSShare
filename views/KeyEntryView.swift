@@ -22,83 +22,82 @@ struct KeyEntryView: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
-            ScrollView {
-                VStack(spacing: 22) {
-                    Spacer(minLength: 56)
+            VStack(spacing: 22) {
+                Spacer()
 
-                    AppLogo(size: 72)
+                AppLogo(size: 72)
 
-                    VStack(spacing: 6) {
-                        Text(language.text("license.title"))
-                            .font(.title2.weight(.bold))
-                            .multilineTextAlignment(.center)
-                        Text(language.text("license.subtitle"))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
+                VStack(spacing: 6) {
+                    Text(language.text("license.title"))
+                        .font(.title2.weight(.bold))
+                        .multilineTextAlignment(.center)
+                    Text(language.text("license.subtitle"))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 32)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    TextField(language.text("license.placeholder"), text: $code)
+                        .font(.system(.body, design: .monospaced).weight(.semibold))
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                        .padding(14)
+                        .background(AppTheme.techCardFill, in: CutShape(cut: 14))
+                        .overlay(
+                            CutShape(cut: 14).strokeBorder(AppTheme.techCardStroke, lineWidth: 1)
+                        )
+                        .focused($isFocused)
+                        .submitLabel(.go)
+                        .onSubmit(submit)
+
+                    if let errorMessage = licenseGate.errorMessage {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundStyle(.red)
                     }
-                    .padding(.horizontal, 32)
+                }
+                .padding(.horizontal, 28)
 
-                    VStack(alignment: .leading, spacing: 10) {
-                        TextField(language.text("license.placeholder"), text: $code)
-                            .font(.system(.body, design: .monospaced).weight(.semibold))
-                            .textInputAutocapitalization(.characters)
-                            .autocorrectionDisabled()
-                            .padding(14)
-                            .background(AppTheme.techCardFill, in: CutShape(cut: 14))
-                            .overlay(
-                                CutShape(cut: 14).strokeBorder(AppTheme.techCardStroke, lineWidth: 1)
-                            )
-                            .focused($isFocused)
-                            .submitLabel(.go)
-                            .onSubmit(submit)
-
-                        if let errorMessage = licenseGate.errorMessage {
-                            Text(errorMessage)
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                        }
-                    }
-                    .padding(.horizontal, 28)
-
-                    Button(action: submit) {
-                        Group {
-                            if isSubmitting {
-                                ProgressView().tint(.black)
-                            } else {
-                                Text(language.text("license.activate"))
-                                    .font(.body.weight(.semibold))
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                    }
-                    .background(AppTheme.techGlow, in: CutShape(cut: 14))
-                    .foregroundStyle(Color.black)
-                    .padding(.horizontal, 28)
-                    .disabled(isSubmitting || code.trimmingCharacters(in: .whitespaces).isEmpty)
-
-                    Button {
-                        openURL(URL(string: "https://cheatiosvip.net")!)
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "heart.fill")
-                                .font(.caption.weight(.semibold))
-                            Text("Donate CheatiOSVip")
+                Button(action: submit) {
+                    Group {
+                        if isSubmitting {
+                            ProgressView().tint(.black)
+                        } else {
+                            Text(language.text("license.activate"))
                                 .font(.body.weight(.semibold))
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
                     }
-                    .background(.clear, in: CutShape(cut: 14))
-                    .overlay(CutShape(cut: 14).strokeBorder(AppTheme.techCardStroke, lineWidth: 1.5))
-                    .foregroundStyle(AppTheme.techGlow)
-                    .padding(.horizontal, 28)
-
-                    Spacer(minLength: 56)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
                 }
+                .background(AppTheme.techGlow, in: CutShape(cut: 14))
+                .foregroundStyle(Color.black)
+                .padding(.horizontal, 28)
+                .disabled(isSubmitting || code.trimmingCharacters(in: .whitespaces).isEmpty)
+
+                Button {
+                    openURL(URL(string: "https://cheatiosvip.net")!)
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "heart.fill")
+                            .font(.caption.weight(.semibold))
+                        Text("Donate CheatiOSVip")
+                            .font(.body.weight(.semibold))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                }
+                .background(.clear, in: CutShape(cut: 14))
+                .overlay(CutShape(cut: 14).strokeBorder(AppTheme.techCardStroke, lineWidth: 1.5))
+                .foregroundStyle(AppTheme.techGlow)
+                .padding(.horizontal, 28)
+
+                Spacer()
             }
         }
+        .ignoresSafeArea(.keyboard)
         .safeAreaInset(edge: .bottom) {
             Text("Make By ©CheatiOSVip")
                 .font(.caption2.weight(.medium))
