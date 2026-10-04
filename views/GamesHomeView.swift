@@ -123,23 +123,17 @@ struct GamesHomeView: View {
                 await checkAnnouncement()
             }
             .task { if let fetched = await PatchHubService.fetchContactURL() { contactURL = fetched } }
-            .background(
-                NavigationLink(
-                    isActive: Binding(
-                        get: { selectedGame != nil },
-                        set: { if !$0 { selectedGame = nil } }
-                    ),
-                    destination: {
-                        if let game = selectedGame {
-                            GamePatchesView(game: game, store: store)
-                        } else {
-                            EmptyView()
-                        }
-                    },
-                    label: { EmptyView() }
-                )
-                .hidden()
-            )
+            .navigationDestination(isPresented: Binding(
+                get: { selectedGame != nil },
+                set: { if !$0 { selectedGame = nil } }
+            )) {
+                if let game = selectedGame {
+                    GamePatchesView(game: game, store: store)
+                }
+            }
+            .navigationDestination(isPresented: $navigateToSettings) {
+                SettingsView()
+            }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 VStack(spacing: 0) {
                     LicenseStatusBar()
@@ -212,9 +206,6 @@ struct GamesHomeView: View {
             Spacer()
 
             // Gear button — tap: Settings, long press 3s: Fake App
-            NavigationLink(destination: SettingsView(), isActive: $navigateToSettings) {
-                EmptyView()
-            }
             ZStack {
                 CutShape(cut: 13)
                     .fill(AppTheme.cyberBase.opacity(0.80))
