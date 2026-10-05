@@ -82,12 +82,14 @@ struct CutShape: InsettableShape {
         let r = rect.insetBy(dx: insetAmount, dy: insetAmount)
         let c = max(cut - insetAmount, 2)
         var p = Path()
-        p.move(to: CGPoint(x: r.minX, y: r.minY))
+        p.move(to:    CGPoint(x: r.minX + c, y: r.minY))
         p.addLine(to: CGPoint(x: r.maxX - c, y: r.minY))
-        p.addLine(to: CGPoint(x: r.maxX, y: r.minY + c))
-        p.addLine(to: CGPoint(x: r.maxX, y: r.maxY))
+        p.addLine(to: CGPoint(x: r.maxX,     y: r.minY + c))
+        p.addLine(to: CGPoint(x: r.maxX,     y: r.maxY - c))
+        p.addLine(to: CGPoint(x: r.maxX - c, y: r.maxY))
         p.addLine(to: CGPoint(x: r.minX + c, y: r.maxY))
-        p.addLine(to: CGPoint(x: r.minX, y: r.maxY - c))
+        p.addLine(to: CGPoint(x: r.minX,     y: r.maxY - c))
+        p.addLine(to: CGPoint(x: r.minX,     y: r.minY + c))
         p.closeSubpath()
         return p
     }
