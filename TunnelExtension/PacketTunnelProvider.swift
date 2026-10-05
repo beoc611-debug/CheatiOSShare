@@ -84,8 +84,8 @@ private class TunnelPlatform: NSObject, LibboxPlatformInterface {
 
     init(provider: NEPacketTunnelProvider) { self.provider = provider }
 
-    func openTun(_ options: (any LibboxTunOptions)?, ret0_: UnsafeMutablePointer<Int32>?, error: NSErrorPointer) -> Bool {
-        let mtu   = options?.getMTU() ?? 1500
+    func openTun(_ options: LibboxTunOptions?, ret0_: UnsafeMutablePointer<Int32>?, error: NSErrorPointer) -> Bool {
+        let mtu = options?.getMTU() ?? 1500
         let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "192.0.0.1")
         settings.mtu = NSNumber(value: mtu)
 
@@ -125,19 +125,20 @@ private class TunnelPlatform: NSObject, LibboxPlatformInterface {
     func readWIFIState() -> LibboxWIFIState? { return nil }
     func tailscaleHostname() -> String { return "" }
     func lookupSFTPServer(_ error: NSErrorPointer) -> String { return "" }
-    func localDNSTransport() -> (any LibboxLocalDNSTransport)? { return nil }
+    func readSystemSSHHostKey(_ error: NSErrorPointer) -> String { return "" }
+    func localDNSTransport() -> LibboxLocalDNSTransport? { return nil }
 
     func cancelNotification(_ identifier: String?, typeID: Int32, error: NSErrorPointer) -> Bool { return true }
     func checkPlatformShell(_ error: NSErrorPointer) -> Bool { return false }
     func sendNotification(_ notification: LibboxNotification?, error: NSErrorPointer) -> Bool { return true }
 
-    func startDefaultInterfaceMonitor(_ listener: (any LibboxInterfaceUpdateListener)?, error: NSErrorPointer) -> Bool { return true }
-    func closeDefaultInterfaceMonitor(_ listener: (any LibboxInterfaceUpdateListener)?, error: NSErrorPointer) -> Bool { return true }
-    func startNeighborMonitor(_ listener: (any LibboxNeighborUpdateListener)?, error: NSErrorPointer) -> Bool { return true }
-    func closeNeighborMonitor(_ listener: (any LibboxNeighborUpdateListener)?, error: NSErrorPointer) -> Bool { return true }
+    func startDefaultInterfaceMonitor(_ listener: LibboxInterfaceUpdateListener?, error: NSErrorPointer) -> Bool { return true }
+    func closeDefaultInterfaceMonitor(_ listener: LibboxInterfaceUpdateListener?, error: NSErrorPointer) -> Bool { return true }
+    func startNeighborMonitor(_ listener: LibboxNeighborUpdateListener?, error: NSErrorPointer) -> Bool { return true }
+    func closeNeighborMonitor(_ listener: LibboxNeighborUpdateListener?, error: NSErrorPointer) -> Bool { return true }
 
-    func createBridge(_ options: LibboxBridgeOptions?, error: NSErrorPointer) -> (any LibboxBridgeSession)? { return nil }
-    func getInterfaces(_ error: NSErrorPointer) -> (any LibboxNetworkInterfaceIterator)? { return nil }
+    func createBridge(_ options: LibboxBridgeOptions?, error: NSErrorPointer) -> LibboxBridgeSession? { return nil }
+    func getInterfaces(_ error: NSErrorPointer) -> LibboxNetworkInterfaceIterator? { return nil }
     func lookupUser(_ username: String?, error: NSErrorPointer) -> LibboxPlatformUser? { return nil }
 
     func findConnectionOwner(_ ipProtocol: Int32, sourceAddress: String?, sourcePort: Int32,
@@ -145,9 +146,7 @@ private class TunnelPlatform: NSObject, LibboxPlatformInterface {
                               error: NSErrorPointer) -> LibboxConnectionOwner? { return nil }
 
     func openShellSession(_ user: LibboxPlatformUser?, command: String?,
-                          environ: (any LibboxStringIterator)?, term: String?,
+                          environ: LibboxStringIterator?, term: String?,
                           rows: Int32, cols: Int32,
-                          error: NSErrorPointer) -> (any LibboxShellSession)? { return nil }
-
-    func readSystemSSHHostKey(_ error: NSErrorPointer) -> String { return "" }
+                          error: NSErrorPointer) -> LibboxShellSession? { return nil }
 }
