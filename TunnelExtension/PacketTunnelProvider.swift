@@ -20,8 +20,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
-        var err: NSError?
-        _ = server?.closeService(&err)
+        try? server?.closeService()
         server = nil
         completionHandler()
     }
@@ -55,9 +54,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         guard server != nil else { throw makeErr("CommandServer nil", -2) }
 
         let config = try loadConfig()
-        guard server!.startOrReloadService(config, options: nil, error: &err) else {
-            throw err ?? makeErr("startOrReloadService failed", -3)
-        }
+        try server!.startOrReloadService(config, options: nil)
 
         startCompletion?(nil)
         startCompletion = nil
@@ -78,13 +75,16 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 
 // MARK: - Platform Interface
 
-private class TunnelPlatform: NSObject, LibboxPlatformInterface {
+// LibboxPlatformInterface in ObjC generates both a class and a protocol;
+// Swift renames the protocol to LibboxPlatformInterfaceProtocol to avoid conflict.
+private class TunnelPlatform: NSObject, LibboxPlatformInterfaceProtocol {
 
     unowned let provider: NEPacketTunnelProvider
 
     init(provider: NEPacketTunnelProvider) { self.provider = provider }
 
-    func openTun(_ options: LibboxTunOptions?, ret0_: UnsafeMutablePointer<Int32>?, error: NSErrorPointer) -> Bool {
+    // BOOL + NSError** methods are Swift-bridged as throws (void)
+    func openTun(_ options: LibboxTunOptions?, ret0_: UnsafeMutablePointer<Int32>?) throws {
         let mtu = options?.getMTU() ?? 1500
         let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "192.0.0.1")
         settings.mtu = NSNumber(value: mtu)
@@ -103,17 +103,13 @@ private class TunnelPlatform: NSObject, LibboxPlatformInterface {
         provider.setTunnelNetworkSettings(settings) { _ in sema.signal() }
         sema.wait()
 
-        // Private API — returns the utun fd created by NEPacketTunnelProvider
-        if let fd = (provider.packetFlow as AnyObject).value(forKey: "socket.fileDescriptor") as? Int32, fd >= 0 {
-            ret0_?.pointee = fd
-            return true
+        guard let fd = (provider.packetFlow as AnyObject).value(forKey: "socket.fileDescriptor") as? Int32, fd >= 0 else {
+            throw NSError(domain: "SBTunnel", code: -4, userInfo: [NSLocalizedDescriptionKey: "Cannot obtain TUN fd"])
         }
-        error?.pointee = NSError(domain: "SBTunnel", code: -4,
-                                 userInfo: [NSLocalizedDescriptionKey: "Cannot obtain TUN fd"])
-        return false
+        ret0_?.pointee = fd
     }
 
-    func autoDetectInterfaceControl(_ fd: Int32, error: NSErrorPointer) -> Bool { return true }
+    func autoDetectInterfaceControl(_ fd: Int32) throws {}
     func usePlatformAutoDetectInterfaceControl() -> Bool { return true }
     func underNetworkExtension() -> Bool { return true }
     func usePlatformBridge() -> Bool { return false }
@@ -124,29 +120,29 @@ private class TunnelPlatform: NSObject, LibboxPlatformInterface {
     func registerMyInterface(_ name: String?) {}
     func readWIFIState() -> LibboxWIFIState? { return nil }
     func tailscaleHostname() -> String { return "" }
+    func localDNSTransport() -> LibboxLocalDNSTransportProtocol? { return nil }
+
+    // _Nonnull return + NSError** → stays as NSErrorPointer (NOT throws)
     func lookupSFTPServer(_ error: NSErrorPointer) -> String { return "" }
     func readSystemSSHHostKey(_ error: NSErrorPointer) -> String { return "" }
-    func localDNSTransport() -> LibboxLocalDNSTransport? { return nil }
 
-    func cancelNotification(_ identifier: String?, typeID: Int32, error: NSErrorPointer) -> Bool { return true }
-    func checkPlatformShell(_ error: NSErrorPointer) -> Bool { return false }
-    func sendNotification(_ notification: LibboxNotification?, error: NSErrorPointer) -> Bool { return true }
+    func cancelNotification(_ identifier: String?, typeID: Int32) throws {}
+    func checkPlatformShell() throws { throw NSError(domain: "SBTunnel", code: -5, userInfo: nil) }
+    func sendNotification(_ notification: LibboxNotification?) throws {}
 
-    func startDefaultInterfaceMonitor(_ listener: LibboxInterfaceUpdateListener?, error: NSErrorPointer) -> Bool { return true }
-    func closeDefaultInterfaceMonitor(_ listener: LibboxInterfaceUpdateListener?, error: NSErrorPointer) -> Bool { return true }
-    func startNeighborMonitor(_ listener: LibboxNeighborUpdateListener?, error: NSErrorPointer) -> Bool { return true }
-    func closeNeighborMonitor(_ listener: LibboxNeighborUpdateListener?, error: NSErrorPointer) -> Bool { return true }
+    func startDefaultInterfaceMonitor(_ listener: LibboxInterfaceUpdateListenerProtocol?) throws {}
+    func closeDefaultInterfaceMonitor(_ listener: LibboxInterfaceUpdateListenerProtocol?) throws {}
+    func startNeighborMonitor(_ listener: LibboxNeighborUpdateListenerProtocol?) throws {}
+    func closeNeighborMonitor(_ listener: LibboxNeighborUpdateListenerProtocol?) throws {}
 
-    func createBridge(_ options: LibboxBridgeOptions?, error: NSErrorPointer) -> LibboxBridgeSession? { return nil }
-    func getInterfaces(_ error: NSErrorPointer) -> LibboxNetworkInterfaceIterator? { return nil }
-    func lookupUser(_ username: String?, error: NSErrorPointer) -> LibboxPlatformUser? { return nil }
+    func createBridge(_ options: LibboxBridgeOptions?) throws -> LibboxBridgeSessionProtocol? { return nil }
+    func getInterfaces() throws -> LibboxNetworkInterfaceIteratorProtocol? { return nil }
+    func lookupUser(_ username: String?) throws -> LibboxPlatformUser? { return nil }
 
     func findConnectionOwner(_ ipProtocol: Int32, sourceAddress: String?, sourcePort: Int32,
-                              destinationAddress: String?, destinationPort: Int32,
-                              error: NSErrorPointer) -> LibboxConnectionOwner? { return nil }
+                              destinationAddress: String?, destinationPort: Int32) throws -> LibboxConnectionOwner? { return nil }
 
     func openShellSession(_ user: LibboxPlatformUser?, command: String?,
-                          environ: LibboxStringIterator?, term: String?,
-                          rows: Int32, cols: Int32,
-                          error: NSErrorPointer) -> LibboxShellSession? { return nil }
+                          environ: LibboxStringIteratorProtocol?, term: String?,
+                          rows: Int32, cols: Int32) throws -> LibboxShellSessionProtocol? { return nil }
 }
