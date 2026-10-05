@@ -81,8 +81,8 @@ private class TunnelPlatform: NSObject, LibboxPlatformInterfaceProtocol {
 
     init(provider: NEPacketTunnelProvider) { self.provider = provider }
 
-    // openTun is NOT auto-bridged to throws (out param ret0_ prevents it)
-    func openTun(_ options: LibboxTunOptions?, ret0_: UnsafeMutablePointer<Int32>?, error: NSErrorPointer) -> Bool {
+    // Exact signature from Xcode 26.3 notes: (any LibboxTunOptionsProtocol)?, UnsafeMutablePointer<Int32>?) throws -> ()
+    func openTun(_ options: (any LibboxTunOptionsProtocol)?, ret0_: UnsafeMutablePointer<Int32>?) throws {
         let mtu = options?.getMTU() ?? 1500
         let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "192.0.0.1")
         settings.mtu = NSNumber(value: mtu)
@@ -101,15 +101,12 @@ private class TunnelPlatform: NSObject, LibboxPlatformInterfaceProtocol {
         provider.setTunnelNetworkSettings(settings) { _ in sema.signal() }
         sema.wait()
 
-        if let fd = (provider.packetFlow as AnyObject).value(forKey: "socket.fileDescriptor") as? Int32, fd >= 0 {
-            ret0_?.pointee = fd
-            return true
+        guard let fd = (provider.packetFlow as AnyObject).value(forKey: "socket.fileDescriptor") as? Int32, fd >= 0 else {
+            throw NSError(domain: "SBTunnel", code: -4, userInfo: [NSLocalizedDescriptionKey: "Cannot obtain TUN fd"])
         }
-        error?.pointee = NSError(domain: "SBTunnel", code: -4, userInfo: [NSLocalizedDescriptionKey: "Cannot obtain TUN fd"])
-        return false
+        ret0_?.pointee = fd
     }
 
-    // Renamed methods (compiler told us the correct names)
     func autoDetectControl(_ fd: Int32) throws {}
     func usePlatformAutoDetectControl() -> Bool { return true }
     func send(_ notification: LibboxNotification?) throws {}
@@ -125,7 +122,6 @@ private class TunnelPlatform: NSObject, LibboxPlatformInterfaceProtocol {
     func tailscaleHostname() -> String { return "" }
     func localDNSTransport() -> LibboxLocalDNSTransportProtocol? { return nil }
 
-    // _Nonnull String return + NSError** → NOT bridged to throws (non-optional can't signal failure via nil)
     func lookupSFTPServer(_ error: NSErrorPointer) -> String { return "" }
     func readSystemSSHHostKey(_ error: NSErrorPointer) -> String { return "" }
 
@@ -137,17 +133,34 @@ private class TunnelPlatform: NSObject, LibboxPlatformInterfaceProtocol {
     func startNeighborMonitor(_ listener: LibboxNeighborUpdateListenerProtocol?) throws {}
     func closeNeighborMonitor(_ listener: LibboxNeighborUpdateListenerProtocol?) throws {}
 
-    // Nullable object return + NSError** → ObjC style (keep error: param, no throws)
-    func createBridge(_ options: LibboxBridgeOptions?, error: NSErrorPointer) -> LibboxBridgeSession? { return nil }
-    func getInterfaces(_ error: NSErrorPointer) -> LibboxNetworkInterfaceIterator? { return nil }
-    func lookupUser(_ username: String?, error: NSErrorPointer) -> LibboxPlatformUser? { return nil }
+    // Throws + non-optional return (Xcode 26.3 pattern: throw to indicate unsupported)
+    func createBridge(_ options: LibboxBridgeOptions?) throws -> any LibboxBridgeSessionProtocol {
+        throw NSError(domain: "SBTunnel", code: -99, userInfo: nil)
+    }
+
+    func getInterfaces() throws -> any LibboxNetworkInterfaceIteratorProtocol {
+        return EmptyNetworkIterator()
+    }
+
+    func lookupUser(_ username: String?) throws -> LibboxPlatformUser {
+        throw NSError(domain: "SBTunnel", code: -99, userInfo: nil)
+    }
 
     func findConnectionOwner(_ ipProtocol: Int32, sourceAddress: String?, sourcePort: Int32,
-                              destinationAddress: String?, destinationPort: Int32,
-                              error: NSErrorPointer) -> LibboxConnectionOwner? { return nil }
+                              destinationAddress: String?, destinationPort: Int32) throws -> LibboxConnectionOwner {
+        throw NSError(domain: "SBTunnel", code: -99, userInfo: nil)
+    }
 
     func openShellSession(_ user: LibboxPlatformUser?, command: String?,
-                          environ: LibboxStringIterator?, term: String?,
-                          rows: Int32, cols: Int32,
-                          error: NSErrorPointer) -> LibboxShellSession? { return nil }
+                          environ: (any LibboxStringIteratorProtocol)?, term: String?,
+                          rows: Int32, cols: Int32) throws -> any LibboxShellSessionProtocol {
+        throw NSError(domain: "SBTunnel", code: -99, userInfo: nil)
+    }
+}
+
+// MARK: - Empty iterator stubs
+
+private class EmptyNetworkIterator: NSObject, LibboxNetworkInterfaceIteratorProtocol {
+    func hasNext() -> Bool { return false }
+    func next() -> LibboxNetworkInterface? { return nil }
 }
