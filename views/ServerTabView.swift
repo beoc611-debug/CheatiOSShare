@@ -122,7 +122,7 @@ struct ServerTabView: View {
                 Text(section.title.uppercased())
                     .font(.system(size: 11, weight: .heavy))
                     .foregroundStyle(accent.opacity(0.85))
-                    .kerning(1.0)
+                    .kerning15(1.0)
                 Spacer()
             }
             .padding(.bottom, 10)

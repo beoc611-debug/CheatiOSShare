@@ -206,7 +206,7 @@ private struct ToastOverlay: ViewModifier {
                         Text(toast.style.badge)
                             .font(.system(size: 11, weight: .black))
                             .foregroundStyle(toast.style.color)
-                            .tracking(0.6)
+                            .tracking15(0.6)
                             .padding(.horizontal, 9)
                             .padding(.vertical, 5)
                             .background(toast.style.color.opacity(0.15), in: Capsule())
@@ -507,6 +507,28 @@ private struct PresentationDragIndicatorModifier: ViewModifier {
     }
 }
 
+private struct KerningModifier: ViewModifier {
+    let kerning: CGFloat
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content.kerning(kerning)
+        } else {
+            content
+        }
+    }
+}
+
+private struct PresentationFractionDetentModifier: ViewModifier {
+    let fraction: CGFloat
+    func body(content: Content) -> some View {
+        if #available(iOS 16, *) {
+            content.presentationDetents([.fraction(fraction)])
+        } else {
+            content
+        }
+    }
+}
+
 struct LabeledRow<C: View>: View {
     let label: String
     @ViewBuilder private var content: () -> C
@@ -549,4 +571,17 @@ extension View {
     func presentationHeightDetent(_ h: CGFloat) -> some View { modifier(PresentationHeightDetentModifier(height: h)) }
     func presentationDragIndicator15(_ visible: Bool) -> some View { modifier(PresentationDragIndicatorModifier(visible: visible)) }
     func formStyleGrouped() -> some View { modifier(FormStyleGroupedModifier()) }
+    func kerning15(_ k: CGFloat) -> some View { modifier(KerningModifier(kerning: k)) }
+    func presentationFractionDetent(_ f: CGFloat) -> some View { modifier(PresentationFractionDetentModifier(fraction: f)) }
+}
+
+extension View {
+    @ViewBuilder
+    func navigationDestination15<V: View>(isPresented: Binding<Bool>, @ViewBuilder destination: () -> V) -> some View {
+        if #available(iOS 16.0, *) {
+            self.navigationDestination(isPresented: isPresented, destination: destination)
+        } else {
+            self
+        }
+    }
 }

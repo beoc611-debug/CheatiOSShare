@@ -679,8 +679,8 @@ struct VTToolSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.hidden)
+        .presentationMediumLargeDetent()
+        .presentationDragIndicator15(false)
     }
 
     private var canRun: Bool {
@@ -855,7 +855,7 @@ struct VipToolsNoticeSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.hidden)
+        .presentationMediumLargeDetent()
+        .presentationDragIndicator15(false)
     }
 }

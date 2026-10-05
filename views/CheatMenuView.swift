@@ -611,7 +611,7 @@ struct CheatMenuView: View {
         Text(text)
             .font(.system(size: 12, weight: .semibold))
             .foregroundStyle(Color(white: 0.45))
-            .kerning(0.8)
+            .kerning15(0.8)
             .padding(.leading, 4)
     }
 

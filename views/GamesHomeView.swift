@@ -123,7 +123,7 @@ struct GamesHomeView: View {
                 await checkAnnouncement()
             }
             .task { if let fetched = await PatchHubService.fetchContactURL() { contactURL = fetched } }
-            .navigationDestination(isPresented: Binding(
+            .navigationDestination15(isPresented: Binding(
                 get: { selectedGame != nil },
                 set: { if !$0 { selectedGame = nil } }
             )) {
@@ -131,7 +131,7 @@ struct GamesHomeView: View {
                     GamePatchesView(game: game, store: store)
                 }
             }
-            .navigationDestination(isPresented: $navigateToSettings) {
+            .navigationDestination15(isPresented: $navigateToSettings) {
                 SettingsView()
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -338,7 +338,7 @@ struct GamesHomeView: View {
                 Text("DANH S\u{00C1}CH GAME")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(.white)
-                    .kerning(0.4)
+                    .kerning15(0.4)
                 Spacer()
                 HStack(spacing: 3) {
                     Text("Xem t\u{1EA5}t c\u{1EA3} (\(games.count))")
@@ -773,7 +773,7 @@ struct GameCardView: View {
             if let badge = cornerBadge {
                 Text(badge.text)
                     .font(.system(size: 8.5, weight: .black))
-                    .kerning(0.8)
+                    .kerning15(0.8)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 9)
                     .padding(.vertical, 5)

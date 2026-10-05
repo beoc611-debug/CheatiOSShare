@@ -297,7 +297,7 @@ struct FreefireESPHomeSection: View {
                 Button { store.removePatches() } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "arrow.uturn.backward.circle.fill").font(.system(size: 15, weight: .bold))
-                        Text("Un Patch").font(.system(size: 15, weight: .bold)).kerning(0.2)
+                        Text("Un Patch").font(.system(size: 15, weight: .bold)).kerning15(0.2)
                     }
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -321,7 +321,7 @@ struct FreefireESPHomeSection: View {
                             Image(systemName: "doc.badge.plus").font(.system(size: 16, weight: .bold))
                         }
                         Text(store.isPatching ? "Đang patch..." : "Patch File vào Game")
-                            .font(.system(size: 15, weight: .bold)).kerning(0.2)
+                            .font(.system(size: 15, weight: .bold)).kerning15(0.2)
                     }
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -396,7 +396,7 @@ struct FreefireESPHomeSection: View {
                         .offset(y: 1)
                 }
                 Text("Download DNS")
-                    .font(.system(size: 15, weight: .bold)).kerning(0.2)
+                    .font(.system(size: 15, weight: .bold)).kerning15(0.2)
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
@@ -463,7 +463,7 @@ private struct PatchErrorSheet: View {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
                         Text("CÓ THỂ LÀM GÌ?")
-                            .font(.system(size: 11, weight: .heavy)).foregroundStyle(orange.opacity(0.80)).kerning(0.8)
+                            .font(.system(size: 11, weight: .heavy)).foregroundStyle(orange.opacity(0.80)).kerning15(0.8)
                         Spacer()
                     }
                     .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 10)
@@ -513,8 +513,8 @@ private struct PatchErrorSheet: View {
                 .buttonStyle(.plain).padding(.horizontal, 16).padding(.bottom, 20)
             }
         }
-        .presentationDetents([.fraction(0.72)])
-        .presentationDragIndicator(.hidden)
+        .presentationFractionDetent(0.72)
+        .presentationDragIndicator15(false)
         .preferredColorScheme(.dark)
     }
 
@@ -673,8 +673,8 @@ private struct ESPResultSheet: View {
                 }
             }
         }
-        .presentationDetents([.fraction(0.72)])
-        .presentationDragIndicator(.hidden)
+        .presentationFractionDetent(0.72)
+        .presentationDragIndicator15(false)
         .preferredColorScheme(.dark)
     }
 
@@ -683,7 +683,7 @@ private struct ESPResultSheet: View {
             Text(text)
                 .font(.system(size: 11, weight: .heavy))
                 .foregroundStyle(accent.opacity(0.80))
-                .kerning(0.8)
+                .kerning15(0.8)
             Spacer()
         }
         .padding(.horizontal, 16)

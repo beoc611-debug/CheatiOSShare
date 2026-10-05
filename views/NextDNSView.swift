@@ -548,7 +548,7 @@ private struct DNSNoticeSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        .presentationMediumLargeDetent()
     }
 }
 

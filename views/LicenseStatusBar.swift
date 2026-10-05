@@ -70,7 +70,7 @@ struct LicenseStatusBar: View {
             } label: {
                 Text("ĐỔI KEY")
                     .font(.system(size: 14, weight: .heavy))
-                    .kerning(0.6)
+                    .kerning15(0.6)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 13)
