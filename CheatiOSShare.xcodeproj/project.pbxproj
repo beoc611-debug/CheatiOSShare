@@ -9,12 +9,6 @@
 /* Begin PBXBuildFile section */
 		CA10CAFEDEADBEEF0000F04C /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F041 /* KeyboardViewController.swift */; };
 		CA10CAFEDEADBEEF0000F04D /* DSWToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F042 /* DSWToolsView.swift */; };
-		TUN009 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = TUN001 /* PacketTunnelProvider.swift */; };
-		TUN017 /* Libbox.xcframework in TunnelExtension Frameworks */ = {isa = PBXBuildFile; fileRef = TUN016 /* Libbox.xcframework */; };
-		TUN018 /* Libbox.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = TUN016 /* Libbox.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		TUN019 /* TunnelExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = TUN004 /* TunnelExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		TUN021 /* VPNTunnelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TUN020 /* VPNTunnelManager.swift */; };
-		TUN023 /* bypass_config.json in Resources */ = {isa = PBXBuildFile; fileRef = TUN022 /* bypass_config.json */; };
 		
 		CA10CAFEDEADBEEF0000B001 /* CanhiOSShareApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F001 /* CanhiOSShareApp.swift */; };
 		CA10CAFEDEADBEEF0000B002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F002 /* ContentView.swift */; };
@@ -280,13 +274,6 @@
 		E05003 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E05004 /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E05005 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		TUN001 /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PacketTunnelProvider.swift; sourceTree = "<group>"; };
-		TUN002 /* TunnelExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TunnelExtension.entitlements; sourceTree = "<group>"; };
-		TUN003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		TUN004 /* TunnelExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TunnelExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		TUN016 /* Libbox.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Libbox.xcframework; path = Libbox.xcframework; sourceTree = "<group>"; };
-		TUN020 /* VPNTunnelManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPNTunnelManager.swift; sourceTree = "<group>"; };
-		TUN022 /* bypass_config.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = bypass_config.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -295,7 +282,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				CA10CAFEDEADBEEF0000B019 /* Security.framework in Frameworks */,
-				TUN018 /* Libbox.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -320,27 +306,15 @@
 				CA10CAFEDEADBEEF0000000I /* Products */,
 				CA10CAFEDEADBEEF0000000K /* Frameworks */,
 				CA10CAFEDEADBEEF0000F040 /* DSWKeyboard */,
-				TUN010 /* TunnelExtension */,);
+			);
 			sourceTree = "<group>";
 		};
 		CA10CAFEDEADBEEF0000000K /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				CA10CAFEDEADBEEF0000F029 /* Security.framework */,
-				TUN016 /* Libbox.xcframework */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		TUN010 /* TunnelExtension */ = {
-			isa = PBXGroup;
-			children = (
-				TUN001 /* PacketTunnelProvider.swift */,
-				TUN022 /* bypass_config.json */,
-				TUN002 /* TunnelExtension.entitlements */,
-				TUN003 /* Info.plist */,
-			);
-			path = TunnelExtension;
 			sourceTree = "<group>";
 		};
 		CA10CAFEDEADBEEF0000000D /* CanhiOSShare */ = {
@@ -426,7 +400,6 @@
 				CA10CAFEDEADBEEF0000F035 /* LicenseGateStore.swift */,
 				CA10CAFEDEADBEEF0000F036 /* AnnouncementService.swift */,
 				CA10CAFEDEADBEEF0000F03F /* NEDNSManager.swift */,
-				TUN020 /* VPNTunnelManager.swift */,
 				CA10CAFEDEADBEEF0000F037 /* JailbreakDetector.swift */,
 				F04001 /* AppTabNavigationState.swift */,
 				F04002 /* CleanerCatalog.swift */,
@@ -522,7 +495,6 @@
 			isa = PBXGroup;
 			children = (
 				CA10CAFEDEADBEEF0000000J /* CheatiOSShare.app */,
-				TUN004 /* TunnelExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -569,33 +541,16 @@
 				CA10CAFEDEADBEEF0000000B /* Frameworks */,
 				CA10CAFEDEADBEEF0000000A /* Resources */,
 				CA10CAFEDEADBEEF0000F04E /* Embed App Extensions */,
-				TUN025 /* Embed Frameworks */,);
+			);
 			buildRules = (
 			);
 			dependencies = (
 				CA10CAFEDEADBEEF0000F051 /* PBXTargetDependency */,
-				TUN012 /* PBXTargetDependency */,);
+			);
 			name = CheatiOSShare;
 			productName = CheatiOSShare;
 			productReference = CA10CAFEDEADBEEF0000000J /* CheatiOSShare.app */;
 			productType = "com.apple.product-type.application";
-		};
-		TUN005 /* TunnelExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = TUN015 /* Build configuration list for PBXNativeTarget "TunnelExtension" */;
-			buildPhases = (
-				TUN006 /* Sources */,
-				TUN007 /* Frameworks */,
-				TUN008 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = TunnelExtension;
-			productName = TunnelExtension;
-			productReference = TUN004 /* TunnelExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -607,24 +562,12 @@
 			remoteGlobalIDString = CA10CAFEDEADBEEF0000F045;
 			remoteInfo = DSWKeyboard;
 		};
-		TUN011 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = CA10CAFEDEADBEEF00000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = TUN005;
-			remoteInfo = TunnelExtension;
-		};
 /* End PBXContainerItemProxy section */
 /* Begin PBXTargetDependency section */
 		CA10CAFEDEADBEEF0000F051 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = CA10CAFEDEADBEEF0000F045 /* DSWKeyboard */;
 			targetProxy = CA10CAFEDEADBEEF0000F050 /* PBXContainerItemProxy */;
-		};
-		TUN012 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = TUN005 /* TunnelExtension */;
-			targetProxy = TUN011 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -658,7 +601,6 @@
 			targets = (
 				CA10CAFEDEADBEEF00000002 /* CheatiOSShare */,
 				CA10CAFEDEADBEEF0000F045 /* DSWKeyboard */,
-				TUN005 /* TunnelExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -709,20 +651,8 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				TUN019 /* TunnelExtension.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		TUN025 /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				TUN018 /* Libbox.xcframework in Frameworks */,
-			);
-			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 
@@ -756,7 +686,6 @@
 				CA10CAFEDEADBEEF0000B025 /* LicenseGateStore.swift in Sources */,
 				CA10CAFEDEADBEEF0000B026 /* AnnouncementService.swift in Sources */,
 				CA10CAFEDEADBEEF0000B02F /* NEDNSManager.swift in Sources */,
-				TUN021 /* VPNTunnelManager.swift in Sources */,
 				CA10CAFEDEADBEEF0000B027 /* JailbreakDetector.swift in Sources */,
 				CA10CAFEDEADBEEF0000B028 /* WelcomeFaceIcon.swift in Sources */,
 				CA10CAFEDEADBEEF0000B029 /* JailbreakBlockView.swift in Sources */,
@@ -842,30 +771,6 @@
 				FF0002 /* FreefireESPHomeSection.swift in Sources */,
 				AUC001 /* AppUIConfigModels.swift in Sources */,
 				STV001 /* ServerTabView.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		TUN006 /* Sources (TunnelExtension) */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				TUN009 /* PacketTunnelProvider.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		TUN007 /* Frameworks (TunnelExtension) */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				TUN017 /* Libbox.xcframework in TunnelExtension Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		TUN008 /* Resources (TunnelExtension) */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				TUN023 /* bypass_config.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1096,52 +1001,6 @@
 			};
 			name = Release;
 		};
-		TUN013 /* Debug (TunnelExtension) */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = TunnelExtension/TunnelExtension.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = TunnelExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.apple.mobile.MobileHouseArrest.Tunnel";
-				PRODUCT_NAME = TunnelExtension;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		TUN014 /* Release (TunnelExtension) */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = TunnelExtension/TunnelExtension.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = TunnelExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.apple.mobile.MobileHouseArrest.Tunnel";
-				PRODUCT_NAME = TunnelExtension;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1169,15 +1028,6 @@
 			buildConfigurations = (
 				CA10CAFEDEADBEEF00000005 /* Debug */,
 				CA10CAFEDEADBEEF00000006 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		TUN015 /* Build configuration list for PBXNativeTarget "TunnelExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				TUN013 /* Debug */,
-				TUN014 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

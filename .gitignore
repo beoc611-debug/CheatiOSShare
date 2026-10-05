@@ -1,6 +1,3 @@
-# Libbox xcframework (downloaded at build time, too large for git)
-Libbox.xcframework/
-
 # Xcode build
 build/
 DerivedData/
