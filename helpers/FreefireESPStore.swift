@@ -59,6 +59,7 @@ final class FreefireESPStore: ObservableObject {
 
     private let bitFastSwap:         Int32 = 1 << 25  // mainBits bit 25: fast weapon swap
     private let bitHighJump:         Int32 = 1 << 26  // mainBits bit 26: high jump
+    private let bitAimSkipDowned:    Int32 = 1 << 24  // mainBits bit 24: skip knocked enemies in aim
 
     // Research Mode — byte 8 bits (0-4)
     private let bitR8Radar:          UInt8 = 1 << 0
@@ -143,6 +144,7 @@ final class FreefireESPStore: ObservableObject {
         case "noRecoil":       return noRecoil
         case "aimFov":         return aimFov
         case "aimFovHide":     return aimFovHide
+        case "skipDowned":     return skipDowned
         case "fastParachute":  return fastParachute
         case "speedRunning":   return speedRunning
         case "fakeDamage":     return fakeDamage
@@ -175,6 +177,7 @@ final class FreefireESPStore: ObservableObject {
         case "noRecoil":       toggle(\.noRecoil)
         case "aimFov":         toggle(\.aimFov)
         case "aimFovHide":     toggle(\.aimFovHide)
+        case "skipDowned":     toggle(\.skipDowned)
         case "fastParachute":  toggle(\.fastParachute)
         case "speedRunning":   toggle(\.speedRunning)
         case "fakeDamage":     toggle(\.fakeDamage)
@@ -198,6 +201,7 @@ final class FreefireESPStore: ObservableObject {
     @Published var noRecoil     = false
     @Published var aimFov       = false
     @Published var aimFovHide   = false
+    @Published var skipDowned   = false
     @Published var fovRadius: Int32 = 100
     @Published var aimMode: Int32 = 1
     @Published var headRate: Int32 = 3
@@ -538,6 +542,7 @@ final class FreefireESPStore: ObservableObject {
         noRecoil     = (mainBits & bitNoRecoil)     != 0
         aimFov       = (mainBits & bitAimFov)       != 0
         aimFovHide   = (mainBits & bitAimFovHide)   != 0
+        skipDowned   = (mainBits & bitAimSkipDowned) != 0
         let modeVal  = (mainBits >> aimModeShift) & 3
         aimMode      = (mainBits & bitStateInitialized) != 0 ? modeVal : 1
         let rateVal  = (mainBits >> headRateShift) & 7
@@ -597,6 +602,7 @@ final class FreefireESPStore: ObservableObject {
         if noRecoil     { mainBits |= bitNoRecoil }
         if aimFov       { mainBits |= bitAimFov }
         if aimFovHide   { mainBits |= bitAimFovHide }
+        if skipDowned   { mainBits |= bitAimSkipDowned }
         if fastSwap     { mainBits |= bitFastSwap }
         if highJump     { mainBits |= bitHighJump }
         mainBits |= (aimMode & 3) << aimModeShift
