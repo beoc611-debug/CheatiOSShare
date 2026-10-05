@@ -23,28 +23,29 @@ enum AppTheme {
     static let emptyIconSize: CGFloat = 30
     static let selectionIconSize: CGFloat = 18
 
-    // MARK: Red / Dark-Rose palette
-    static let cyberBase      = Color(red: 0.05, green: 0.02, blue: 0.03)
-    static let techGlow       = Color(red: 1.00, green: 0.18, blue: 0.38)   // neon red-rose
-    static let neonPurple     = Color(red: 0.85, green: 0.10, blue: 0.28)   // deep crimson
-    static let neonCyan       = Color(red: 1.00, green: 0.45, blue: 0.62)   // hot pink
-    static let techCardFill   = Color(red: 0.08, green: 0.03, blue: 0.04)
+    // MARK: Cyberpunk Navy + Neon palette
+    static let cyberBase      = Color(red: 0.04, green: 0.05, blue: 0.14)   // deep navy
+    static let techGlow       = Color(red: 1.00, green: 0.09, blue: 0.44)   // neon pink  #FF176F
+    static let neonPurple     = Color(red: 0.66, green: 0.33, blue: 0.97)   // violet     #A855F7
+    static let neonCyan       = Color(red: 0.00, green: 0.85, blue: 1.00)   // electric cyan #00D9FF
+    static let neonBlue       = Color(red: 0.36, green: 0.36, blue: 1.00)   // electric blue #5B5CFF
+    static let techCardFill   = Color(red: 0.04, green: 0.05, blue: 0.11)   // #0B0D1C
 
     static let techCardStroke = LinearGradient(
         colors: [
-            Color(red: 1.00, green: 0.18, blue: 0.38).opacity(0.55),
-            Color(red: 0.85, green: 0.10, blue: 0.28).opacity(0.30)
+            Color(red: 1.00, green: 0.09, blue: 0.44).opacity(0.50),
+            Color(red: 0.66, green: 0.33, blue: 0.97).opacity(0.30)
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
     static let rowPalette: [Color] = [
-        Color(red: 1.00, green: 0.56, blue: 0.24),
-        Color(red: 0.96, green: 0.28, blue: 0.42),
-        Color(red: 0.30, green: 0.78, blue: 0.96),
-        Color(red: 0.66, green: 0.46, blue: 0.98),
-        Color(red: 0.36, green: 0.85, blue: 0.56),
+        Color(red: 0.00, green: 0.85, blue: 1.00),   // cyan
+        Color(red: 0.66, green: 0.33, blue: 0.97),   // purple
+        Color(red: 1.00, green: 0.09, blue: 0.44),   // pink
+        Color(red: 0.36, green: 0.36, blue: 1.00),   // blue
+        Color(red: 0.00, green: 0.96, blue: 0.63),   // green
     ]
     static func rowColor(_ index: Int) -> Color { rowPalette[index % rowPalette.count] }
 

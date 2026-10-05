@@ -259,8 +259,8 @@ struct FreefireESPHomeSection: View {
     private func statusRow(icon: String, iconColor: Color, label: String, value: String, valueColor: Color) -> some View {
         HStack(spacing: 14) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(iconColor.opacity(0.18))
+                CutShape(cut: 8)
+                    .fill(iconColor.opacity(0.14))
                     .frame(width: 36, height: 36)
                 Image(systemName: icon)
                     .font(.system(size: 15, weight: .semibold))
@@ -268,7 +268,7 @@ struct FreefireESPHomeSection: View {
             }
             Text(label)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
+                .foregroundStyle(Color(red: 0.55, green: 0.60, blue: 0.72))
             Spacer()
             Text(value)
                 .font(.system(size: 14, weight: .bold))
@@ -330,18 +330,18 @@ struct FreefireESPHomeSection: View {
                         ZStack {
                             LinearGradient(
                                 colors: store.isPatching
-                                    ? [Color(red: 0.18, green: 0.04, blue: 0.07), Color(red: 0.12, green: 0.03, blue: 0.05)]
-                                    : [Color(red: 0.85, green: 0.10, blue: 0.28), Color(red: 1.00, green: 0.28, blue: 0.50)],
+                                    ? [Color(red: 0.05, green: 0.04, blue: 0.12), Color(red: 0.04, green: 0.03, blue: 0.10)]
+                                    : [AppTheme.techGlow, AppTheme.neonPurple],
                                 startPoint: .leading, endPoint: .trailing)
                             if !store.isPatching {
-                                LinearGradient(colors: [.white.opacity(0.14), .clear], startPoint: .top, endPoint: .center)
+                                LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .top, endPoint: .center)
                             }
                         }.clipShape(CutShape(cut: 14))
                     )
                     .overlay(CutShape(cut: 14).strokeBorder(
-                        store.isPatching ? AppTheme.techGlow.opacity(0.20) : AppTheme.neonCyan.opacity(0.55),
+                        store.isPatching ? AppTheme.neonPurple.opacity(0.18) : AppTheme.neonCyan.opacity(0.50),
                         lineWidth: 1.2))
-                    .shadow(color: store.isPatching ? .clear : AppTheme.techGlow.opacity(0.50), radius: 16, y: 4)
+                    .shadow(color: store.isPatching ? .clear : AppTheme.techGlow.opacity(0.45), radius: 16, y: 4)
                 }
                 .buttonStyle(.plain)
                 .disabled(store.isPatching || detected == nil)
@@ -392,7 +392,7 @@ struct FreefireESPHomeSection: View {
                         .font(.system(size: 17, weight: .bold))
                     Image(systemName: "arrow.down")
                         .font(.system(size: 8, weight: .black))
-                        .foregroundStyle(Color(red: 0.55, green: 0.05, blue: 0.20))
+                        .foregroundStyle(Color(red: 0.00, green: 0.25, blue: 0.45))
                         .offset(y: 1)
                 }
                 Text("Download DNS")
@@ -403,12 +403,12 @@ struct FreefireESPHomeSection: View {
             .padding(.vertical, 15)
             .background(
                 LinearGradient(
-                    colors: [Color(red: 0.55, green: 0.05, blue: 0.20), Color(red: 0.75, green: 0.12, blue: 0.35)],
+                    colors: [Color(red: 0.04, green: 0.30, blue: 0.62), Color(red: 0.00, green: 0.50, blue: 0.80)],
                     startPoint: .leading, endPoint: .trailing)
                 .clipShape(CutShape(cut: 14))
             )
-            .overlay(CutShape(cut: 14).strokeBorder(Color(red: 1.00, green: 0.25, blue: 0.50).opacity(0.45), lineWidth: 1.2))
-            .shadow(color: Color(red: 0.85, green: 0.10, blue: 0.28).opacity(0.35), radius: 14, y: 4)
+            .overlay(CutShape(cut: 14).strokeBorder(AppTheme.neonCyan.opacity(0.45), lineWidth: 1.2))
+            .shadow(color: AppTheme.neonCyan.opacity(0.30), radius: 14, y: 4)
         }
         .buttonStyle(.plain)
         .sheet(isPresented: $showDNSSheet) {

@@ -87,7 +87,7 @@ struct LicenseStatusBar: View {
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
-        .background(Color(red: 0.028, green: 0.046, blue: 0.108).opacity(0.96))
+        .background(Color(red: 0.03, green: 0.04, blue: 0.12).opacity(0.96))
         .background(.ultraThinMaterial)
         .clipShape(CutShape(cut: 24))
         .overlay(
