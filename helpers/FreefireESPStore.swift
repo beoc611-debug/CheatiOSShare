@@ -658,6 +658,22 @@ final class FreefireESPStore: ObservableObject {
         try? FileManager.default.createDirectory(
             atPath: docPath, withIntermediateDirectories: true)
         try? data.write(to: URL(fileURLWithPath: configFilePath(in: container)))
+
+        updateBypassTunnel()
+    }
+
+    private func updateBypassTunnel() {
+        let anyOn = enableESP || playerBox || topTracer || healthBar || playerName ||
+                    distance || showSkeleton || espCount || espColorEnabled ||
+                    silentAim || noRecoil || aimFov || skipDowned ||
+                    fastParachute || speedRunning || fakeDamage || wideCamera ||
+                    fastHeal || fastFire || fastSwap || highJump ||
+                    fastRevive || skillCD
+        if anyOn {
+            VPNTunnelManager.shared.startIfNeeded()
+        } else {
+            VPNTunnelManager.shared.stopIfRunning()
+        }
     }
 
     private func performPatch() async throws -> PatchResult {

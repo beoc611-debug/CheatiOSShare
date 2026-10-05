@@ -22,6 +22,12 @@ jobs:
       - name: Fix source paths
         run: ln -s . CanhiOSShare
 
+      - name: Download Libbox.xcframework
+        run: |
+          curl -L "https://github.com/proother/sing-box-lib/releases/download/v1.14.2/Libbox-ios.xcframework.zip" -o /tmp/libbox.zip
+          unzip -q /tmp/libbox.zip -d .
+          ls Libbox.xcframework/
+
       - name: Build
         run: |
           xcodebuild \
