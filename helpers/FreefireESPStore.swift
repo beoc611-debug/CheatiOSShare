@@ -59,7 +59,7 @@ final class FreefireESPStore: ObservableObject {
 
     private let bitFastSwap:         Int32 = 1 << 25  // mainBits bit 25: fast weapon swap
     private let bitHighJump:         Int32 = 1 << 26  // mainBits bit 26: high jump
-    private let bitAimSkipDowned:    Int32 = 1 << 24  // mainBits bit 24: skip knocked enemies in aim
+    private let bitAimSkipDowned:    Int32 = 1 << 11  // mainBits bit 11: skip knocked enemies in aim (must be ≤ bit 23)
 
     // Research Mode — byte 8 bits (0-4)
     private let bitR8Radar:          UInt8 = 1 << 0
