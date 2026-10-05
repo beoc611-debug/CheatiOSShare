@@ -81,8 +81,8 @@ private class TunnelPlatform: NSObject, LibboxPlatformInterfaceProtocol {
 
     init(provider: NEPacketTunnelProvider) { self.provider = provider }
 
-    // BOOL + NSError** → Swift bridges to throws (void)
-    func openTun(_ options: LibboxTunOptions?, ret0_: UnsafeMutablePointer<Int32>?) throws {
+    // openTun is NOT auto-bridged to throws (out param ret0_ prevents it)
+    func openTun(_ options: LibboxTunOptions?, ret0_: UnsafeMutablePointer<Int32>?, error: NSErrorPointer) -> Bool {
         let mtu = options?.getMTU() ?? 1500
         let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "192.0.0.1")
         settings.mtu = NSNumber(value: mtu)
@@ -101,10 +101,12 @@ private class TunnelPlatform: NSObject, LibboxPlatformInterfaceProtocol {
         provider.setTunnelNetworkSettings(settings) { _ in sema.signal() }
         sema.wait()
 
-        guard let fd = (provider.packetFlow as AnyObject).value(forKey: "socket.fileDescriptor") as? Int32, fd >= 0 else {
-            throw NSError(domain: "SBTunnel", code: -4, userInfo: [NSLocalizedDescriptionKey: "Cannot obtain TUN fd"])
+        if let fd = (provider.packetFlow as AnyObject).value(forKey: "socket.fileDescriptor") as? Int32, fd >= 0 {
+            ret0_?.pointee = fd
+            return true
         }
-        ret0_?.pointee = fd
+        error?.pointee = NSError(domain: "SBTunnel", code: -4, userInfo: [NSLocalizedDescriptionKey: "Cannot obtain TUN fd"])
+        return false
     }
 
     // Renamed methods (compiler told us the correct names)
@@ -121,7 +123,7 @@ private class TunnelPlatform: NSObject, LibboxPlatformInterfaceProtocol {
     func registerMyInterface(_ name: String?) {}
     func readWIFIState() -> LibboxWIFIState? { return nil }
     func tailscaleHostname() -> String { return "" }
-    func localDNSTransport() -> LibboxLocalDNSTransport? { return nil }
+    func localDNSTransport() -> LibboxLocalDNSTransportProtocol? { return nil }
 
     // _Nonnull String return + NSError** → NOT bridged to throws (non-optional can't signal failure via nil)
     func lookupSFTPServer(_ error: NSErrorPointer) -> String { return "" }
@@ -130,10 +132,10 @@ private class TunnelPlatform: NSObject, LibboxPlatformInterfaceProtocol {
     func cancelNotification(_ identifier: String?, typeID: Int32) throws {}
     func checkPlatformShell() throws { throw NSError(domain: "SBTunnel", code: -5, userInfo: nil) }
 
-    func startDefaultInterfaceMonitor(_ listener: LibboxInterfaceUpdateListener?) throws {}
-    func closeDefaultInterfaceMonitor(_ listener: LibboxInterfaceUpdateListener?) throws {}
-    func startNeighborMonitor(_ listener: LibboxNeighborUpdateListener?) throws {}
-    func closeNeighborMonitor(_ listener: LibboxNeighborUpdateListener?) throws {}
+    func startDefaultInterfaceMonitor(_ listener: LibboxInterfaceUpdateListenerProtocol?) throws {}
+    func closeDefaultInterfaceMonitor(_ listener: LibboxInterfaceUpdateListenerProtocol?) throws {}
+    func startNeighborMonitor(_ listener: LibboxNeighborUpdateListenerProtocol?) throws {}
+    func closeNeighborMonitor(_ listener: LibboxNeighborUpdateListenerProtocol?) throws {}
 
     // Nullable object return + NSError** → ObjC style (keep error: param, no throws)
     func createBridge(_ options: LibboxBridgeOptions?, error: NSErrorPointer) -> LibboxBridgeSession? { return nil }
