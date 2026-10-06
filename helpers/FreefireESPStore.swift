@@ -64,6 +64,7 @@ final class FreefireESPStore: ObservableObject {
     // Research Mode — byte 8 bits (0-4)
     private let bitR8FastRevive:     UInt8 = 1 << 2
     private let bitR8SkillCD:        UInt8 = 1 << 3
+    private let bitR8Ghost:          UInt8 = 1 << 4
 
     // MARK: - Game variant selector
     enum FFVariant: String, CaseIterable, Identifiable {
@@ -93,15 +94,15 @@ final class FreefireESPStore: ObservableObject {
     ]
 
     // MARK: - Published state (ESP tab)
-    @Published var enableESP    = true
-    @Published var playerBox    = true
-    @Published var topTracer    = true
-    @Published var healthBar    = true
-    @Published var playerName   = true
-    @Published var distance     = true
-    @Published var espCount      = true
+    @Published var enableESP    = false
+    @Published var playerBox    = false
+    @Published var topTracer    = false
+    @Published var healthBar    = false
+    @Published var playerName   = false
+    @Published var distance     = false
+    @Published var espCount      = false
     @Published var espColorEnabled = false
-    @Published var showSkeleton  = true
+    @Published var showSkeleton  = false
 
     // ESP Colors (full RGB — stored as bytes 14-31 in config)
     @Published var lineColor:   Color = Color(red: 1.00, green: 0.10, blue: 0.10)
@@ -152,6 +153,7 @@ final class FreefireESPStore: ObservableObject {
         case "highJump":       return highJump
         case "fastRevive":     return fastRevive
         case "skillCD":        return skillCD
+        case "ghost":          return ghost
         default:               return serverToggles[id] ?? false
         }
     }
@@ -182,6 +184,7 @@ final class FreefireESPStore: ObservableObject {
         case "highJump":       toggle(\.highJump)
         case "fastRevive":     toggle(\.fastRevive)
         case "skillCD":        toggle(\.skillCD)
+        case "ghost":          toggle(\.ghost)
         default:               serverToggles[id] = !(serverToggles[id] ?? false)
         }
     }
@@ -211,6 +214,7 @@ final class FreefireESPStore: ObservableObject {
     // RESEARCH tab
     @Published var fastRevive  = false
     @Published var skillCD     = false
+    @Published var ghost       = false
 
     // MARK: - Status
     @Published var selectedVariant: FFVariant = .freefire
@@ -221,7 +225,9 @@ final class FreefireESPStore: ObservableObject {
     @Published var isPatching        = false
     @Published var patchResult: PatchResult?
     @Published var patchLog: [PatchLogEntry] = []
+    @Published var isGameRunning = false
     var storedFeatureToken: String = ""
+    private var heartbeatTimer: Timer?
 
     enum PatchResult: Identifiable, Equatable {
         case success
@@ -235,6 +241,51 @@ final class FreefireESPStore: ObservableObject {
     init() {
         refresh()
         flushState()
+        startHeartbeatPolling()
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.handleAppBecameActive() }
+        }
+    }
+
+    private func heartbeatPath(in container: String) -> String {
+        (documentsPath(in: container) as NSString).appendingPathComponent(".hb")
+    }
+
+    private func startHeartbeatPolling() {
+        heartbeatTimer?.invalidate()
+        heartbeatTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.checkHeartbeat() }
+        }
+    }
+
+    private func checkHeartbeat() {
+        guard let (_, container) = resolvedContainer else {
+            isGameRunning = false
+            return
+        }
+        let path = heartbeatPath(in: container)
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: path),
+           let mod = attrs[.modificationDate] as? Date {
+            isGameRunning = Date().timeIntervalSince(mod) < 10
+        } else {
+            isGameRunning = false
+        }
+    }
+
+    private func handleAppBecameActive() {
+        guard isPatchInstalled || isPatchInstalledMAX else { return }
+        checkHeartbeat()
+        if isGameRunning {
+            if let (_, container) = resolvedContainer {
+                readState(from: container)
+            }
+        } else {
+            resetAllToggles()
+        }
+        suppressConfigToken()
     }
 
     // MARK: - Container resolution
@@ -325,9 +376,6 @@ final class FreefireESPStore: ObservableObject {
             detectedMAXBundleID = nil
             isPatchInstalledMAX = false
         }
-        if let (_, container) = resolvedContainer {
-            readState(from: container)
-        }
         // Auto-restart token refresh after app relaunch if patch is already installed
         if tokenRefreshTask == nil,
            let (_, container) = resolvedContainer(for: selectedVariant),
@@ -410,6 +458,18 @@ final class FreefireESPStore: ObservableObject {
         }
     }
 
+    func resetAllToggles() {
+        enableESP = false; playerBox = false; topTracer = false
+        healthBar = false; playerName = false; distance = false
+        espCount = false; espColorEnabled = false; showSkeleton = false
+        silentAim = false; noRecoil = false; aimFov = false; aimFovHide = false
+        skipDowned = false; fastParachute = false; speedRunning = false
+        fakeDamage = false; wideCamera = false; fastHeal = false; fastFire = false
+        fastSwap = false; highJump = false; fastRevive = false; skillCD = false; ghost = false
+        serverToggles = [:]
+        flushState()
+    }
+
     func removePatches() {
         guard let (_, container) = resolvedContainer else { return }
         let fm = FileManager.default
@@ -427,6 +487,16 @@ final class FreefireESPStore: ObservableObject {
         tokenRefreshTask?.cancel()
         tokenRefreshTask = nil
         refresh()
+    }
+
+    // Zeroes bytes 40-59 in .pdata so C# sees h1=0 (no valid token) on game resume.
+    // This prevents a brief ESP flash caused by C# resuming with stale in-memory state.
+    private func suppressConfigToken() {
+        guard let (_, container) = resolvedContainer else { return }
+        let path = configFilePath(in: container)
+        guard var d = try? Data(contentsOf: URL(fileURLWithPath: path)), d.count >= 60 else { return }
+        for i in 40..<60 { d[i] = 0 }
+        try? d.write(to: URL(fileURLWithPath: path))
     }
 
     private func openGame() {
@@ -473,7 +543,8 @@ final class FreefireESPStore: ObservableObject {
                 self.patchResult = result
                 if case .success = result {
                     self.refresh()
-                    self.flushState()
+                    self.resetAllToggles()      // force all features OFF in UI + .pdata
+                    self.suppressConfigToken()  // clear h1 → C# disables ESP on resume
                     self.openGame()
                 }
             }
@@ -552,6 +623,7 @@ final class FreefireESPStore: ObservableObject {
         let r8: UInt8 = data.count >= 9 ? data[8] : 0
         fastRevive  = (r8 & bitR8FastRevive) != 0
         skillCD     = (r8 & bitR8SkillCD)    != 0
+        ghost       = (r8 & bitR8Ghost)      != 0
 
         // Thickness from bytes 11-13
         lineThicknessRaw  = data.count >= 12 ? Int32(data[11]) : 5
@@ -618,6 +690,7 @@ final class FreefireESPStore: ObservableObject {
         var r8: UInt8 = 0
         if fastRevive  { r8 |= bitR8FastRevive }
         if skillCD     { r8 |= bitR8SkillCD }
+        if ghost       { r8 |= bitR8Ghost }
         data[8] = r8; data[9] = 0; data[10] = 0
         // bytes 11-13: thickness (0-97)
         data[11] = UInt8(min(97, max(0, lineThicknessRaw)))

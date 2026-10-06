@@ -1,6 +1,7 @@
 import SwiftUI
 import Darwin
 import UIKit
+import SafariServices
 
 struct FreefireESPHomeSection: View {
     @ObservedObject var store: FreefireESPStore
@@ -11,6 +12,9 @@ struct FreefireESPHomeSection: View {
     @State private var statRAMPct: Int = 0
     @State private var statRAMUsedMB: Int = 0
     @State private var showDNSSheet = false
+    @State private var isDNSLoading = false
+    @State private var dnsToastMsg: String? = nil
+    @State private var dnsWebURL: URL? = nil
     @State private var uiConfig: UIConfig? = nil
     @State private var showESPToast = false
     @State private var espToastIsOn = false
@@ -21,14 +25,17 @@ struct FreefireESPHomeSection: View {
     @State private var patchErrorMsg = ""
 
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 12) {
             if tab == 0 {
                 statusCard
-                patchButton
                 dnsButton
             } else if tab == 1 {
+                innoSectionHeader(title: "ESP PROTOCOL", subtitle: "Tường nhìn xuyên & hiển thị đối thủ")
+                    .padding(.horizontal, 4).padding(.top, 4)
                 ServerTabView(store: store, sections: uiConfig?.esp ?? [])
             } else {
+                innoSectionHeader(title: "MISC SETTINGS", subtitle: "Các cài đặt bổ sung khác")
+                    .padding(.horizontal, 4).padding(.top, 4)
                 ServerTabView(store: store, sections: uiConfig?.misc ?? [])
             }
         }
@@ -89,6 +96,14 @@ struct FreefireESPHomeSection: View {
         .sheet(isPresented: $showPatchErrorSheet) {
             PatchErrorSheet(message: patchErrorMsg, onDismiss: { showPatchErrorSheet = false })
         }
+        .sheet(isPresented: Binding(
+            get: { dnsWebURL != nil },
+            set: { if !$0 { dnsWebURL = nil } }
+        )) {
+            if let url = dnsWebURL {
+                SafariView(url: url)
+            }
+        }
     }
 
     // MARK: - Open game helper
@@ -118,99 +133,86 @@ struct FreefireESPHomeSection: View {
 
     private var statusCard: some View {
         VStack(spacing: 0) {
-            // Game variant picker — CutShape style
+            // Section header
+            innoSectionHeader(title: "TRẠNG THÁI HỆ THỐNG", subtitle: "Phát hiện game & tài nguyên thiết bị")
+                .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 10)
+
+            // Game variant picker
             HStack(spacing: 4) {
                 ForEach(FreefireESPStore.FFVariant.allCases) { variant in
                     let isSelected = store.selectedVariant == variant
-                    Button {
-                        store.selectVariant(variant)
-                    } label: {
+                    Button { store.selectVariant(variant) } label: {
                         Text(variant.rawValue)
                             .font(.system(size: 12, weight: isSelected ? .bold : .medium))
-                            .foregroundStyle(isSelected ? .white : Color(red: 0.45, green: 0.55, blue: 0.75))
+                            .foregroundStyle(isSelected ? .white : Color(white: 0.38))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 9)
-                            .background(
-                                isSelected
-                                    ? AnyView(
-                                        CutShape(cut: 8).fill(
-                                            LinearGradient(
-                                                colors: [AppTheme.neonPurple, AppTheme.techGlow],
-                                                startPoint: .leading, endPoint: .trailing))
-                                        .overlay(CutShape(cut: 8).strokeBorder(.white.opacity(0.18), lineWidth: 0.5))
-                                    )
-                                    : AnyView(Color.clear)
-                            )
+                            .padding(.vertical, 8)
+                            .background(isSelected ? AppTheme.neonRed : Color.clear,
+                                        in: RoundedRectangle(cornerRadius: 8))
                             .animation(.easeInOut(duration: 0.12), value: isSelected)
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(4)
-            .background(Color.white.opacity(0.06))
-            .clipShape(CutShape(cut: 11))
-            .overlay(CutShape(cut: 11).strokeBorder(AppTheme.neonPurple.opacity(0.28), lineWidth: 0.8))
-            .padding(.bottom, 14)
+            .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 11))
+            .padding(.horizontal, 16).padding(.bottom, 8)
 
             let detected = store.selectedVariant == .freefire ? store.detectedBundleID : store.detectedMAXBundleID
             let patchInstalled = store.selectedVariant == .freefire ? store.isPatchInstalled : store.isPatchInstalledMAX
 
-            statusRow(
-                icon: "apps.iphone",
-                iconColor: detected != nil ? AppTheme.neonCyan : Color(red: 0.45, green: 0.50, blue: 0.68),
-                label: store.selectedVariant.rawValue,
-                value: detected != nil ? "Đã phát hiện" : "Không tìm thấy",
-                valueColor: detected != nil
-                    ? Color(red: 0.10, green: 0.90, blue: 0.52)
-                    : Color(red: 0.80, green: 0.30, blue: 0.30)
-            )
-
+            let gameStatusSuffix = detected != nil ? (store.isGameRunning ? "  /  Game online" : "  /  Game offline") : ""
+            innoStatusRow(icon: "apps.iphone", label: store.selectedVariant.rawValue,
+                value: detected != nil ? "Đã phát hiện\(gameStatusSuffix)" : "Không tìm thấy",
+                valueColor: detected != nil ? (store.isGameRunning ? Color(red: 0.10, green: 0.90, blue: 0.52) : Color(red: 0.85, green: 0.65, blue: 0.10)) : AppTheme.neonRed,
+                iconColor: detected != nil ? Color(red: 0.10, green: 0.85, blue: 0.50) : Color(white: 0.35))
             statusDivider
-
-            statusRow(
-                icon: "doc.badge.gearshape",
-                iconColor: patchInstalled ? AppTheme.techGlow : Color(red: 0.45, green: 0.50, blue: 0.68),
-                label: "Patch file",
+            innoStatusRow(icon: "doc.badge.gearshape", label: "Patch file",
                 value: patchInstalled ? "Đã cài đặt" : "Chưa cài",
-                valueColor: patchInstalled
-                    ? Color(red: 0.10, green: 0.90, blue: 0.52)
-                    : Color(red: 0.85, green: 0.65, blue: 0.10)
-            )
-
+                valueColor: patchInstalled ? Color(red: 0.10, green: 0.90, blue: 0.52) : Color(red: 0.85, green: 0.65, blue: 0.10),
+                iconColor: patchInstalled ? AppTheme.neonRed : Color(white: 0.35))
             statusDivider
-
-            let cpuColor: Color = statCPU < 40
-                ? Color(red: 0.10, green: 0.90, blue: 0.52)
-                : (statCPU < 70 ? Color(red: 1.00, green: 0.80, blue: 0.10) : Color(red: 1.00, green: 0.25, blue: 0.25))
-            statusRow(
-                icon: "cpu",
-                iconColor: cpuColor,
-                label: "CPU (app)",
-                value: "\(statCPU)%",
-                valueColor: cpuColor
-            )
-
+            let cpuColor: Color = statCPU < 40 ? Color(red: 0.10, green: 0.90, blue: 0.52) : (statCPU < 70 ? Color(red: 1.00, green: 0.80, blue: 0.10) : AppTheme.neonRed)
+            innoStatusRow(icon: "cpu", label: "CPU (app)", value: "\(statCPU)%", valueColor: cpuColor, iconColor: cpuColor)
             statusDivider
+            let ramColor: Color = statRAMPct < 60 ? Color(red: 0.10, green: 0.90, blue: 0.52) : (statRAMPct < 80 ? Color(red: 1.00, green: 0.80, blue: 0.10) : AppTheme.neonRed)
+            innoStatusRow(icon: "memorychip", label: "RAM (hệ thống)", value: "\(statRAMPct)%  \(statRAMUsedMB)MB", valueColor: ramColor, iconColor: ramColor)
 
-            let ramColor: Color = statRAMPct < 60
-                ? Color(red: 0.10, green: 0.90, blue: 0.52)
-                : (statRAMPct < 80 ? Color(red: 1.00, green: 0.80, blue: 0.10) : Color(red: 1.00, green: 0.25, blue: 0.25))
-            statusRow(
-                icon: "memorychip",
-                iconColor: ramColor,
-                label: "RAM (hệ thống)",
-                value: "\(statRAMPct)%  \(statRAMUsedMB)MB",
-                valueColor: ramColor
-            )
+            Spacer(minLength: 6)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .techCard()
+        .background(AppTheme.techCardFill)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .strokeBorder(Color.white.opacity(0.07), lineWidth: 1))
         .task {
             while !Task.isCancelled {
                 updateSystemStats()
                 try? await Task.sleep(nanoseconds: 3_000_000_000)
             }
+        }
+    }
+
+    private func innoStatusRow(icon: String, label: String, value: String, valueColor: Color, iconColor: Color) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle().fill(iconColor.opacity(0.14)).frame(width: 36, height: 36)
+                Image(systemName: icon).font(.system(size: 14, weight: .semibold)).foregroundStyle(iconColor)
+            }
+            Text(label).font(.system(size: 14, weight: .medium)).foregroundStyle(Color(white: 0.55))
+            Spacer()
+            Text(value).font(.system(size: 13, weight: .bold)).foregroundStyle(valueColor)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 3)
+    }
+
+    private func innoSectionHeader(title: String, subtitle: String) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.system(size: 12, weight: .heavy)).foregroundStyle(.white).kerning15(0.5)
+                Text(subtitle).font(.system(size: 11)).foregroundStyle(Color(white: 0.35))
+            }
+            Spacer()
+            Rectangle().fill(AppTheme.neonRed).frame(width: 3, height: 30).clipShape(Capsule())
         }
     }
 
@@ -256,170 +258,216 @@ struct FreefireESPHomeSection: View {
         statCPU = min(Int(totalCPU), 999)
     }
 
-    private func statusRow(icon: String, iconColor: Color, label: String, value: String, valueColor: Color) -> some View {
-        HStack(spacing: 14) {
-            ZStack {
-                CutShape(cut: 8)
-                    .fill(iconColor.opacity(0.14))
-                    .frame(width: 36, height: 36)
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(iconColor)
-            }
-            Text(label)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Color(red: 0.55, green: 0.60, blue: 0.72))
-            Spacer()
-            Text(value)
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(valueColor)
-        }
-        .padding(.vertical, 4)
-    }
-
     private var statusDivider: some View {
         Rectangle()
-            .fill(LinearGradient(
-                colors: [.clear, AppTheme.techGlow.opacity(0.18), .clear],
-                startPoint: .leading, endPoint: .trailing))
+            .fill(Color.white.opacity(0.06))
             .frame(height: 0.5)
-            .padding(.vertical, 9)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
     }
 
-    // MARK: - Patch button
+    // MARK: - Patch / INJECT button
 
     private var patchButton: some View {
         let detected = store.selectedVariant == .freefire ? store.detectedBundleID : store.detectedMAXBundleID
         let patchInstalled = store.selectedVariant == .freefire ? store.isPatchInstalled : store.isPatchInstalledMAX
+        let variantLabel = store.selectedVariant == .freefire ? "FREE FIRE THƯỜNG" : "FREE FIRE MAX"
 
-        return VStack(spacing: 6) {
+        return VStack(spacing: 10) {
             if patchInstalled && !store.isPatching {
+                // Un-patch button
                 Button { store.removePatches() } label: {
                     HStack(spacing: 10) {
-                        Image(systemName: "arrow.uturn.backward.circle.fill").font(.system(size: 15, weight: .bold))
-                        Text("Un Patch").font(.system(size: 15, weight: .bold)).kerning15(0.2)
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 15)
-                    .background(
-                        LinearGradient(
-                            colors: [Color(red: 0.75, green: 0.15, blue: 0.15), Color(red: 0.55, green: 0.10, blue: 0.10)],
-                            startPoint: .leading, endPoint: .trailing
-                        ).clipShape(CutShape(cut: 14))
-                    )
-                    .overlay(CutShape(cut: 14).strokeBorder(Color.red.opacity(0.45), lineWidth: 1.2))
-                    .shadow(color: Color.red.opacity(0.35), radius: 12, y: 4)
-                }
-                .buttonStyle(.plain)
-            } else {
-                Button { store.patchGame() } label: {
-                    HStack(spacing: 10) {
-                        if store.isPatching {
-                            ProgressView().scaleEffect(0.85).tint(.white)
-                        } else {
-                            Image(systemName: "doc.badge.plus").font(.system(size: 16, weight: .bold))
-                        }
-                        Text(store.isPatching ? "Đang patch..." : "Patch File vào Game")
-                            .font(.system(size: 15, weight: .bold)).kerning15(0.2)
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 15)
-                    .background(
                         ZStack {
-                            LinearGradient(
-                                colors: store.isPatching
-                                    ? [Color(red: 0.05, green: 0.04, blue: 0.12), Color(red: 0.04, green: 0.03, blue: 0.10)]
-                                    : [AppTheme.techGlow, AppTheme.neonPurple],
-                                startPoint: .leading, endPoint: .trailing)
-                            if !store.isPatching {
-                                LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .top, endPoint: .center)
-                            }
-                        }.clipShape(CutShape(cut: 14))
+                            Circle().fill(Color.white.opacity(0.15)).frame(width: 34, height: 34)
+                            Image(systemName: "arrow.uturn.backward.circle.fill")
+                                .font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("UN-PATCH")
+                                .font(.system(size: 14, weight: .heavy)).foregroundStyle(.white).kerning15(0.5)
+                            Text("Gỡ bỏ patch đã cài")
+                                .font(.system(size: 11)).foregroundStyle(.white.opacity(0.65))
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 18).padding(.vertical, 13)
+                    .background(
+                        LinearGradient(colors: [Color(red: 0.55, green: 0.10, blue: 0.10), Color(red: 0.38, green: 0.07, blue: 0.07)],
+                                       startPoint: .leading, endPoint: .trailing)
                     )
-                    .overlay(CutShape(cut: 14).strokeBorder(
-                        store.isPatching ? AppTheme.neonPurple.opacity(0.18) : AppTheme.neonCyan.opacity(0.50),
-                        lineWidth: 1.2))
-                    .shadow(color: store.isPatching ? .clear : AppTheme.techGlow.opacity(0.45), radius: 16, y: 4)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(AppTheme.neonRed.opacity(0.45), lineWidth: 1.2))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PressScaleButtonStyle())
+            } else {
+                // INJECT button (green, full width)
+                Button { store.patchGame() } label: {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(store.isPatching ? 0.10 : 0.18))
+                                .frame(width: 38, height: 38)
+                            if store.isPatching {
+                                ProgressView().scaleEffect(0.85).tint(.white)
+                            } else {
+                                Image(systemName: "bolt.fill")
+                                    .font(.system(size: 17, weight: .bold)).foregroundStyle(.white)
+                            }
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(store.isPatching ? "ĐANG INJECT..." : "INJECT (\(variantLabel))")
+                                .font(.system(size: 13, weight: .heavy)).foregroundStyle(.white).kerning15(0.4)
+                            Text(store.isPatching ? "Vui lòng chờ..." : "Bắt đầu kích hoạt chức năng")
+                                .font(.system(size: 11)).foregroundStyle(.white.opacity(0.70))
+                        }
+                        Spacer()
+                        if !store.isPatching {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(.white.opacity(0.55))
+                        }
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 12)
+                    .background(
+                        store.isPatching
+                            ? LinearGradient(colors: [Color(white: 0.12), Color(white: 0.10)], startPoint: .leading, endPoint: .trailing)
+                            : LinearGradient(colors: [AppTheme.injectGreen, Color(red: 0.04, green: 0.55, blue: 0.28)], startPoint: .leading, endPoint: .trailing)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(store.isPatching ? Color.white.opacity(0.08) : AppTheme.injectGreen.opacity(0.50), lineWidth: 1.2))
+                    .shadow(color: store.isPatching ? .clear : AppTheme.injectGreen.opacity(0.40), radius: 16, y: 4)
+                }
+                .buttonStyle(PressScaleButtonStyle())
                 .disabled(store.isPatching || detected == nil)
-                .opacity((detected == nil && !store.isPatching) ? 0.45 : 1.0)
+                .opacity((detected == nil && !store.isPatching) ? 0.40 : 1.0)
             }
 
             if detected == nil {
-                HStack(alignment: .top, spacing: 12) {
+                HStack(alignment: .top, spacing: 10) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color(red: 1.0, green: 0.65, blue: 0.10).opacity(0.18))
-                            .frame(width: 38, height: 38)
+                        Circle().fill(Color(red: 1.0, green: 0.65, blue: 0.10).opacity(0.15)).frame(width: 36, height: 36)
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(Color(red: 1.0, green: 0.70, blue: 0.10))
+                            .font(.system(size: 15, weight: .bold)).foregroundStyle(Color(red: 1.0, green: 0.70, blue: 0.10))
                     }
-                    VStack(alignment: .leading, spacing: 5) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("Không tìm thấy \(store.selectedVariant.rawValue)")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(Color(red: 1.0, green: 0.80, blue: 0.35))
+                            .font(.system(size: 13, weight: .bold)).foregroundStyle(Color(red: 1.0, green: 0.80, blue: 0.35))
                         Text("Hãy cài game lên thiết bị trước khi sử dụng tính năng này.")
-                            .font(.system(size: 12, weight: .regular))
-                            .foregroundStyle(Color(red: 0.70, green: 0.65, blue: 0.50))
-                        Text("⚠︎ Có khả năng thiết bị của bạn không nằm trong danh sách hỗ trợ của phiên bản iOS này.")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(Color(red: 1.0, green: 0.70, blue: 0.10).opacity(0.80))
-                            .fixedSize(horizontal: false, vertical: true)
+                            .font(.system(size: 11)).foregroundStyle(Color(white: 0.45))
                     }
                     Spacer()
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 12)
-                .background(Color(red: 1.0, green: 0.65, blue: 0.10).opacity(0.08))
+                .padding(12)
+                .background(Color(red: 1.0, green: 0.65, blue: 0.10).opacity(0.07))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color(red: 1.0, green: 0.70, blue: 0.10).opacity(0.30), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color(red: 1.0, green: 0.70, blue: 0.10).opacity(0.25), lineWidth: 1))
             }
-
         }
     }
 
     // MARK: - DNS button
 
     private var dnsButton: some View {
-        Button { showDNSSheet = true } label: {
-            HStack(spacing: 10) {
-                ZStack {
-                    Image(systemName: "shield.fill")
-                        .font(.system(size: 17, weight: .bold))
-                    Image(systemName: "arrow.down")
-                        .font(.system(size: 8, weight: .black))
-                        .foregroundStyle(Color(red: 0.00, green: 0.25, blue: 0.45))
-                        .offset(y: 1)
+        let blue = Color(red: 0.30, green: 0.70, blue: 1.00)
+        return ZStack {
+            Button {
+                guard !isDNSLoading else { return }
+                isDNSLoading = true
+                Task {
+                    do {
+                        let result = try await PatchHubService.fetchDNSProfiles()
+                        if let profile = result.profiles.first, let url = URL(string: profile.downloadURL) {
+                            await MainActor.run {
+                                dnsWebURL = url
+                            }
+                        } else {
+                            showDNSToast("Không tải được danh sách DNS")
+                        }
+                    } catch {
+                        showDNSToast("Lỗi kết nối — kiểm tra mạng")
+                    }
+                    isDNSLoading = false
                 }
-                Text("Download DNS")
-                    .font(.system(size: 15, weight: .bold)).kerning15(0.2)
+            } label: {
+                HStack(spacing: 12) {
+                    ZStack {
+                        // Shield outline frame
+                        Image(systemName: "shield")
+                            .font(.system(size: 28, weight: .light))
+                            .foregroundStyle(blue)
+                        // Download arrow inside shield
+                        Image(systemName: "arrow.down")
+                            .font(.system(size: 11, weight: .black))
+                            .foregroundStyle(blue)
+                            .offset(y: 1)
+                    }
+                    .frame(width: 36, height: 36)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("DOWNLOAD DNS")
+                            .font(.system(size: 13, weight: .heavy)).foregroundStyle(.white).kerning15(0.4)
+                        Text(isDNSLoading ? "Đang tải…" : "Mở trình duyệt trong app để cài")
+                            .font(.system(size: 11)).foregroundStyle(Color(white: 0.45))
+                    }
+                    Spacer()
+                    if isDNSLoading {
+                        ProgressView().scaleEffect(0.75).tint(blue)
+                    } else {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .font(.system(size: 18, weight: .semibold)).foregroundStyle(blue.opacity(0.80))
+                    }
+                }
+                .padding(.horizontal, 16).padding(.vertical, 13)
+                .background(AppTheme.techCardFill)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(blue.opacity(0.40), lineWidth: 1.2))
             }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 15)
-            .background(
-                LinearGradient(
-                    colors: [Color(red: 0.04, green: 0.30, blue: 0.62), Color(red: 0.00, green: 0.50, blue: 0.80)],
-                    startPoint: .leading, endPoint: .trailing)
-                .clipShape(CutShape(cut: 14))
-            )
-            .overlay(CutShape(cut: 14).strokeBorder(AppTheme.neonCyan.opacity(0.45), lineWidth: 1.2))
-            .shadow(color: AppTheme.neonCyan.opacity(0.30), radius: 14, y: 4)
-        }
-        .buttonStyle(.plain)
-        .sheet(isPresented: $showDNSSheet) {
-            ZStack {
-                Color(red: 0.05, green: 0.02, blue: 0.03).ignoresSafeArea()
-                NextDNSView()
+            .buttonStyle(PressScaleButtonStyle())
+            .disabled(isDNSLoading)
+
+            // Toast overlay
+            if let msg = dnsToastMsg {
+                VStack {
+                    Spacer()
+                    Text(msg)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16).padding(.vertical, 10)
+                        .background(Color(red: 0.08, green: 0.12, blue: 0.20).opacity(0.95))
+                        .clipShape(Capsule())
+                        .overlay(Capsule().strokeBorder(blue.opacity(0.35), lineWidth: 1))
+                        .padding(.bottom, 8)
+                }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                .animation(.spring(response: 0.3), value: dnsToastMsg != nil)
             }
-            .preferredColorScheme(.dark)
         }
     }
 
+    private func showDNSToast(_ msg: String) {
+        withAnimation { dnsToastMsg = msg }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            withAnimation { dnsToastMsg = nil }
+        }
+    }
+
+}
+
+// MARK: - In-App Safari Browser
+
+private struct SafariView: UIViewControllerRepresentable {
+    let url: URL
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        let cfg = SFSafariViewController.Configuration()
+        cfg.entersReaderIfAvailable = false
+        let vc = SFSafariViewController(url: url, configuration: cfg)
+        vc.preferredControlTintColor = UIColor(red: 0.93, green: 0.12, blue: 0.16, alpha: 1)
+        return vc
+    }
+    func updateUIViewController(_ vc: SFSafariViewController, context: Context) {}
 }
 
 // MARK: - Patch Error Sheet
@@ -594,9 +642,9 @@ private struct ESPResultSheet: View {
                     .padding(.bottom, 16)
 
                     // title
-                    Text(isOn ? "ESP đang hoạt động ✅" : "ESP chưa kích hoạt ❌")
+                    Text(isOn ? "ESP đang hoạt động" : "ESP chưa kích hoạt")
                         .font(.system(size: 20, weight: .heavy))
-                        .foregroundStyle(accent)
+                        .foregroundStyle(isOn ? Color(red: 0.24, green: 0.88, blue: 0.52) : Color(red: 0.95, green: 0.28, blue: 0.35))
                         .padding(.bottom, 6)
 
                     Text(isOn
