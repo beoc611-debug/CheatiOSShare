@@ -275,13 +275,13 @@ final class FreefireESPStore: ObservableObject {
     private func handleAppBecameActive() {
         guard isPatchInstalled || isPatchInstalledMAX else { return }
         if isGameProcessRunning() {
-            if let (_, container) = resolvedContainer {
-                readState(from: container)
-            }
+            // Game is running: re-assert current UI state to .pdata.
+            // Do NOT read state back (app is source of truth) and do NOT
+            // suppress the token (that would zero h1 and kill active features).
+            flushState()
         } else {
             resetAllToggles()
         }
-        suppressConfigToken()
     }
 
     // MARK: - Container resolution
@@ -539,8 +539,7 @@ final class FreefireESPStore: ObservableObject {
                 self.patchResult = result
                 if case .success = result {
                     self.refresh()
-                    self.resetAllToggles()      // force all features OFF in UI + .pdata
-                    self.suppressConfigToken()  // clear h1 → C# disables ESP on resume
+                    self.flushState()  // write current features with new token → game starts with user's settings
                     self.openGame()
                 }
             }
