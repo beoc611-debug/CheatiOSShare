@@ -296,11 +296,39 @@ final class FreefireESPStore: ObservableObject {
         (container as NSString).appendingPathComponent("Documents")
     }
 
+    // Unity 2020+ uses Library/Application Support instead of Documents
+    private func appSupportPath(in container: String) -> String {
+        (container as NSString).appendingPathComponent("Library/Application Support")
+    }
+
+    // All possible Unity persistentDataPath roots for this container
+    private func persistentRoots(in container: String) -> [String] {
+        [documentsPath(in: container), appSupportPath(in: container)]
+    }
+
     private func configFilePath(in container: String) -> String {
-        let dir = (documentsPath(in: container) as NSString)
-            .appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame")
+        // Write to both roots; return the one that already has a .pdata (prefer existing),
+        // else default to Documents so new files land somewhere consistent.
+        let sub = "contentcache/Compulsory/ios/gameassetbundles/ingame"
+        for root in persistentRoots(in: container) {
+            let dir = (root as NSString).appendingPathComponent(sub)
+            let path = (dir as NSString).appendingPathComponent(".pdata")
+            if FileManager.default.fileExists(atPath: path) { return path }
+        }
+        let dir = (documentsPath(in: container) as NSString).appendingPathComponent(sub)
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         return (dir as NSString).appendingPathComponent(".pdata")
+    }
+
+    // Write .pdata to every possible Unity persistentDataPath root
+    private func writeConfigToAllRoots(_ data: Data, in container: String) {
+        let sub = "contentcache/Compulsory/ios/gameassetbundles/ingame"
+        for root in persistentRoots(in: container) {
+            let dir = (root as NSString).appendingPathComponent(sub)
+            try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+            let path = (dir as NSString).appendingPathComponent(".pdata")
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
     }
 
     func checkESPStatus() -> String {
@@ -310,15 +338,22 @@ final class FreefireESPStore: ObservableObject {
 
         var lines: [String] = []
 
-        // 1. Heartbeat file — C# writes every ~60 frames (~1s). Age tells us if patch is running NOW.
-        let hbPath = (documentsPath(in: container) as NSString).appendingPathComponent(".hb")
-        if let attrs = try? FileManager.default.attributesOfItem(atPath: hbPath),
-           let mod = attrs[.modificationDate] as? Date {
-            let age = Int(-mod.timeIntervalSinceNow)
+        // 1. Heartbeat file — C# writes every ~60 frames (~1s). Check both Unity path roots.
+        var hbAge: Int? = nil
+        var hbRoot = ""
+        for root in persistentRoots(in: container) {
+            let p = (root as NSString).appendingPathComponent(".hb")
+            if let attrs = try? FileManager.default.attributesOfItem(atPath: p),
+               let mod = attrs[.modificationDate] as? Date {
+                let age = Int(-mod.timeIntervalSinceNow)
+                if hbAge == nil || age < hbAge! { hbAge = age; hbRoot = root.hasSuffix("Documents") ? "Docs" : "AppSupport" }
+            }
+        }
+        if let age = hbAge {
             if age < 5 {
-                lines.append("💓 C# đang chạy (hb \(age)s trước)")
+                lines.append("💓 C# đang chạy [\(hbRoot)] (hb \(age)s trước)")
             } else if age < 60 {
-                lines.append("⚠️ C# có vẻ đang chạy (hb \(age)s trước)")
+                lines.append("⚠️ C# có vẻ đang chạy [\(hbRoot)] (hb \(age)s trước)")
             } else {
                 lines.append("💔 C# không chạy (hb \(age)s trước - vào game chưa?)")
             }
@@ -748,7 +783,7 @@ final class FreefireESPStore: ObservableObject {
         let docPath = documentsPath(in: container)
         try? FileManager.default.createDirectory(
             atPath: docPath, withIntermediateDirectories: true)
-        try? data.write(to: URL(fileURLWithPath: configFilePath(in: container)))
+        writeConfigToAllRoots(data, in: container)
     }
 
     private func performPatch() async throws -> PatchResult {
@@ -785,22 +820,29 @@ final class FreefireESPStore: ObservableObject {
                     "Không tải được file patch từ server. Vui lòng kiểm tra kết nối mạng."])
         }
 
-        let destBytes = patchBytesPath(in: container)
-        try? fm.removeItem(atPath: destBytes)
-        do {
-            try patchData.write(to: URL(fileURLWithPath: destBytes))
-            addLog("Tải bytes: OK (\(patchData.count / 1024) KB)", level: .ok)
-        } catch {
-            addLog("Ghi bytes thất bại: \(error.localizedDescription)", level: .err)
-            throw error
+        // Write patch bytes + localConfig to ALL possible Unity persistentDataPath roots
+        // (Documents = Unity <2020, Library/Application Support = Unity 2020+)
+        var writtenBytesCount = 0
+        for root in persistentRoots(in: container) {
+            try? fm.createDirectory(atPath: root, withIntermediateDirectories: true)
+            let dest = (root as NSString).appendingPathComponent("Assembly-CSharp-patch.bytes")
+            try? fm.removeItem(atPath: dest)
+            if (try? patchData.write(to: URL(fileURLWithPath: dest))) != nil { writtenBytesCount += 1 }
+        }
+        addLog("Ghi bytes vào \(writtenBytesCount) path: OK (\(patchData.count / 1024) KB)", level: writtenBytesCount > 0 ? .ok : .err)
+        if writtenBytesCount == 0 {
+            throw NSError(domain: "FreefireESP", code: 3,
+                userInfo: [NSLocalizedDescriptionKey: "Không ghi được patch bytes vào game container"])
         }
 
         addLog("Tải localConfig từ server...")
         if let configData = await PatchHubService.fetchLocalConfig() {
-            let destConfig = localConfigPath(in: container)
-            try? fm.removeItem(atPath: destConfig)
-            try? configData.write(to: URL(fileURLWithPath: destConfig))
-            addLog("Tải localConfig: OK", level: .ok)
+            for root in persistentRoots(in: container) {
+                let dest = (root as NSString).appendingPathComponent("localConfig.json")
+                try? fm.removeItem(atPath: dest)
+                try? configData.write(to: URL(fileURLWithPath: dest))
+            }
+            addLog("Tải localConfig: OK (ghi \(persistentRoots(in: container).count) path)", level: .ok)
         } else {
             addLog("localConfig không tải được, bỏ qua", level: .warn)
         }
@@ -854,17 +896,30 @@ final class FreefireESPStore: ObservableObject {
                 let k = await MainActor.run { LicenseGateStore.storedKeyCode ?? "" }
                 let t = await PatchHubService.fetchPatchAuth(licenseKey: k, hwid: h) ?? ""
                 let d = await MainActor.run { self.documentsPath(in: container) }
+                let allRoots = await MainActor.run { self.persistentRoots(in: container) }
                 Self.writeTokenJson(featureToken: t, licKey: k, docsPath: d)
+                let cfgSub = "contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata"
+                let allCfgPaths = allRoots.map { ($0 as NSString).appendingPathComponent(cfgSub) }
                 if !t.isEmpty {
-                    let cfgPath = (d as NSString).appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata")
                     if Self.isFridaPresent() {
-                        var bad = (try? Data(contentsOf: URL(fileURLWithPath: cfgPath))) ?? Data(count: 60)
-                        while bad.count < 60 { bad.append(0) }
-                        bad[39] = 0; bad[56] = 0; bad[57] = 0; bad[58] = 0; bad[59] = 0
-                        try? bad.write(to: URL(fileURLWithPath: cfgPath))
+                        for cfgPath in allCfgPaths {
+                            var bad = (try? Data(contentsOf: URL(fileURLWithPath: cfgPath))) ?? Data(count: 60)
+                            while bad.count < 60 { bad.append(0) }
+                            bad[39] = 0; bad[56] = 0; bad[57] = 0; bad[58] = 0; bad[59] = 0
+                            try? bad.write(to: URL(fileURLWithPath: cfgPath))
+                        }
                         await MainActor.run { self.storedFeatureToken = ""; self.flushState() }
                     } else {
-                        Self.refreshEspCfgToken(featureToken: t, cfgPath: cfgPath)
+                        // Refresh the primary (Documents) path; sync other roots from it
+                        let primaryCfg = allCfgPaths[0]
+                        Self.refreshEspCfgToken(featureToken: t, cfgPath: primaryCfg)
+                        if let synced = try? Data(contentsOf: URL(fileURLWithPath: primaryCfg)) {
+                            for cfgPath in allCfgPaths.dropFirst() {
+                                let dir = (cfgPath as NSString).deletingLastPathComponent
+                                try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+                                try? synced.write(to: URL(fileURLWithPath: cfgPath))
+                            }
+                        }
                         await MainActor.run { self.storedFeatureToken = t }
                     }
                 } else {
