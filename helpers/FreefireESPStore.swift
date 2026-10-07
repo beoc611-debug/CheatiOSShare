@@ -273,8 +273,7 @@ final class FreefireESPStore: ObservableObject {
     }
 
     private func handleAppBecameActive() {
-        guard isPatchInstalled || isPatchInstalledMAX else { return }
-        flushState()
+        refresh()
     }
 
     // MARK: - Container resolution
@@ -698,7 +697,11 @@ final class FreefireESPStore: ObservableObject {
         let (fr, fg, fb) = colorToBytes(fovColor)
         data[35] = fr; data[36] = fg; data[37] = fb
         data[38] = UInt8(min(97, max(0, skelThicknessRaw)))
-        data[39] = 0 // ping counter — reset to 0 on full flush; incremented by refreshEspCfgToken
+        // Preserve ping counter from disk — resetting to 0 breaks the C# esp_pn liveness check
+        let _cfgPath = configFilePath(in: container)
+        if let _existing = try? Data(contentsOf: URL(fileURLWithPath: _cfgPath)), _existing.count >= 40 {
+            data[39] = _existing[39]
+        } // else: new file → data[39] stays 0
         // bytes 40-55: featureToken ASCII (16 bytes); bytes 56-59: h1 int32 LE
         // h1=0 means "no token" — C# skips ESP if h1==0
         if !storedFeatureToken.isEmpty {
