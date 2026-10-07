@@ -237,6 +237,7 @@ final class FreefireESPStore: ObservableObject {
     // RESEARCH tab
     @Published var ghostControl = false
     @Published var ghostScale: Int32 = 100   // ghost button size %: 50/75/100/125/150/175/200
+    var ghost: Bool { ghostControl }   // alias for view compatibility
     @Published var fastRevive  = false
     @Published var skillCD     = false
     @Published var chams       = false
