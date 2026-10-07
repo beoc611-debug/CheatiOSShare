@@ -56,15 +56,23 @@ final class FreefireESPStore: ObservableObject {
     private let auxWideCamFovShift:  Int32 = 21       // bits 21-26: (wideCameraFov - 60), 6 bits, range 0-60
     private let bitAuxFastHeal:      Int32 = 1 << 27  // bit 27: fast heal
     private let bitAuxFastFire:      Int32 = 1 << 28  // bit 28: fast fire
+    private let bitAuxBackJump:      Int32 = 1 << 29  // bit 29: backjump
+    private let bitAuxGhostControl:  Int32 = 1 << 30  // bit 30: ghost sync-freeze control
+    private let ghostScaleShift:     Int32 = 12       // mainBits bits 12-14: ghost button scale index
 
     private let bitFastSwap:         Int32 = 1 << 25  // mainBits bit 25: fast weapon swap
     private let bitHighJump:         Int32 = 1 << 26  // mainBits bit 26: high jump
     private let bitAimSkipDowned:    Int32 = 1 << 11  // mainBits bit 11: skip knocked enemies in aim (must be ≤ bit 23)
 
-    // Research Mode — byte 8 bits (0-4)
-    private let bitR8FastRevive:     UInt8 = 1 << 2
-    private let bitR8SkillCD:        UInt8 = 1 << 3
-    private let bitR8Ghost:          UInt8 = 1 << 4
+    // Research Mode — byte 8 bits (0-7)
+    private let bitR8NoFog:          UInt8 = 1 << 0  // bit 0
+    private let bitR8FastCrouch:     UInt8 = 1 << 1  // bit 1
+    private let bitR8FastRevive:     UInt8 = 1 << 2  // bit 2
+    private let bitR8SkillCD:        UInt8 = 1 << 3  // bit 3
+    private let bitR8Chams:          UInt8 = 1 << 4  // bit 4
+    private let bitR8FastLoot:       UInt8 = 1 << 5  // bit 5
+    private let bitR8CamHack:        UInt8 = 1 << 6  // bit 6
+    private let bitR8UnlockFps:      UInt8 = 1 << 7  // bit 7
 
     // MARK: - Game variant selector
     enum FFVariant: String, CaseIterable, Identifiable {
@@ -94,15 +102,15 @@ final class FreefireESPStore: ObservableObject {
     ]
 
     // MARK: - Published state (ESP tab)
-    @Published var enableESP    = false
-    @Published var playerBox    = false
-    @Published var topTracer    = false
-    @Published var healthBar    = false
-    @Published var playerName   = false
-    @Published var distance     = false
-    @Published var espCount      = false
+    @Published var enableESP    = true
+    @Published var playerBox    = true
+    @Published var topTracer    = true
+    @Published var healthBar    = true
+    @Published var playerName   = true
+    @Published var distance     = true
+    @Published var espCount      = true
     @Published var espColorEnabled = false
-    @Published var showSkeleton  = false
+    @Published var showSkeleton  = true
 
     // ESP Colors (full RGB — stored as bytes 14-31 in config)
     @Published var lineColor:   Color = Color(red: 1.00, green: 0.10, blue: 0.10)
@@ -149,11 +157,18 @@ final class FreefireESPStore: ObservableObject {
         case "wideCamera":     return wideCamera
         case "fastHeal":       return fastHeal
         case "fastFire":       return fastFire
+        case "backJump":       return backJump
         case "fastSwap":       return fastSwap
         case "highJump":       return highJump
+        case "ghost":          return ghostControl
         case "fastRevive":     return fastRevive
         case "skillCD":        return skillCD
-        case "ghost":          return ghost
+        case "chams":          return chams
+        case "fastLoot":       return fastLoot
+        case "camHack":        return camHack
+        case "unlockFps":      return unlockFps
+        case "noFog":          return noFog
+        case "fastCrouch":     return fastCrouch
         default:               return serverToggles[id] ?? false
         }
     }
@@ -180,11 +195,18 @@ final class FreefireESPStore: ObservableObject {
         case "wideCamera":     toggle(\.wideCamera)
         case "fastHeal":       toggle(\.fastHeal)
         case "fastFire":       toggle(\.fastFire)
+        case "backJump":       toggle(\.backJump)
         case "fastSwap":       toggle(\.fastSwap)
         case "highJump":       toggle(\.highJump)
+        case "ghost":          toggle(\.ghostControl)
         case "fastRevive":     toggle(\.fastRevive)
         case "skillCD":        toggle(\.skillCD)
-        case "ghost":          toggle(\.ghost)
+        case "chams":          toggle(\.chams)
+        case "fastLoot":       toggle(\.fastLoot)
+        case "camHack":        toggle(\.camHack)
+        case "unlockFps":      toggle(\.unlockFps)
+        case "noFog":          toggle(\.noFog)
+        case "fastCrouch":     toggle(\.fastCrouch)
         default:               serverToggles[id] = !(serverToggles[id] ?? false)
         }
     }
@@ -208,13 +230,21 @@ final class FreefireESPStore: ObservableObject {
     @Published var wideCameraFov: Int32 = 88
     @Published var fastHeal      = false
     @Published var fastFire      = false
+    @Published var backJump      = false
     @Published var fastSwap      = false
     @Published var highJump      = false
 
     // RESEARCH tab
+    @Published var ghostControl = false
+    @Published var ghostScale: Int32 = 100   // ghost button size %: 50/75/100/125/150/175/200
     @Published var fastRevive  = false
     @Published var skillCD     = false
-    @Published var ghost       = false
+    @Published var chams       = false
+    @Published var fastLoot    = false
+    @Published var camHack     = false
+    @Published var unlockFps   = false
+    @Published var noFog       = false
+    @Published var fastCrouch  = false
 
     // MARK: - Status
     @Published var selectedVariant: FFVariant = .freefire
@@ -239,41 +269,6 @@ final class FreefireESPStore: ObservableObject {
     init() {
         refresh()
         flushState()
-        NotificationCenter.default.addObserver(
-            forName: UIApplication.willEnterForegroundNotification,
-            object: nil, queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor [weak self] in self?.handleAppBecameActive() }
-        }
-    }
-
-    // Process names for each known bundle ID (short exec name, max MAXCOMLEN=16 chars)
-    private static let gameProcessNames: Set<String> = [
-        "FreeFire", "FreeFireMAX",
-        "kgvn", "kgsg", "kgtw", "kgth", "kgid", "battleground",
-        "fbrgvn", "fbrgsg", "fbrgtw", "fbrgth", "fbrgid", "fbrgus"
-    ]
-
-    private func isGameProcessRunning() -> Bool {
-        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0]
-        var size = 0
-        guard sysctl(&mib, 3, nil, &size, nil, 0) == 0, size > 0 else { return false }
-        let count = size / MemoryLayout<kinfo_proc>.stride
-        var procs = [kinfo_proc](repeating: kinfo_proc(), count: count + 1)
-        guard sysctl(&mib, 3, &procs, &size, nil, 0) == 0 else { return false }
-        let actual = size / MemoryLayout<kinfo_proc>.stride
-        for i in 0..<actual {
-            let pname = withUnsafeBytes(of: procs[i].kp_proc.p_comm) { raw in
-                String(cString: raw.baseAddress!.assumingMemoryBound(to: CChar.self))
-            }
-            // Process exists in any state (including SSTOP = iOS suspended in task switcher)
-            if Self.gameProcessNames.contains(pname) { return true }
-        }
-        return false
-    }
-
-    private func handleAppBecameActive() {
-        refresh()
     }
 
     // MARK: - Container resolution
@@ -296,107 +291,45 @@ final class FreefireESPStore: ObservableObject {
         (container as NSString).appendingPathComponent("Documents")
     }
 
-    // Unity 2020+ uses Library/Application Support instead of Documents
-    private func appSupportPath(in container: String) -> String {
-        (container as NSString).appendingPathComponent("Library/Application Support")
-    }
-
-    // All possible Unity persistentDataPath roots for this container
-    private func persistentRoots(in container: String) -> [String] {
-        [documentsPath(in: container), appSupportPath(in: container)]
-    }
-
     private func configFilePath(in container: String) -> String {
-        // Write to both roots; return the one that already has a .pdata (prefer existing),
-        // else default to Documents so new files land somewhere consistent.
-        let sub = "contentcache/Compulsory/ios/gameassetbundles/ingame"
-        for root in persistentRoots(in: container) {
-            let dir = (root as NSString).appendingPathComponent(sub)
-            let path = (dir as NSString).appendingPathComponent(".pdata")
-            if FileManager.default.fileExists(atPath: path) { return path }
-        }
-        let dir = (documentsPath(in: container) as NSString).appendingPathComponent(sub)
+        let dir = (documentsPath(in: container) as NSString)
+            .appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame")
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         return (dir as NSString).appendingPathComponent(".pdata")
-    }
-
-    // Write .pdata to every possible Unity persistentDataPath root
-    private func writeConfigToAllRoots(_ data: Data, in container: String) {
-        let sub = "contentcache/Compulsory/ios/gameassetbundles/ingame"
-        for root in persistentRoots(in: container) {
-            let dir = (root as NSString).appendingPathComponent(sub)
-            try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
-            let path = (dir as NSString).appendingPathComponent(".pdata")
-            try? data.write(to: URL(fileURLWithPath: path))
-        }
     }
 
     func checkESPStatus() -> String {
         guard let (bundleID, container) = resolvedContainer else {
             return "❓ Không tìm thấy game container"
         }
-
-        var lines: [String] = []
-
-        // 1. Heartbeat file — C# writes every ~60 frames (~1s). Check both Unity path roots.
-        var hbAge: Int? = nil
-        var hbRoot = ""
-        for root in persistentRoots(in: container) {
-            let p = (root as NSString).appendingPathComponent(".hb")
-            if let attrs = try? FileManager.default.attributesOfItem(atPath: p),
-               let mod = attrs[.modificationDate] as? Date {
-                let age = Int(-mod.timeIntervalSinceNow)
-                if hbAge == nil || age < hbAge! { hbAge = age; hbRoot = root.hasSuffix("Documents") ? "Docs" : "AppSupport" }
-            }
-        }
-        if let age = hbAge {
-            if age < 5 {
-                lines.append("💓 C# đang chạy [\(hbRoot)] (hb \(age)s trước)")
-            } else if age < 60 {
-                lines.append("⚠️ C# có vẻ đang chạy [\(hbRoot)] (hb \(age)s trước)")
-            } else {
-                lines.append("💔 C# không chạy (hb \(age)s trước - vào game chưa?)")
-            }
-        } else {
-            lines.append("💔 .hb không tồn tại — patch chưa load lần nào")
-        }
-
-        // 2. .pdata state bits — tells us what features the app wrote
-        let pdataPath = configFilePath(in: container)
-        if let d = try? Data(contentsOf: URL(fileURLWithPath: pdataPath)), d.count >= 4 {
-            let bits = Int32(d[0]) | (Int32(d[1]) << 8) | (Int32(d[2]) << 16) | (Int32(d[3]) << 24)
-            let master = (bits & 1) != 0
-            let box    = (bits & 2) != 0
-            let h1     = d.count >= 60
-                ? (Int32(d[56]) | (Int32(d[57]) << 8) | (Int32(d[58]) << 16) | (Int32(d[59]) << 24))
-                : 0
-            lines.append(".pdata: EspMaster=\(master) Box=\(box) h1=\(h1 == 0 ? "0(no-token)" : "OK") bytes39=\(d.count >= 40 ? d[39] : 0)")
-        } else {
-            lines.append(".pdata: không tồn tại — chưa inject?")
-        }
-
-        // 3. PlayerPrefs plist — esp_tv, esp_pn, esp_sg
+        // Unity iOS uses "unity.{bundleID}.plist" in some versions, "{bundleID}.plist" in others
         let paths = [
             "\(container)/Library/Preferences/unity.\(bundleID).plist",
             "\(container)/Library/Preferences/\(bundleID).plist",
             "\(container)/Library/Preferences/unity.\(bundleID).player.plist",
         ]
-        if let plistPath = paths.first(where: { FileManager.default.fileExists(atPath: $0) }),
-           let data = try? Data(contentsOf: URL(fileURLWithPath: plistPath)),
-           let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
-            func fv(_ k: String) -> Float {
-                if let v = plist[k] as? Float { return v }
-                if let v = plist[k] as? Double { return Float(v) }
-                if let v = plist[k] as? Int { return Float(v) }
-                return -1
-            }
-            let tv = fv("esp_tv"); let pn = fv("esp_pn"); let sg = fv("esp_sg")
-            lines.append("esp_tv=\(tv >= 0.5 ? "✅BẬT" : tv < 0 ? "❓chưa set" : "❌TẮT") pn=\(Int(pn)) sg=\(Int(sg))")
-        } else {
-            lines.append("PlayerPrefs: không tìm thấy plist")
+        guard let plistPath = paths.first(where: { FileManager.default.fileExists(atPath: $0) }),
+              let data = try? Data(contentsOf: URL(fileURLWithPath: plistPath)) else {
+            return "❓ Không tìm thấy PlayerPrefs plist"
         }
-
-        return lines.joined(separator: "\n")
+        guard let plist = try? PropertyListSerialization.propertyList(
+            from: data, options: [], format: nil) as? [String: Any] else {
+            return "❓ Không parse được PlayerPrefs"
+        }
+        var espTv: Float = -1
+        if let v = plist["esp_tv"] as? Float { espTv = v }
+        else if let v = plist["esp_tv"] as? Double { espTv = Float(v) }
+        else if let v = plist["esp_tv"] as? Int { espTv = Float(v) }
+        if espTv < 0 { return "❓ esp_tv chưa set (mở game trước)" }
+        var phashStr = ""
+        if let v = plist["esp_phash"] as? Float {
+            phashStr = " | path_hash=\(v.bitPattern)"
+        } else if let v = plist["esp_phash"] as? Double {
+            phashStr = " | path_hash=\(Float(v).bitPattern)"
+        }
+        return espTv >= 0.5
+            ? "✅ ESP: BẬT\(phashStr)"
+            : "❌ ESP: TẮT\(phashStr)"
     }
 
     private func patchBytesPath(in container: String) -> String {
@@ -425,6 +358,9 @@ final class FreefireESPStore: ObservableObject {
         } else {
             detectedMAXBundleID = nil
             isPatchInstalledMAX = false
+        }
+        if let (_, container) = resolvedContainer {
+            readState(from: container)
         }
         // Auto-restart token refresh after app relaunch if patch is already installed
         if tokenRefreshTask == nil,
@@ -486,11 +422,17 @@ final class FreefireESPStore: ObservableObject {
         flushState()
     }
 
+    func setGhostScale(_ v: Int32) {
+        ghostScale = max(50, min(200, v))
+        flushState()
+    }
+
     func doubleValue(for id: String) -> Double {
         switch id {
         case "wideCameraFov": return Double(wideCameraFov)
         case "silentFov":     return Double(silentFov)
         case "fovRadius":     return Double(fovRadius)
+        case "ghostScale":    return Double(ghostScale)
         case "aimMode":       return Double(aimMode)
         case "headRate":      return Double(headRate - 1)  // stored 1-4, segment is 0-indexed
         default:              return 0
@@ -502,22 +444,11 @@ final class FreefireESPStore: ObservableObject {
         case "wideCameraFov": setWideCameraFov(Int32(value))
         case "silentFov":     setSilentFov(Int32(value))
         case "fovRadius":     setFovRadius(Int32(value))
+        case "ghostScale":    setGhostScale(Int32(value))
         case "aimMode":       setAimMode(Int32(value))
         case "headRate":      setHeadRate(Int32(value) + 1)  // segment 0-indexed → stored 1-4
         default:              break
         }
-    }
-
-    func resetAllToggles() {
-        enableESP = false; playerBox = false; topTracer = false
-        healthBar = false; playerName = false; distance = false
-        espCount = false; espColorEnabled = false; showSkeleton = false
-        silentAim = false; noRecoil = false; aimFov = false; aimFovHide = false
-        skipDowned = false; fastParachute = false; speedRunning = false
-        fakeDamage = false; wideCamera = false; fastHeal = false; fastFire = false
-        fastSwap = false; highJump = false; fastRevive = false; skillCD = false; ghost = false
-        serverToggles = [:]
-        flushState()
     }
 
     func removePatches() {
@@ -537,16 +468,6 @@ final class FreefireESPStore: ObservableObject {
         tokenRefreshTask?.cancel()
         tokenRefreshTask = nil
         refresh()
-    }
-
-    // Zeroes bytes 40-59 in .pdata so C# sees h1=0 (no valid token) on game resume.
-    // This prevents a brief ESP flash caused by C# resuming with stale in-memory state.
-    private func suppressConfigToken() {
-        guard let (_, container) = resolvedContainer else { return }
-        let path = configFilePath(in: container)
-        guard var d = try? Data(contentsOf: URL(fileURLWithPath: path)), d.count >= 60 else { return }
-        for i in 40..<60 { d[i] = 0 }
-        try? d.write(to: URL(fileURLWithPath: path))
     }
 
     private func openGame() {
@@ -593,7 +514,7 @@ final class FreefireESPStore: ObservableObject {
                 self.patchResult = result
                 if case .success = result {
                     self.refresh()
-                    self.flushState()  // write current features with new token → game starts with user's settings
+                    self.flushState()
                     self.openGame()
                 }
             }
@@ -666,13 +587,31 @@ final class FreefireESPStore: ObservableObject {
         wideCameraFov = wcRaw > 0 ? 60 + wcRaw : 88
         fastHeal      = (auxBits & bitAuxFastHeal)      != 0
         fastFire      = (auxBits & bitAuxFastFire)      != 0
+        backJump      = (auxBits & bitAuxBackJump)      != 0
+        ghostControl  = (auxBits & bitAuxGhostControl)  != 0
         fastSwap      = (mainBits & bitFastSwap)        != 0
         highJump      = (mainBits & bitHighJump)        != 0
 
         let r8: UInt8 = data.count >= 9 ? data[8] : 0
+        // ghost scale stored in byte 9 (not mainBits — avoids float precision edge cases)
+        let gsi: UInt8 = data.count >= 10 ? (data[9] & 7) : 0
+        switch gsi {
+        case 1: ghostScale = 50
+        case 2: ghostScale = 75
+        case 4: ghostScale = 125
+        case 5: ghostScale = 150
+        case 6: ghostScale = 175
+        case 7: ghostScale = 200
+        default: ghostScale = 100
+        }
         fastRevive  = (r8 & bitR8FastRevive) != 0
         skillCD     = (r8 & bitR8SkillCD)    != 0
-        ghost       = (r8 & bitR8Ghost)      != 0
+        chams       = (r8 & bitR8Chams)      != 0
+        fastLoot    = (r8 & bitR8FastLoot)   != 0
+        camHack     = (r8 & bitR8CamHack)    != 0
+        unlockFps   = (r8 & bitR8UnlockFps)  != 0
+        noFog       = (r8 & bitR8NoFog)      != 0
+        fastCrouch  = (r8 & bitR8FastCrouch) != 0
 
         // Thickness from bytes 11-13
         lineThicknessRaw  = data.count >= 12 ? Int32(data[11]) : 5
@@ -723,6 +662,19 @@ final class FreefireESPStore: ObservableObject {
         auxBits |= ((wideCameraFov - 60) & 0x3F) << auxWideCamFovShift
         if fastHeal      { auxBits |= bitAuxFastHeal }
         if fastFire      { auxBits |= bitAuxFastFire }
+        if backJump      { auxBits |= bitAuxBackJump }
+        if ghostControl  { auxBits |= bitAuxGhostControl }
+        let gsi: Int32
+        switch ghostScale {
+        case 50:  gsi = 1
+        case 75:  gsi = 2
+        case 125: gsi = 4
+        case 150: gsi = 5
+        case 175: gsi = 6
+        case 200: gsi = 7
+        default:  gsi = 0  // 100% = default, saves bit space
+        }
+        // gsi written to pdata byte 9 (not mainBits — avoids float precision edge cases)
         auxBits |= ((fovRadius / 2) & 0xFF) << auxFovRadiusShift
         auxBits |= ((silentFov / 2) & 0xFF) << auxSilentFovShift
 
@@ -739,8 +691,13 @@ final class FreefireESPStore: ObservableObject {
         var r8: UInt8 = 0
         if fastRevive  { r8 |= bitR8FastRevive }
         if skillCD     { r8 |= bitR8SkillCD }
-        if ghost       { r8 |= bitR8Ghost }
-        data[8] = r8; data[9] = 0; data[10] = 0
+        if chams       { r8 |= bitR8Chams }
+        if fastLoot    { r8 |= bitR8FastLoot }
+        if camHack     { r8 |= bitR8CamHack }
+        if unlockFps   { r8 |= bitR8UnlockFps }
+        if noFog       { r8 |= bitR8NoFog }
+        if fastCrouch  { r8 |= bitR8FastCrouch }
+        data[8] = r8; data[9] = UInt8(gsi & 7); data[10] = 0
         // bytes 11-13: thickness (0-97)
         data[11] = UInt8(min(97, max(0, lineThicknessRaw)))
         data[12] = UInt8(min(97, max(0, boxThicknessRaw)))
@@ -759,11 +716,7 @@ final class FreefireESPStore: ObservableObject {
         let (fr, fg, fb) = colorToBytes(fovColor)
         data[35] = fr; data[36] = fg; data[37] = fb
         data[38] = UInt8(min(97, max(0, skelThicknessRaw)))
-        // Preserve ping counter from disk — resetting to 0 breaks the C# esp_pn liveness check
-        let _cfgPath = configFilePath(in: container)
-        if let _existing = try? Data(contentsOf: URL(fileURLWithPath: _cfgPath)), _existing.count >= 40 {
-            data[39] = _existing[39]
-        } // else: new file → data[39] stays 0
+        data[39] = 0 // ping counter — reset to 0 on full flush; incremented by refreshEspCfgToken
         // bytes 40-55: featureToken ASCII (16 bytes); bytes 56-59: h1 int32 LE
         // h1=0 means "no token" — C# skips ESP if h1==0
         if !storedFeatureToken.isEmpty {
@@ -783,7 +736,7 @@ final class FreefireESPStore: ObservableObject {
         let docPath = documentsPath(in: container)
         try? FileManager.default.createDirectory(
             atPath: docPath, withIntermediateDirectories: true)
-        writeConfigToAllRoots(data, in: container)
+        try? data.write(to: URL(fileURLWithPath: configFilePath(in: container)))
     }
 
     private func performPatch() async throws -> PatchResult {
@@ -820,29 +773,22 @@ final class FreefireESPStore: ObservableObject {
                     "Không tải được file patch từ server. Vui lòng kiểm tra kết nối mạng."])
         }
 
-        // Write patch bytes + localConfig to ALL possible Unity persistentDataPath roots
-        // (Documents = Unity <2020, Library/Application Support = Unity 2020+)
-        var writtenBytesCount = 0
-        for root in persistentRoots(in: container) {
-            try? fm.createDirectory(atPath: root, withIntermediateDirectories: true)
-            let dest = (root as NSString).appendingPathComponent("Assembly-CSharp-patch.bytes")
-            try? fm.removeItem(atPath: dest)
-            if (try? patchData.write(to: URL(fileURLWithPath: dest))) != nil { writtenBytesCount += 1 }
-        }
-        addLog("Ghi bytes vào \(writtenBytesCount) path: OK (\(patchData.count / 1024) KB)", level: writtenBytesCount > 0 ? .ok : .err)
-        if writtenBytesCount == 0 {
-            throw NSError(domain: "FreefireESP", code: 3,
-                userInfo: [NSLocalizedDescriptionKey: "Không ghi được patch bytes vào game container"])
+        let destBytes = patchBytesPath(in: container)
+        try? fm.removeItem(atPath: destBytes)
+        do {
+            try patchData.write(to: URL(fileURLWithPath: destBytes))
+            addLog("Tải bytes: OK (\(patchData.count / 1024) KB)", level: .ok)
+        } catch {
+            addLog("Ghi bytes thất bại: \(error.localizedDescription)", level: .err)
+            throw error
         }
 
         addLog("Tải localConfig từ server...")
         if let configData = await PatchHubService.fetchLocalConfig() {
-            for root in persistentRoots(in: container) {
-                let dest = (root as NSString).appendingPathComponent("localConfig.json")
-                try? fm.removeItem(atPath: dest)
-                try? configData.write(to: URL(fileURLWithPath: dest))
-            }
-            addLog("Tải localConfig: OK (ghi \(persistentRoots(in: container).count) path)", level: .ok)
+            let destConfig = localConfigPath(in: container)
+            try? fm.removeItem(atPath: destConfig)
+            try? configData.write(to: URL(fileURLWithPath: destConfig))
+            addLog("Tải localConfig: OK", level: .ok)
         } else {
             addLog("localConfig không tải được, bỏ qua", level: .warn)
         }
@@ -896,30 +842,17 @@ final class FreefireESPStore: ObservableObject {
                 let k = await MainActor.run { LicenseGateStore.storedKeyCode ?? "" }
                 let t = await PatchHubService.fetchPatchAuth(licenseKey: k, hwid: h) ?? ""
                 let d = await MainActor.run { self.documentsPath(in: container) }
-                let allRoots = await MainActor.run { self.persistentRoots(in: container) }
                 Self.writeTokenJson(featureToken: t, licKey: k, docsPath: d)
-                let cfgSub = "contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata"
-                let allCfgPaths = allRoots.map { ($0 as NSString).appendingPathComponent(cfgSub) }
                 if !t.isEmpty {
+                    let cfgPath = (d as NSString).appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata")
                     if Self.isFridaPresent() {
-                        for cfgPath in allCfgPaths {
-                            var bad = (try? Data(contentsOf: URL(fileURLWithPath: cfgPath))) ?? Data(count: 60)
-                            while bad.count < 60 { bad.append(0) }
-                            bad[39] = 0; bad[56] = 0; bad[57] = 0; bad[58] = 0; bad[59] = 0
-                            try? bad.write(to: URL(fileURLWithPath: cfgPath))
-                        }
+                        var bad = (try? Data(contentsOf: URL(fileURLWithPath: cfgPath))) ?? Data(count: 60)
+                        while bad.count < 60 { bad.append(0) }
+                        bad[39] = 0; bad[56] = 0; bad[57] = 0; bad[58] = 0; bad[59] = 0
+                        try? bad.write(to: URL(fileURLWithPath: cfgPath))
                         await MainActor.run { self.storedFeatureToken = ""; self.flushState() }
                     } else {
-                        // Refresh the primary (Documents) path; sync other roots from it
-                        let primaryCfg = allCfgPaths[0]
-                        Self.refreshEspCfgToken(featureToken: t, cfgPath: primaryCfg)
-                        if let synced = try? Data(contentsOf: URL(fileURLWithPath: primaryCfg)) {
-                            for cfgPath in allCfgPaths.dropFirst() {
-                                let dir = (cfgPath as NSString).deletingLastPathComponent
-                                try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
-                                try? synced.write(to: URL(fileURLWithPath: cfgPath))
-                            }
-                        }
+                        Self.refreshEspCfgToken(featureToken: t, cfgPath: cfgPath)
                         await MainActor.run { self.storedFeatureToken = t }
                     }
                 } else {
