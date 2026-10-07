@@ -274,14 +274,7 @@ final class FreefireESPStore: ObservableObject {
 
     private func handleAppBecameActive() {
         guard isPatchInstalled || isPatchInstalledMAX else { return }
-        if isGameProcessRunning() {
-            // Game is running: re-assert current UI state to .pdata.
-            // Do NOT read state back (app is source of truth) and do NOT
-            // suppress the token (that would zero h1 and kill active features).
-            flushState()
-        } else {
-            resetAllToggles()
-        }
+        flushState()
     }
 
     // MARK: - Container resolution
