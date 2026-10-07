@@ -23,18 +23,21 @@ enum AppTheme {
     static let emptyIconSize: CGFloat = 30
     static let selectionIconSize: CGFloat = 18
 
-    // MARK: Cyberpunk Navy + Neon palette
-    static let cyberBase      = Color(red: 0.04, green: 0.05, blue: 0.14)   // deep navy
-    static let techGlow       = Color(red: 1.00, green: 0.09, blue: 0.44)   // neon pink  #FF176F
-    static let neonPurple     = Color(red: 0.66, green: 0.33, blue: 0.97)   // violet     #A855F7
-    static let neonCyan       = Color(red: 0.00, green: 0.85, blue: 1.00)   // electric cyan #00D9FF
-    static let neonBlue       = Color(red: 0.36, green: 0.36, blue: 1.00)   // electric blue #5B5CFF
-    static let techCardFill   = Color(red: 0.04, green: 0.05, blue: 0.11)   // #0B0D1C
+    // MARK: Innova palette
+    static let cyberBase      = Color(red: 0.04, green: 0.04, blue: 0.06)   // #0A0A0F dark base
+    static let neonRed        = Color(red: 1.00, green: 0.09, blue: 0.26)   // #FF1744 primary red
+    static let techGlow       = Color(red: 1.00, green: 0.09, blue: 0.26)   // alias for red
+    static let neonPurple     = Color(red: 0.66, green: 0.33, blue: 0.97)   // kept for sheets
+    static let neonCyan       = Color(red: 0.00, green: 0.85, blue: 1.00)   // kept for sheets
+    static let neonBlue       = Color(red: 0.36, green: 0.36, blue: 1.00)   // kept for sheets
+    static let injectGreen    = Color(red: 0.05, green: 0.72, blue: 0.35)   // INJECT button
+    static let techCardFill   = Color(red: 0.08, green: 0.08, blue: 0.11)   // card bg
+    static let rowDark        = Color(red: 0.06, green: 0.06, blue: 0.09)   // row bg
 
     static let techCardStroke = LinearGradient(
         colors: [
-            Color(red: 1.00, green: 0.09, blue: 0.44).opacity(0.50),
-            Color(red: 0.66, green: 0.33, blue: 0.97).opacity(0.30)
+            Color(red: 1.00, green: 0.09, blue: 0.26).opacity(0.40),
+            Color(red: 1.00, green: 0.09, blue: 0.26).opacity(0.15)
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing

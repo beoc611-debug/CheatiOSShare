@@ -225,9 +225,7 @@ final class FreefireESPStore: ObservableObject {
     @Published var isPatching        = false
     @Published var patchResult: PatchResult?
     @Published var patchLog: [PatchLogEntry] = []
-    @Published var isGameRunning = false
     var storedFeatureToken: String = ""
-    private var heartbeatTimer: Timer?
 
     enum PatchResult: Identifiable, Equatable {
         case success
@@ -241,7 +239,6 @@ final class FreefireESPStore: ObservableObject {
     init() {
         refresh()
         flushState()
-        startHeartbeatPolling()
         NotificationCenter.default.addObserver(
             forName: UIApplication.willEnterForegroundNotification,
             object: nil, queue: .main
@@ -250,35 +247,34 @@ final class FreefireESPStore: ObservableObject {
         }
     }
 
-    private func heartbeatPath(in container: String) -> String {
-        (documentsPath(in: container) as NSString).appendingPathComponent(".hb")
-    }
+    // Process names for each known bundle ID (short exec name, max MAXCOMLEN=16 chars)
+    private static let gameProcessNames: Set<String> = [
+        "FreeFire", "FreeFireMAX",
+        "kgvn", "kgsg", "kgtw", "kgth", "kgid", "battleground",
+        "fbrgvn", "fbrgsg", "fbrgtw", "fbrgth", "fbrgid", "fbrgus"
+    ]
 
-    private func startHeartbeatPolling() {
-        heartbeatTimer?.invalidate()
-        heartbeatTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in self?.checkHeartbeat() }
+    private func isGameProcessRunning() -> Bool {
+        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0]
+        var size = 0
+        guard sysctl(&mib, 3, nil, &size, nil, 0) == 0, size > 0 else { return false }
+        let count = size / MemoryLayout<kinfo_proc>.stride
+        var procs = [kinfo_proc](repeating: kinfo_proc(), count: count + 1)
+        guard sysctl(&mib, 3, &procs, &size, nil, 0) == 0 else { return false }
+        let actual = size / MemoryLayout<kinfo_proc>.stride
+        for i in 0..<actual {
+            let pname = withUnsafeBytes(of: procs[i].kp_proc.p_comm) { raw in
+                String(cString: raw.baseAddress!.assumingMemoryBound(to: CChar.self))
+            }
+            // Process exists in any state (including SSTOP = iOS suspended in task switcher)
+            if Self.gameProcessNames.contains(pname) { return true }
         }
-    }
-
-    private func checkHeartbeat() {
-        guard let (_, container) = resolvedContainer else {
-            isGameRunning = false
-            return
-        }
-        let path = heartbeatPath(in: container)
-        if let attrs = try? FileManager.default.attributesOfItem(atPath: path),
-           let mod = attrs[.modificationDate] as? Date {
-            isGameRunning = Date().timeIntervalSince(mod) < 10
-        } else {
-            isGameRunning = false
-        }
+        return false
     }
 
     private func handleAppBecameActive() {
         guard isPatchInstalled || isPatchInstalledMAX else { return }
-        checkHeartbeat()
-        if isGameRunning {
+        if isGameProcessRunning() {
             if let (_, container) = resolvedContainer {
                 readState(from: container)
             }

@@ -82,42 +82,33 @@ struct GamesHomeView: View {
     private var homeStack: some View {
         AnyNavigationStack {
             ZStack {
-                if selectedTab == 0 {
-                    ScrollView(.vertical, showsIndicators: false) {
-                        LazyVStack(spacing: 0, pinnedViews: []) {
-                            cyberHeader
-                                .padding(.horizontal, 20)
-                                .padding(.top, 8)
-                                .padding(.bottom, 16)
-
-                            if ffTab == 0 {
-                                deviceInfoCard
-                                    .padding(.horizontal, 16)
-                                    .padding(.bottom, 14)
-                                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
-                            }
-
-                            FreefireESPHomeSection(store: ffESP, tab: ffTab)
-                                .transition(.opacity)
-
-                            Spacer(minLength: 32)
-                        }
-                        .animation(.spring(response: 0.34, dampingFraction: 0.82), value: ffTab)
-                    }
-                }
-            }
-            .background(
+                AppTheme.cyberBase.ignoresSafeArea()
                 Image("AppBg")
                     .resizable()
                     .scaledToFill()
                     .ignoresSafeArea()
+                    .opacity(0.18)
                     .allowsHitTesting(false)
-            )
+
+                if selectedTab == 0 {
+                    VStack(spacing: 0) {
+                        innovaHeader
+                        topTabBar
+                        ScrollView(.vertical, showsIndicators: false) {
+                            LazyVStack(spacing: 0, pinnedViews: []) {
+                                        FreefireESPHomeSection(store: ffESP, tab: ffTab)
+                                    .transition(.opacity)
+                                Spacer(minLength: 20)
+                            }
+                            .animation(.spring(response: 0.34, dampingFraction: 0.82), value: ffTab)
+                        }
+                        .safeAreaInset(edge: .bottom) { floatingInjectBar }
+                    }
+                }
+            }
             .navigationTitle("")
             .navigationBarHidden(true)
-            .refreshable {
-                await checkAnnouncement()
-            }
+            .refreshable { await checkAnnouncement() }
             .task {
                 try? await Task.sleep(nanoseconds: 4_000_000_000)
                 await checkAnnouncement()
@@ -127,20 +118,9 @@ struct GamesHomeView: View {
                 get: { selectedGame != nil },
                 set: { if !$0 { selectedGame = nil } }
             )) {
-                if let game = selectedGame {
-                    GamePatchesView(game: game, store: store)
-                }
+                if let game = selectedGame { GamePatchesView(game: game, store: store) }
             }
-            .navigationDestination15(isPresented: $navigateToSettings) {
-                SettingsView()
-            }
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                VStack(spacing: 0) {
-                    LicenseStatusBar()
-                        .padding(.bottom, 10)
-                    bottomTabBar
-                }
-            }
+            .navigationDestination15(isPresented: $navigateToSettings) { SettingsView() }
             .toast($licenseGate.activationToast)
             .sheet(item: $draftCoordinator.request) { request in
                 PatchProjectEditorView(
@@ -153,136 +133,232 @@ struct GamesHomeView: View {
                 }
             }
         }
-        .tint(AppTheme.accent)
+        .tint(AppTheme.neonRed)
         .preferredColorScheme(.dark)
     }
 
-    // MARK: - Custom header
+    // MARK: - Innova header
 
-    private var cyberHeader: some View {
-        HStack(alignment: .top, spacing: 0) {
-            VStack(alignment: .leading, spacing: 5) {
-                // Title row: "CheatiOSVip" + crown+DSW block
-                HStack(alignment: .bottom, spacing: 8) {
-                    Text("CheatiOSVip")
-                        .font(.system(size: 30, weight: .black))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Color(red: 1.00, green: 1.00, blue: 1.00),
-                                         Color(red: 0.85, green: 0.85, blue: 1.00)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-
-                    VStack(spacing: 0) {
-                        Image(systemName: "crown.fill")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [AppTheme.neonCyan, AppTheme.techGlow],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                        Text("PREMIUM")
-                            .font(.system(size: 16, weight: .heavy))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [AppTheme.neonCyan, AppTheme.techGlow],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
+    private var innovaHeader: some View {
+        HStack(spacing: 10) {
+            // Left: scope icon + title
+            HStack(spacing: 10) {
+                AppLogo(size: 38)
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Text("CheatiOS")
+                            .font(.system(size: 16, weight: .black))
+                            .foregroundStyle(.white)
+                        Text("Vip")
+                            .font(.system(size: 16, weight: .black))
+                            .foregroundStyle(AppTheme.neonRed)
                     }
-                    .padding(.bottom, 2)
+                    HStack(spacing: 5) {
+                        Text("✦ VIP PRO")
+                            .font(.system(size: 8, weight: .heavy))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(AppTheme.neonRed.opacity(0.85), in: Capsule())
+                        Text("INTERNAL ENGINE • BYPASS")
+                            .font(.system(size: 8, weight: .medium))
+                            .foregroundStyle(Color(white: 0.38))
+                    }
                 }
-
-                Text("Tr\u{1EE3} th\u{1EE7} game \u{00B7} An to\u{00E0}n \u{00B7} \u{1ED4}n \u{0111}\u{1ECB}nh")
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(Color(red: 0.55, green: 0.60, blue: 0.72))
             }
 
             Spacer()
 
-            // Gear button — tap: Settings, long press 3s: Fake App
-            ZStack {
-                CutShape(cut: 13)
-                    .fill(AppTheme.cyberBase.opacity(0.80))
-                    .frame(width: 46, height: 46)
-                    .overlay(
-                        CutShape(cut: 13)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [AppTheme.neonPurple.opacity(0.80),
-                                             AppTheme.techGlow.opacity(0.40)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1.5
-                            )
-                    )
-                    .shadow(color: AppTheme.neonPurple.opacity(0.30), radius: 10)
-                Image(systemName: "gearshape.fill")
-                    .font(.system(size: 19, weight: .semibold))
-                    .foregroundStyle(AppTheme.neonPurple)
+            // Right: server badge + ready badge + gear
+            HStack(spacing: 6) {
+                HStack(spacing: 3) {
+                    Circle().fill(Color(red: 0.10, green: 0.85, blue: 0.45)).frame(width: 5, height: 5)
+                    Text("SV-C2")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+                .padding(.horizontal, 7).padding(.vertical, 4)
+                .background(Color.white.opacity(0.07), in: Capsule())
+                .overlay(Capsule().strokeBorder(Color.white.opacity(0.12), lineWidth: 1))
+
+                HStack(spacing: 3) {
+                    Circle().fill(Color(red: 0.10, green: 0.85, blue: 0.45)).frame(width: 5, height: 5)
+                    Text("READY")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(Color(red: 0.10, green: 0.85, blue: 0.45))
+                }
+                .padding(.horizontal, 7).padding(.vertical, 4)
+                .background(Color(red: 0.10, green: 0.85, blue: 0.45).opacity(0.10), in: Capsule())
+                .overlay(Capsule().strokeBorder(Color(red: 0.10, green: 0.85, blue: 0.45).opacity(0.35), lineWidth: 1))
+
+                Button { navigateToSettings = true } label: {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(Color(white: 0.50))
+                        .frame(width: 30, height: 30)
+                        .background(Color.white.opacity(0.07), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .onLongPressGesture(minimumDuration: 3.0) { showFakeAppSheet = true }
+                .sheet(isPresented: $showFakeAppSheet) { FakeAppSheetView() }
             }
-            .onTapGesture { navigateToSettings = true }
-            .onLongPressGesture(minimumDuration: 3.0) { showFakeAppSheet = true }
-            .sheet(isPresented: $showFakeAppSheet) { FakeAppSheetView() }
-            .accessibilityLabel(language.text("tab.settings"))
         }
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .background(Color(red: 0.05, green: 0.05, blue: 0.07))
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Color.white.opacity(0.07)).frame(height: 0.5)
+        }
+    }
+
+    // MARK: - Top Tab Bar
+
+    private var topTabBar: some View {
+        HStack(spacing: 4) {
+            innovaTabItem(icon: "house.fill", label: "MAIN", index: 0)
+            innovaTabItem(icon: "scope", label: "ESP/AIM", index: 1)
+            innovaTabItem(icon: "slider.horizontal.3", label: "MISC", index: 2)
+        }
+        .padding(4)
+        .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 16).padding(.vertical, 10)
+        .background(Color(red: 0.05, green: 0.05, blue: 0.07))
+    }
+
+    private func innovaTabItem(icon: String, label: String, index: Int) -> some View {
+        let active = ffTab == index
+        return Button {
+            let gen = UIImpactFeedbackGenerator(style: .light)
+            gen.impactOccurred()
+            withAnimation(.easeInOut(duration: 0.18)) { ffTab = index; selectedTab = 0 }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: active ? .bold : .medium))
+                Text(label)
+                    .font(.system(size: 12, weight: active ? .bold : .medium))
+            }
+            .foregroundStyle(active ? .white : Color(white: 0.38))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 9)
+            .background(active ? AppTheme.neonRed : Color.clear, in: RoundedRectangle(cornerRadius: 9))
+            .animation(.easeInOut(duration: 0.15), value: active)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Floating inject bar
+
+    private var floatingInjectBar: some View {
+        let patchInstalled = ffESP.selectedVariant == .freefire ? ffESP.isPatchInstalled : ffESP.isPatchInstalledMAX
+        let variantLabel = ffESP.selectedVariant == .freefire ? "FREE FIRE THƯỜNG" : "FREE FIRE MAX"
+        let detected = ffESP.selectedVariant == .freefire ? ffESP.detectedBundleID : ffESP.detectedMAXBundleID
+        let accentColor: Color = patchInstalled ? AppTheme.neonRed : AppTheme.injectGreen
+
+        return HStack(spacing: 10) {
+            Button {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                if patchInstalled { ffESP.removePatches() } else { ffESP.patchGame() }
+            } label: {
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle().fill(Color.white.opacity(0.18)).frame(width: 34, height: 34)
+                        if ffESP.isPatching {
+                            ProgressView().scaleEffect(0.75).tint(.white)
+                        } else {
+                            Image(systemName: patchInstalled ? "arrow.uturn.backward.circle.fill" : "bolt.fill")
+                                .font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
+                        }
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(ffESP.isPatching ? "ĐANG XỬ LÝ..." : (patchInstalled ? "UN-PATCH" : "INJECT (\(variantLabel))"))
+                            .font(.system(size: 12, weight: .heavy)).foregroundStyle(.white).kerning15(0.3)
+                        Text(ffESP.isPatching ? "Vui lòng chờ..." : (patchInstalled ? "Gỡ bỏ patch đã cài" : "Bắt đầu kích hoạt chức năng"))
+                            .font(.system(size: 10)).foregroundStyle(.white.opacity(0.65))
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 16).padding(.vertical, 12)
+                .background(
+                    patchInstalled
+                        ? LinearGradient(colors: [Color(red: 0.55, green: 0.10, blue: 0.10), Color(red: 0.38, green: 0.07, blue: 0.07)], startPoint: .leading, endPoint: .trailing)
+                        : LinearGradient(colors: [AppTheme.injectGreen, Color(red: 0.04, green: 0.55, blue: 0.28)], startPoint: .leading, endPoint: .trailing)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(accentColor.opacity(0.45), lineWidth: 1.2))
+                .shadow(color: accentColor.opacity(0.35), radius: 12, y: 3)
+            }
+            .buttonStyle(PressScaleButtonStyle())
+            .disabled(ffESP.isPatching || detected == nil)
+            .opacity(detected == nil && !ffESP.isPatching ? 0.45 : 1.0)
+
+            Button {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                if !ffESP.isPatching {
+                    if patchInstalled { ffESP.removePatches() } else { ffESP.patchGame() }
+                }
+            } label: {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 50, height: 50)
+                    .background(
+                        patchInstalled
+                            ? LinearGradient(colors: [Color(red: 0.55, green: 0.10, blue: 0.10), Color(red: 0.38, green: 0.07, blue: 0.07)], startPoint: .top, endPoint: .bottom)
+                            : LinearGradient(colors: [AppTheme.injectGreen, Color(red: 0.04, green: 0.55, blue: 0.28)], startPoint: .top, endPoint: .bottom)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .shadow(color: accentColor.opacity(0.35), radius: 10, y: 3)
+            }
+            .buttonStyle(PressScaleButtonStyle())
+            .disabled(ffESP.isPatching)
+        }
+        .padding(.horizontal, 16).padding(.top, 10).padding(.bottom, 12)
     }
 
     // MARK: - Device info card
 
     private var deviceInfoCard: some View {
         VStack(spacing: 0) {
+            innoSectionHeader(title: "THÔNG TIN THIẾT BỊ", subtitle: "Phiên bản iOS & trạng thái hỗ trợ")
+                .padding(.bottom, 4)
+
             deviceInfoRow(
                 icon: "apple.logo",
-                iconColor: AppTheme.neonCyan,
+                iconColor: Color(red: 0.10, green: 0.85, blue: 0.50),
                 label: language.text("settings.ios_version"),
                 value: shortOSVersion,
-                valueColor: AppTheme.neonCyan
+                valueColor: Color(red: 0.10, green: 0.85, blue: 0.50)
             )
-
             infoRowDivider
-
             deviceInfoRow(
                 icon: "iphone",
-                iconColor: AppTheme.neonBlue,
+                iconColor: Color(white: 0.60),
                 label: language.text("common.device"),
                 value: AppInfo.hardwareDisplayName,
                 valueColor: .white
             )
-
             infoRowDivider
-
             deviceInfoRow(
                 icon: appState.isSupported ? "checkmark.seal.fill" : "xmark.seal.fill",
-                iconColor: appState.isSupported ? Color(red: 0.10, green: 0.85, blue: 0.50) : .red,
+                iconColor: appState.isSupported ? Color(red: 0.10, green: 0.85, blue: 0.50) : AppTheme.neonRed,
                 label: language.text("settings.support"),
                 value: language.text(appState.isSupported ? "settings.supported" : "settings.unsupported"),
-                valueColor: appState.isSupported ? Color(red: 0.10, green: 0.90, blue: 0.52) : .red,
-                glowColor: appState.isSupported ? Color(red: 0.10, green: 0.85, blue: 0.50).opacity(0.55) : .red.opacity(0.55)
+                valueColor: appState.isSupported ? Color(red: 0.10, green: 0.90, blue: 0.52) : AppTheme.neonRed,
+                glowColor: appState.isSupported ? Color(red: 0.10, green: 0.85, blue: 0.50).opacity(0.55) : AppTheme.neonRed.opacity(0.55)
             )
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .techCard()
+        .background(AppTheme.techCardFill)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .strokeBorder(Color.white.opacity(0.07), lineWidth: 1))
     }
 
     private var infoRowDivider: some View {
         Rectangle()
-            .fill(
-                LinearGradient(
-                    colors: [Color.clear, AppTheme.techGlow.opacity(0.18), Color.clear],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
+            .fill(Color.white.opacity(0.06))
             .frame(height: 0.5)
-            .padding(.vertical, 9)
+            .padding(.vertical, 8)
     }
 
     private func deviceInfoRow(
@@ -295,24 +371,41 @@ struct GamesHomeView: View {
     ) -> some View {
         HStack(spacing: 12) {
             ZStack {
-                CutShape(cut: 7)
+                Circle()
                     .fill(iconColor.opacity(0.14))
-                    .frame(width: 30, height: 30)
+                    .frame(width: 32, height: 32)
                 Image(systemName: icon)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(iconColor)
             }
-
             Text(label)
                 .font(.subheadline)
-                .foregroundStyle(Color(red: 0.55, green: 0.60, blue: 0.72))
-
+                .foregroundStyle(Color(white: 0.45))
             Spacer()
-
             Text(value)
-                .font(.system(size: 14, weight: .bold, design: .default))
+                .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(valueColor)
                 .shadow(color: glowColor, radius: 5)
+        }
+    }
+
+    // Innova-style section header
+    private func innoSectionHeader(title: String, subtitle: String) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 13, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .kerning15(0.6)
+                Text(subtitle)
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundStyle(Color(white: 0.38))
+            }
+            Spacer()
+            Rectangle()
+                .fill(AppTheme.neonRed)
+                .frame(width: 3, height: 32)
+                .clipShape(Capsule())
         }
     }
 
@@ -416,82 +509,6 @@ struct GamesHomeView: View {
         }
     }
 
-    // MARK: - Bottom Tab Bar
-
-    private var bottomTabBar: some View {
-        HStack(spacing: 0) {
-            ffTabItem(icon: "house.fill", label: "HOME", ffIndex: 0)
-            ffTabItem(icon: "scope", label: "ESP/AIM", ffIndex: 1)
-            ffTabItem(icon: "slider.horizontal.3", label: "MISC", ffIndex: 2)
-        }
-        .padding(.top, 8)
-        .padding(.bottom, 4)
-        .background(
-            ZStack {
-                Color(red: 0.03, green: 0.04, blue: 0.11).opacity(0.96)
-                LinearGradient(
-                    colors: [AppTheme.techGlow.opacity(0.04), .clear],
-                    startPoint: .top, endPoint: .bottom
-                )
-            }
-            .ignoresSafeArea(edges: .bottom)
-        )
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(LinearGradient(
-                    colors: [AppTheme.techGlow.opacity(0.45), AppTheme.neonPurple.opacity(0.30), AppTheme.neonCyan.opacity(0.25), AppTheme.techGlow.opacity(0.45)],
-                    startPoint: .leading, endPoint: .trailing
-                ))
-                .frame(height: 0.8)
-        }
-    }
-
-    private func tabItem(icon: String, label: String, index: Int) -> some View {
-        let active = selectedTab == index
-        return Button {
-            withAnimation(.spring(response: 0.28, dampingFraction: 0.72)) {
-                selectedTab = index
-            }
-        } label: {
-            VStack(spacing: 5) {
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: active ? .bold : .regular))
-                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.29, green: 0.31, blue: 0.50))
-                    .shadow(color: active ? AppTheme.techGlow.opacity(0.65) : .clear, radius: 8)
-                Text(label)
-                    .font(.system(size: 10, weight: active ? .bold : .medium))
-                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.29, green: 0.31, blue: 0.50))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func ffTabItem(icon: String, label: String, ffIndex: Int) -> some View {
-        let active = ffTab == ffIndex
-        return Button {
-            let gen = UIImpactFeedbackGenerator(style: .light)
-            gen.impactOccurred()
-            withAnimation(.spring(response: 0.32, dampingFraction: 0.78)) {
-                ffTab = ffIndex
-                selectedTab = 0
-            }
-        } label: {
-            VStack(spacing: 5) {
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: active ? .bold : .regular))
-                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.29, green: 0.31, blue: 0.50))
-                    .shadow(color: active ? AppTheme.techGlow.opacity(0.65) : .clear, radius: 8)
-                Text(label)
-                    .font(.system(size: 10, weight: active ? .bold : .medium))
-                    .foregroundStyle(active ? AppTheme.techGlow : Color(red: 0.29, green: 0.31, blue: 0.50))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
-        }
-        .buttonStyle(.plain)
-    }
 
     private var emptyGamesView: some View {
         VStack(spacing: 14) {

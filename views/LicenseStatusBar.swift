@@ -87,20 +87,14 @@ struct LicenseStatusBar: View {
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
-        .background(Color(red: 0.03, green: 0.04, blue: 0.12).opacity(0.96))
+        .background(Color(red: 0.05, green: 0.05, blue: 0.07).opacity(0.97))
         .background(.ultraThinMaterial)
-        .clipShape(CutShape(cut: 24))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
-            CutShape(cut: 24)
-                .strokeBorder(
-                    LinearGradient(
-                        colors: [AppTheme.neonPurple.opacity(0.65), AppTheme.techGlow.opacity(0.40)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.09), lineWidth: 1)
         )
-        .shadow(color: AppTheme.neonPurple.opacity(0.22), radius: 20, y: -4)
+        .shadow(color: Color.black.opacity(0.45), radius: 16, y: -4)
         .padding(.horizontal, 16)
         .sheet(isPresented: $showInfo) {
             LicenseInfoSheetView()

@@ -16,9 +16,8 @@ struct FreefireESPHomeSection: View {
     @State private var dnsToastMsg: String? = nil
     @State private var dnsWebURL: URL? = nil
     @State private var uiConfig: UIConfig? = nil
-    @State private var showESPToast = false
-    @State private var espToastIsOn = false
-    @State private var pendingESPCheck = false
+    @State private var showCheckSheet = false
+    @State private var checkSheetIsOn = false
     @State private var gameOpenPending = false
     @State private var wasPatching = false
     @State private var showPatchErrorSheet = false
@@ -29,6 +28,7 @@ struct FreefireESPHomeSection: View {
             if tab == 0 {
                 statusCard
                 dnsButton
+                checkButton
             } else if tab == 1 {
                 innoSectionHeader(title: "ESP PROTOCOL", subtitle: "Tường nhìn xuyên & hiển thị đối thủ")
                     .padding(.horizontal, 4).padding(.top, 4)
@@ -57,7 +57,6 @@ struct FreefireESPHomeSection: View {
             if !isNowPatching && wasPatching {
                 let errors = store.patchLog.filter { $0.level == .err }.count
                 if errors == 0 && !store.patchLog.isEmpty {
-                    pendingESPCheck = true
                     gameOpenPending = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                         guard gameOpenPending else { return }
@@ -69,17 +68,7 @@ struct FreefireESPHomeSection: View {
             wasPatching = isNowPatching
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            gameOpenPending = false  // user đã về app → cancel pending openGame
-            guard pendingESPCheck else { return }
-            pendingESPCheck = false
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                let statusStr = store.checkESPStatus() ?? ""
-                espToastIsOn = statusStr.hasPrefix("✅")
-                showESPToast = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
-                    showESPToast = false
-                }
-            }
+            gameOpenPending = false
         }
         .onReceive(store.$patchResult) { result in
             guard let result = result else { return }
@@ -90,8 +79,8 @@ struct FreefireESPHomeSection: View {
                 }
             }
         }
-        .sheet(isPresented: $showESPToast) {
-            ESPResultSheet(isOn: espToastIsOn, onDismiss: { showESPToast = false })
+        .sheet(isPresented: $showCheckSheet) {
+            ESPResultSheet(isOn: checkSheetIsOn, onDismiss: { showCheckSheet = false })
         }
         .sheet(isPresented: $showPatchErrorSheet) {
             PatchErrorSheet(message: patchErrorMsg, onDismiss: { showPatchErrorSheet = false })
@@ -161,10 +150,9 @@ struct FreefireESPHomeSection: View {
             let detected = store.selectedVariant == .freefire ? store.detectedBundleID : store.detectedMAXBundleID
             let patchInstalled = store.selectedVariant == .freefire ? store.isPatchInstalled : store.isPatchInstalledMAX
 
-            let gameStatusSuffix = detected != nil ? (store.isGameRunning ? "  /  Game online" : "  /  Game offline") : ""
             innoStatusRow(icon: "apps.iphone", label: store.selectedVariant.rawValue,
-                value: detected != nil ? "Đã phát hiện\(gameStatusSuffix)" : "Không tìm thấy",
-                valueColor: detected != nil ? (store.isGameRunning ? Color(red: 0.10, green: 0.90, blue: 0.52) : Color(red: 0.85, green: 0.65, blue: 0.10)) : AppTheme.neonRed,
+                value: detected != nil ? "Đã phát hiện" : "Không tìm thấy",
+                valueColor: detected != nil ? Color(red: 0.10, green: 0.90, blue: 0.52) : AppTheme.neonRed,
                 iconColor: detected != nil ? Color(red: 0.10, green: 0.85, blue: 0.50) : Color(white: 0.35))
             statusDivider
             innoStatusRow(icon: "doc.badge.gearshape", label: "Patch file",
@@ -454,6 +442,45 @@ struct FreefireESPHomeSection: View {
         }
     }
 
+    private var checkButton: some View {
+        let green = Color(red: 0.10, green: 0.88, blue: 0.52)
+        let patchInstalled = store.selectedVariant == .freefire ? store.isPatchInstalled : store.isPatchInstalledMAX
+        let anyFeatureOn = store.enableESP || store.silentAim || store.noRecoil || store.aimFov
+            || store.speedRunning || store.fastParachute || store.fakeDamage || store.wideCamera
+            || store.fastHeal || store.fastFire || store.fastSwap || store.highJump
+            || store.fastRevive || store.skillCD || store.ghost
+        return Button {
+            checkSheetIsOn = patchInstalled && anyFeatureOn
+            showCheckSheet = true
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(green.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(green)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("KIỂM TRA CHỨC NĂNG")
+                        .font(.system(size: 13, weight: .heavy)).foregroundStyle(.white)
+                    Text("Xem chức năng có đang hoạt động không")
+                        .font(.system(size: 11)).foregroundStyle(Color(white: 0.45))
+                }
+                Spacer()
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 18, weight: .semibold)).foregroundStyle(green.opacity(0.75))
+            }
+            .padding(.horizontal, 16).padding(.vertical, 13)
+            .background(AppTheme.techCardFill)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(green.opacity(0.35), lineWidth: 1.2))
+        }
+        .buttonStyle(.plain)
+    }
+
 }
 
 // MARK: - In-App Safari Browser
@@ -642,14 +669,16 @@ private struct ESPResultSheet: View {
                     .padding(.bottom, 16)
 
                     // title
-                    Text(isOn ? "ESP đang hoạt động" : "ESP chưa kích hoạt")
+                    Text(isOn ? "Chức năng đang hoạt động" : "Chức năng chưa hoạt động")
                         .font(.system(size: 20, weight: .heavy))
                         .foregroundStyle(isOn ? Color(red: 0.24, green: 0.88, blue: 0.52) : Color(red: 0.95, green: 0.28, blue: 0.35))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
                         .padding(.bottom, 6)
 
                     Text(isOn
-                        ? "Patch thành công — tính năng đã sẵn sàng trong game"
-                        : "Cần thêm một vài bước để kích hoạt ESP")
+                        ? "Hệ thống sẵn sàng — vào game và bắt đầu trận là dùng được ngay"
+                        : "Patch chưa cài hoặc chưa bật chức năng nào trong app")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
                         .multilineTextAlignment(.center)
@@ -663,30 +692,30 @@ private struct ESPResultSheet: View {
                         if isOn {
                             stepRow(num: "1", icon: "gamecontroller.fill", color: green,
                                     title: "Vào Free Fire và chơi bình thường",
-                                    desc: "ESP đã sẵn sàng — mở game và bắt đầu trận là thấy ngay.")
+                                    desc: "Chức năng đã sẵn sàng — mở game và bắt đầu trận là dùng được ngay.")
                             divider
-                            stepRow(num: "2", icon: "app.badge.fill", color: Color(red: 0.55, green: 0.72, blue: 1.0),
-                                    title: "Không tắt app bằng đa nhiệm",
-                                    desc: "Khi chơi game, đừng vuốt lên bỏ app trong màn hình đa nhiệm. Chỉ cần nhấn Home hoặc chuyển sang game là đủ.")
+                            stepRow(num: "2", icon: "slider.horizontal.3", color: Color(red: 0.55, green: 0.72, blue: 1.0),
+                                    title: "Bật / tắt chức năng bất kỳ lúc nào",
+                                    desc: "Vuốt đa nhiệm vào app, bật hoặc tắt tính năng, rồi quay lại game là áp dụng ngay.")
                             divider
                             stepRow(num: "3", icon: "arrow.clockwise.circle.fill", color: Color(red: 0.80, green: 0.65, blue: 1.0),
-                                    title: "Khi nào cần patch lại?",
-                                    desc: "Nếu game được cập nhật hoặc ESP tự dưng tắt thì bấm Patch lại là ổn.")
+                                    title: "Khi nào cần Inject lại?",
+                                    desc: "Nếu game được cập nhật hoặc chức năng tự dưng không hoạt động thì bấm Inject lại là ổn.")
                         } else {
-                            stepRow(num: "1", icon: "arrow.uturn.backward.circle.fill", color: Color(red: 1.0, green: 0.75, blue: 0.15),
-                                    title: "Quay lại và bấm Patch lại",
-                                    desc: "Đóng bảng này → bấm 'Patch File vào Game' một lần nữa.")
+                            stepRow(num: "1", icon: "bolt.fill", color: Color(red: 1.0, green: 0.75, blue: 0.15),
+                                    title: "Bấm Inject (Free Fire Thường / MAX)",
+                                    desc: "Về màn hình MAIN → bấm nút Inject lớn bên dưới để cài patch vào game.")
                             divider
-                            stepRow(num: "2", icon: "gamecontroller.fill", color: Color(red: 0.55, green: 0.72, blue: 1.0),
-                                    title: "Mở Free Fire, vào đến màn hình chính",
-                                    desc: "App sẽ tự mở game. Đợi vào đến màn hình lobby, không cần vào trận.")
+                            stepRow(num: "2", icon: "togglepower", color: Color(red: 0.55, green: 0.72, blue: 1.0),
+                                    title: "Bật ít nhất 1 chức năng trong ESP/AIM hoặc MISC",
+                                    desc: "Vào tab ESP/AIM hoặc MISC, bật tính năng bạn muốn dùng trước khi vào game.")
                             divider
-                            stepRow(num: "3", icon: "clock.arrow.circlepath", color: Color(red: 0.80, green: 0.65, blue: 1.0),
-                                    title: "Chờ vài giây rồi quay lại đây",
-                                    desc: "Để game chạy khoảng 10 giây rồi switch về app — bảng thông báo sẽ tự hiện.")
+                            stepRow(num: "3", icon: "gamecontroller.fill", color: Color(red: 0.80, green: 0.65, blue: 1.0),
+                                    title: "Vào Free Fire và bắt đầu trận",
+                                    desc: "Mở game, vào lobby và bắt đầu trận — chức năng sẽ tự áp dụng.")
                             divider
                             stepRow(num: "4", icon: "creditcard.fill", color: red,
-                                    title: "Vẫn TẮT? Kiểm tra tài khoản Premium",
+                                    title: "Vẫn không hoạt động? Kiểm tra tài khoản",
                                     desc: "Có thể tài khoản đã hết hạn hoặc chưa kích hoạt trên thiết bị này. Xem thông tin key ở cuối màn hình chính.")
                         }
                     }
@@ -700,7 +729,7 @@ private struct ESPResultSheet: View {
                     Button {
                         dismiss(); onDismiss()
                     } label: {
-                        Text(isOn ? "Vào game thôi!" : "Đã hiểu, thử lại")
+                        Text(isOn ? "Vào game thôi!" : "Đã hiểu, làm theo hướng dẫn")
                             .font(.system(size: 16, weight: .bold))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)

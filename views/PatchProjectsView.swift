@@ -378,7 +378,7 @@ struct PatchProjectDetailView: View {
     private func setRuleState(_ isOn: Bool, rule: PatchRule) {
         guard rule.canToggle, togglingRuleID == nil else { return }
         togglingRuleID = rule.id
-        Task.detached(priority: .userInitiated) {
+        Task(priority: .userInitiated) {
             do {
                 try DevicePatchService.setRuleState(isOn, rule: rule)
                 await MainActor.run {

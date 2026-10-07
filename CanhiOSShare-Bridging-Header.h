@@ -10,3 +10,4 @@
 #import "helpers/AppIconHelper.h"
 #import "helpers/AppLauncher.h"
 #import "helpers/DisplayIdentity.h"
+#include <libproc.h>
