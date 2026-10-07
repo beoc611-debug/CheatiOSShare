@@ -18,6 +18,7 @@ struct FreefireESPHomeSection: View {
     @State private var uiConfig: UIConfig? = nil
     @State private var showCheckSheet = false
     @State private var checkSheetIsOn = false
+    @State private var checkDiagText: String = ""
     @State private var gameOpenPending = false
     @State private var wasPatching = false
     @State private var showPatchErrorSheet = false
@@ -80,7 +81,7 @@ struct FreefireESPHomeSection: View {
             }
         }
         .sheet(isPresented: $showCheckSheet) {
-            ESPResultSheet(isOn: checkSheetIsOn, onDismiss: { showCheckSheet = false })
+            ESPResultSheet(isOn: checkSheetIsOn, diagText: checkDiagText, onDismiss: { showCheckSheet = false })
         }
         .sheet(isPresented: $showPatchErrorSheet) {
             PatchErrorSheet(message: patchErrorMsg, onDismiss: { showPatchErrorSheet = false })
@@ -451,6 +452,7 @@ struct FreefireESPHomeSection: View {
             || store.fastRevive || store.skillCD || store.ghost
         return Button {
             checkSheetIsOn = patchInstalled && anyFeatureOn
+            checkDiagText = store.checkESPStatus()
             showCheckSheet = true
         } label: {
             HStack(spacing: 12) {
@@ -622,6 +624,7 @@ private struct PatchErrorSheet: View {
 
 private struct ESPResultSheet: View {
     let isOn: Bool
+    let diagText: String
     let onDismiss: () -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -629,8 +632,9 @@ private struct ESPResultSheet: View {
     private let red    = Color(red: 1.00, green: 0.38, blue: 0.38)
     private let accent: Color
 
-    init(isOn: Bool, onDismiss: @escaping () -> Void) {
+    init(isOn: Bool, diagText: String = "", onDismiss: @escaping () -> Void) {
         self.isOn = isOn
+        self.diagText = diagText
         self.onDismiss = onDismiss
         self.accent = isOn
             ? Color(red: 0.10, green: 0.92, blue: 0.55)
@@ -683,7 +687,20 @@ private struct ESPResultSheet: View {
                         .foregroundStyle(Color(red: 0.52, green: 0.63, blue: 0.82))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 28)
-                        .padding(.bottom, 22)
+                        .padding(.bottom, 12)
+
+                    if !diagText.isEmpty {
+                        Text(diagText)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(Color(white: 0.75))
+                            .multilineTextAlignment(.leading)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(white: 0.08).cornerRadius(10))
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 16)
+                    }
 
                     // steps card
                     VStack(alignment: .leading, spacing: 0) {
