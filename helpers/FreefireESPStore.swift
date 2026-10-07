@@ -307,34 +307,61 @@ final class FreefireESPStore: ObservableObject {
         guard let (bundleID, container) = resolvedContainer else {
             return "❓ Không tìm thấy game container"
         }
-        // Unity iOS uses "unity.{bundleID}.plist" in some versions, "{bundleID}.plist" in others
+
+        var lines: [String] = []
+
+        // 1. Heartbeat file — C# writes every ~60 frames (~1s). Age tells us if patch is running NOW.
+        let hbPath = (documentsPath(in: container) as NSString).appendingPathComponent(".hb")
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: hbPath),
+           let mod = attrs[.modificationDate] as? Date {
+            let age = Int(-mod.timeIntervalSinceNow)
+            if age < 5 {
+                lines.append("💓 C# đang chạy (hb \(age)s trước)")
+            } else if age < 60 {
+                lines.append("⚠️ C# có vẻ đang chạy (hb \(age)s trước)")
+            } else {
+                lines.append("💔 C# không chạy (hb \(age)s trước - vào game chưa?)")
+            }
+        } else {
+            lines.append("💔 .hb không tồn tại — patch chưa load lần nào")
+        }
+
+        // 2. .pdata state bits — tells us what features the app wrote
+        let pdataPath = configFilePath(in: container)
+        if let d = try? Data(contentsOf: URL(fileURLWithPath: pdataPath)), d.count >= 4 {
+            let bits = Int32(d[0]) | (Int32(d[1]) << 8) | (Int32(d[2]) << 16) | (Int32(d[3]) << 24)
+            let master = (bits & 1) != 0
+            let box    = (bits & 2) != 0
+            let h1     = d.count >= 60
+                ? (Int32(d[56]) | (Int32(d[57]) << 8) | (Int32(d[58]) << 16) | (Int32(d[59]) << 24))
+                : 0
+            lines.append(".pdata: EspMaster=\(master) Box=\(box) h1=\(h1 == 0 ? "0(no-token)" : "OK") bytes39=\(d.count >= 40 ? d[39] : 0)")
+        } else {
+            lines.append(".pdata: không tồn tại — chưa inject?")
+        }
+
+        // 3. PlayerPrefs plist — esp_tv, esp_pn, esp_sg
         let paths = [
             "\(container)/Library/Preferences/unity.\(bundleID).plist",
             "\(container)/Library/Preferences/\(bundleID).plist",
             "\(container)/Library/Preferences/unity.\(bundleID).player.plist",
         ]
-        guard let plistPath = paths.first(where: { FileManager.default.fileExists(atPath: $0) }),
-              let data = try? Data(contentsOf: URL(fileURLWithPath: plistPath)) else {
-            return "❓ Không tìm thấy PlayerPrefs plist"
+        if let plistPath = paths.first(where: { FileManager.default.fileExists(atPath: $0) }),
+           let data = try? Data(contentsOf: URL(fileURLWithPath: plistPath)),
+           let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
+            func fv(_ k: String) -> Float {
+                if let v = plist[k] as? Float { return v }
+                if let v = plist[k] as? Double { return Float(v) }
+                if let v = plist[k] as? Int { return Float(v) }
+                return -1
+            }
+            let tv = fv("esp_tv"); let pn = fv("esp_pn"); let sg = fv("esp_sg")
+            lines.append("esp_tv=\(tv >= 0.5 ? "✅BẬT" : tv < 0 ? "❓chưa set" : "❌TẮT") pn=\(Int(pn)) sg=\(Int(sg))")
+        } else {
+            lines.append("PlayerPrefs: không tìm thấy plist")
         }
-        guard let plist = try? PropertyListSerialization.propertyList(
-            from: data, options: [], format: nil) as? [String: Any] else {
-            return "❓ Không parse được PlayerPrefs"
-        }
-        var espTv: Float = -1
-        if let v = plist["esp_tv"] as? Float { espTv = v }
-        else if let v = plist["esp_tv"] as? Double { espTv = Float(v) }
-        else if let v = plist["esp_tv"] as? Int { espTv = Float(v) }
-        if espTv < 0 { return "❓ esp_tv chưa set (mở game trước)" }
-        var phashStr = ""
-        if let v = plist["esp_phash"] as? Float {
-            phashStr = " | path_hash=\(v.bitPattern)"
-        } else if let v = plist["esp_phash"] as? Double {
-            phashStr = " | path_hash=\(Float(v).bitPattern)"
-        }
-        return espTv >= 0.5
-            ? "✅ ESP: BẬT\(phashStr)"
-            : "❌ ESP: TẮT\(phashStr)"
+
+        return lines.joined(separator: "\n")
     }
 
     private func patchBytesPath(in container: String) -> String {
