@@ -493,7 +493,7 @@ struct FreefireESPHomeSection: View {
                         Text("LỊCH SỬ HOẠT ĐỘNG")
                             .font(.system(size: 10, weight: .heavy))
                             .foregroundStyle(purple.opacity(0.70))
-                            .kerning(0.5)
+                            .kerning15(0.5)
                         Spacer()
                         if !store.antiBanLog.isEmpty {
                             Button { store.clearAntiBanLog() } label: {
