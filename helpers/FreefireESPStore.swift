@@ -10,6 +10,13 @@ struct PatchLogEntry: Identifiable {
     let text: String
 }
 
+struct AntiBanLogEntry: Identifiable {
+    let id = UUID()
+    let time: String
+    let message: String
+    let isDelete: Bool
+}
+
 // Manages Free Fire ESP state by reading/writing a config file in the game's
 // Documents/ folder. The game reads the same file every ~1 second via the
 // patched ESPLogic (replacing the old in-game 3-finger menu).
@@ -257,6 +264,12 @@ final class FreefireESPStore: ObservableObject {
     @Published var patchResult: PatchResult?
     @Published var patchLog: [PatchLogEntry] = []
     var storedFeatureToken: String = ""
+
+    // MARK: - AntiBan Memory
+    @Published var antiBanEnabled: Bool = false
+    @Published var antiBanRunning: Bool = false
+    @Published var antiBanLog: [AntiBanLogEntry] = []
+    private var antiBanScanTask: Task<Void, Never>?
 
     enum PatchResult: Identifiable, Equatable {
         case success
@@ -517,6 +530,9 @@ final class FreefireESPStore: ObservableObject {
                     self.refresh()
                     self.flushState()
                     self.openGame()
+                    if self.antiBanEnabled {
+                        self.scheduleAntiBanScan()
+                    }
                 }
             }
         }
@@ -932,5 +948,78 @@ final class FreefireESPStore: ObservableObject {
             _results.append((_p, _ok))
         }
         return _results
+    }
+
+    // MARK: - AntiBan Memory methods
+
+    func scheduleAntiBanScan() {
+        guard antiBanEnabled, let (_, container) = resolvedContainer else { return }
+        antiBanScanTask?.cancel()
+        addAntiBanLog("⏳ Đã kích hoạt — bắt đầu scan sau 10 giây...", isDelete: false)
+        antiBanScanTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(nanoseconds: 10_000_000_000)
+            guard !Task.isCancelled else { return }
+            while !Task.isCancelled && self.antiBanEnabled {
+                await self.runAntiBanScan(container: container)
+                // scan lại mỗi 30 giây
+                try? await Task.sleep(nanoseconds: 30_000_000_000)
+            }
+        }
+    }
+
+    func stopAntiBan() {
+        antiBanScanTask?.cancel()
+        antiBanScanTask = nil
+        antiBanRunning = false
+        addAntiBanLog("🛑 Antiban đã dừng", isDelete: false)
+    }
+
+    private func runAntiBanScan(container: String) async {
+        antiBanRunning = true
+        let docsPath = documentsPath(in: container)
+        let fm = FileManager.default
+        guard let items = try? fm.contentsOfDirectory(atPath: docsPath) else {
+            addAntiBanLog("⚠️ Không đọc được Documents", isDelete: false)
+            antiBanRunning = false
+            return
+        }
+        var deletedCount = 0
+        for item in items {
+            let itemPath = (docsPath as NSString).appendingPathComponent(item)
+            var isDir: ObjCBool = false
+            fm.fileExists(atPath: itemPath, isDirectory: &isDir)
+            if isDir.boolValue { continue }
+            let size = (try? fm.attributesOfItem(atPath: itemPath)[.size] as? Int64) ?? 0
+            // Xóa file nhỏ hơn 1MB (KB hoặc bytes)
+            if size < 1_000_000 {
+                let sizeStr = ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
+                do {
+                    try fm.removeItem(atPath: itemPath)
+                    addAntiBanLog("🗑️ Xóa: \(item) (\(sizeStr))", isDelete: true)
+                    deletedCount += 1
+                } catch {
+                    // bỏ qua file đang bị lock
+                }
+            }
+        }
+        if deletedCount > 0 {
+            addAntiBanLog("✅ Scan xong — xóa \(deletedCount) file", isDelete: false)
+        } else {
+            addAntiBanLog("✅ Scan xong — không còn file cần xóa", isDelete: false)
+        }
+        antiBanRunning = false
+    }
+
+    func clearAntiBanLog() {
+        antiBanLog.removeAll()
+    }
+
+    private func addAntiBanLog(_ msg: String, isDelete: Bool) {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "HH:mm:ss"
+        let entry = AntiBanLogEntry(time: fmt.string(from: Date()), message: msg, isDelete: isDelete)
+        antiBanLog.insert(entry, at: 0)
+        if antiBanLog.count > 80 { antiBanLog.removeLast() }
     }
 }

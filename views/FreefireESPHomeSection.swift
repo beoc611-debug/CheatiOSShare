@@ -30,6 +30,7 @@ struct FreefireESPHomeSection: View {
                 statusCard
                 dnsButton
                 checkButton
+                antiBanCard
             } else if tab == 1 {
                 innoSectionHeader(title: "ESP PROTOCOL", subtitle: "Tường nhìn xuyên & hiển thị đối thủ")
                     .padding(.horizontal, 4).padding(.top, 4)
@@ -443,15 +444,121 @@ struct FreefireESPHomeSection: View {
         }
     }
 
+    // MARK: - AntiBan Memory Card
+
+    private var antiBanCard: some View {
+        let purple = Color(red: 0.62, green: 0.32, blue: 1.00)
+        return VStack(spacing: 0) {
+            // Header + Toggle
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle().fill(purple.opacity(0.16)).frame(width: 36, height: 36)
+                    Image(systemName: "shield.slash.fill")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(store.antiBanRunning ? purple : purple.opacity(0.75))
+                        .scaleEffect(store.antiBanRunning ? 1.10 : 1.0)
+                        .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true),
+                                   value: store.antiBanRunning)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("ANTIBAN MEMORY")
+                        .font(.system(size: 13, weight: .heavy)).foregroundStyle(.white)
+                    Text(store.antiBanEnabled
+                         ? (store.antiBanRunning ? "Đang scan & xóa file..." : "Đã bật — chờ sau patch 10s")
+                         : "Tự động xóa file sau khi patch")
+                        .font(.system(size: 11))
+                        .foregroundStyle(store.antiBanEnabled ? purple.opacity(0.85) : Color(white: 0.45))
+                }
+                Spacer()
+                Toggle("", isOn: Binding(
+                    get: { store.antiBanEnabled },
+                    set: { newVal in
+                        store.antiBanEnabled = newVal
+                        if !newVal { store.stopAntiBan() }
+                    }
+                ))
+                .toggleStyle(SwitchToggleStyle(tint: purple))
+                .labelsHidden()
+                .scaleEffect(0.88)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 13)
+
+            // Log panel (show when enabled or has log)
+            if store.antiBanEnabled || !store.antiBanLog.isEmpty {
+                Rectangle().fill(Color.white.opacity(0.06)).frame(height: 0.5).padding(.horizontal, 16)
+
+                VStack(spacing: 0) {
+                    // Log header
+                    HStack {
+                        Text("LỊCH SỬ HOẠT ĐỘNG")
+                            .font(.system(size: 10, weight: .heavy))
+                            .foregroundStyle(purple.opacity(0.70))
+                            .kerning(0.5)
+                        Spacer()
+                        if !store.antiBanLog.isEmpty {
+                            Button { store.clearAntiBanLog() } label: {
+                                Text("Xóa log")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundStyle(Color(white: 0.35))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        if store.antiBanRunning {
+                            HStack(spacing: 4) {
+                                ProgressView().scaleEffect(0.60).tint(purple)
+                                Text("đang chạy")
+                                    .font(.system(size: 10)).foregroundStyle(purple.opacity(0.70))
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 16).padding(.top, 10).padding(.bottom, 6)
+
+                    // Log entries
+                    if store.antiBanLog.isEmpty {
+                        Text("Chưa có hoạt động nào. Bấm Patch File để bắt đầu.")
+                            .font(.system(size: 11)).foregroundStyle(Color(white: 0.30))
+                            .padding(.horizontal, 16).padding(.bottom, 12)
+                    } else {
+                        ScrollView(showsIndicators: false) {
+                            VStack(spacing: 0) {
+                                ForEach(store.antiBanLog.prefix(30)) { entry in
+                                    HStack(alignment: .top, spacing: 8) {
+                                        Text(entry.time)
+                                            .font(.system(size: 10, design: .monospaced))
+                                            .foregroundStyle(Color(white: 0.30))
+                                            .frame(width: 56, alignment: .leading)
+                                        Text(entry.message)
+                                            .font(.system(size: 11))
+                                            .foregroundStyle(entry.isDelete
+                                                ? Color(red: 1.0, green: 0.45, blue: 0.45)
+                                                : Color(white: 0.65))
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .padding(.horizontal, 16).padding(.vertical, 3)
+                                }
+                            }
+                        }
+                        .frame(maxHeight: 140)
+                        .padding(.bottom, 8)
+                    }
+                }
+                .background(Color.black.opacity(0.18))
+            }
+        }
+        .background(AppTheme.techCardFill)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .strokeBorder(store.antiBanEnabled ? purple.opacity(0.45) : Color.white.opacity(0.07), lineWidth: 1.2))
+        .animation(.easeInOut(duration: 0.2), value: store.antiBanEnabled)
+        .animation(.easeInOut(duration: 0.15), value: store.antiBanRunning)
+        .animation(.easeInOut(duration: 0.15), value: store.antiBanLog.count)
+    }
+
     private var checkButton: some View {
         let green = Color(red: 0.10, green: 0.88, blue: 0.52)
         let patchInstalled = store.selectedVariant == .freefire ? store.isPatchInstalled : store.isPatchInstalledMAX
-        let anyFeatureOn = store.enableESP || store.silentAim || store.noRecoil || store.aimFov
-            || store.speedRunning || store.fastParachute || store.fakeDamage || store.wideCamera
-            || store.fastHeal || store.fastFire || store.fastSwap || store.highJump
-            || store.fastRevive || store.skillCD || store.ghost
         return Button {
-            checkSheetIsOn = patchInstalled && anyFeatureOn
+            checkSheetIsOn = patchInstalled
             checkDiagText = store.checkESPStatus()
             showCheckSheet = true
         } label: {
