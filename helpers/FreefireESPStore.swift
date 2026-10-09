@@ -206,6 +206,7 @@ final class FreefireESPStore: ObservableObject {
         case "unlockFps":      return unlockFps
         case "noFog":          return noFog
         case "fastCrouch":     return fastCrouch
+        case "spinBot":        return spinBotEnabled
         default:               return serverToggles[id] ?? false
         }
     }
@@ -244,6 +245,7 @@ final class FreefireESPStore: ObservableObject {
         case "unlockFps":      toggle(\.unlockFps)
         case "noFog":          toggle(\.noFog)
         case "fastCrouch":     toggle(\.fastCrouch)
+        case "spinBot":        toggle(\.spinBotEnabled)
         default:               serverToggles[id] = !(serverToggles[id] ?? false)
         }
     }
@@ -284,6 +286,11 @@ final class FreefireESPStore: ObservableObject {
     @Published var noFog       = false
     @Published var fastCrouch  = false
 
+    // SPINBOT — byte 9 bits 3-7 of pdata
+    @Published var spinBotEnabled: Bool = false
+    @Published var spinBotSpeedIndex: Int = 1  // 0-10: 180/360/540/720/900/1080/1440/1800/2400/3000/3600 °/s
+    static let spinBotSpeedLabels: [String] = ["180°/s", "360°/s", "540°/s", "720°/s", "900°/s", "1080°/s", "1440°/s", "1800°/s", "2400°/s", "3000°/s", "3600°/s"]
+
     // MARK: - Status
     @Published var selectedVariant: FFVariant = .freefire
     @Published var detectedBundleID: String?
@@ -301,10 +308,14 @@ final class FreefireESPStore: ObservableObject {
     @Published var antiBanLog: [AntiBanLogEntry] = []
     @Published var antiBanProgress: Double = 0
     @Published var antiBanStatusMsg: String = ""
-    @Published var antiBanBtnVisible: Bool = UserDefaults.standard.object(forKey: "ab_btn_vis") == nil ? true : UserDefaults.standard.bool(forKey: "ab_btn_vis")
+    @Published var antiBanBtnVisible: Bool = UserDefaults.standard.object(forKey: "ab_btn_vis") == nil ? false : UserDefaults.standard.bool(forKey: "ab_btn_vis")
     private var antiBanScanTask: Task<Void, Never>?
     private var antiBanOpTask: Task<Void, Never>?
     private var antiBanCmdWatchTask: Task<Void, Never>?
+
+    // MARK: - AntiBan Memory V2
+    @Published var antiBanV2Enabled: Bool = UserDefaults.standard.bool(forKey: "ab_v2_on")
+    private var antiBanV2Task: Task<Void, Never>?
 
     enum PatchResult: Identifiable, Equatable {
         case success
@@ -484,6 +495,7 @@ final class FreefireESPStore: ObservableObject {
         case "ghostScale":    return Double(ghostScale)
         case "aimMode":       return Double(aimMode)
         case "headRate":      return Double(headRate - 1)  // stored 1-4, segment is 0-indexed
+        case "spinBotSpeedIndex": return Double(spinBotSpeedIndex)
         default:              return 0
         }
     }
@@ -496,6 +508,7 @@ final class FreefireESPStore: ObservableObject {
         case "ghostScale":    setGhostScale(Int32(value))
         case "aimMode":       setAimMode(Int32(value))
         case "headRate":      setHeadRate(Int32(value) + 1)  // segment 0-indexed → stored 1-4
+        case "spinBotSpeedIndex": spinBotSpeedIndex = max(0, min(10, Int(value))); flushStatePublic()
         default:              break
         }
     }
@@ -568,8 +581,11 @@ final class FreefireESPStore: ObservableObject {
                     self.syncBtnVisFlag()
                     BackgroundAudioKeepAlive.shared.start()
                     self.ensureAntiBanCmdWatcher()
-                    if self.antiBanEnabled {
-                        self.scheduleAntiBanScan()
+                    if self.antiBanEnabled { self.scheduleAntiBanScan() }
+                    if self.antiBanV2Enabled { self.ensureAntiBanV2Task() }
+                    Task { [weak self] in
+                        try? await Task.sleep(nanoseconds: 40_000_000_000)
+                        await MainActor.run { self?.removePatches() }
                     }
                 }
             }
@@ -752,7 +768,9 @@ final class FreefireESPStore: ObservableObject {
         if unlockFps   { r8 |= bitR8UnlockFps }
         if noFog       { r8 |= bitR8NoFog }
         if fastCrouch  { r8 |= bitR8FastCrouch }
-        data[8] = r8; data[9] = UInt8(gsi & 7); data[10] = 0
+        let spBit: UInt8 = spinBotEnabled ? (1 << 3) : 0
+        let spIdx: UInt8 = UInt8(min(15, spinBotSpeedIndex) & 0xF)
+        data[8] = r8; data[9] = UInt8(gsi & 7) | spBit | (spIdx << 4); data[10] = 0
         // bytes 11-13: thickness (0-97)
         data[11] = UInt8(min(97, max(0, lineThicknessRaw)))
         data[12] = UInt8(min(97, max(0, boxThicknessRaw)))
@@ -1054,7 +1072,8 @@ final class FreefireESPStore: ObservableObject {
     private static let antiBanSkipDirs: Set<String> = ["MReplays", "record", "Workshop"]
 
     private static func isSafeToMove(_ name: String) -> Bool {
-        return !name.lowercased().contains("avatar")
+        let l = name.lowercased()
+        return !l.contains("avatar") && !l.hasSuffix(".flag")
     }
 
     private var antiBanBackupDir: String {
@@ -1217,5 +1236,56 @@ final class FreefireESPStore: ObservableObject {
         let entry = AntiBanLogEntry(time: fmt.string(from: Date()), message: msg, kind: kind)
         antiBanLog.insert(entry, at: 0)
         if antiBanLog.count > 80 { antiBanLog.removeLast() }
+    }
+
+    // MARK: - AntiBan Memory V2
+
+    func enableAntiBanV2() {
+        antiBanV2Enabled = true
+        UserDefaults.standard.set(true, forKey: "ab_v2_on")
+        ensureAntiBanV2Task()
+    }
+
+    func disableAntiBanV2() {
+        antiBanV2Enabled = false
+        UserDefaults.standard.set(false, forKey: "ab_v2_on")
+        antiBanV2Task?.cancel()
+        antiBanV2Task = nil
+    }
+
+    func ensureAntiBanV2Task() {
+        guard antiBanV2Task == nil else { return }
+        antiBanV2Task = Task { [weak self] in
+            while !Task.isCancelled {
+                await MainActor.run { self?.runAntiBanV2Scan() }
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+            }
+        }
+    }
+
+    private static let v2SkipFiles: Set<String> = [
+        "assembly-csharp-patch.bytes",
+        "localconfig.json",
+        "esp_cfg",
+        ".pdata",
+        ".tok"
+    ]
+
+    private func runAntiBanV2Scan() {
+        guard let (_, container) = resolvedContainer else { return }
+        let docsPath = documentsPath(in: container)
+        let fm = FileManager.default
+        guard let items = try? fm.contentsOfDirectory(atPath: docsPath) else { return }
+        for item in items {
+            let lower = item.lowercased()
+            if lower.hasSuffix(".flag") { continue }
+            if Self.v2SkipFiles.contains(lower) { continue }
+            let fullPath = (docsPath as NSString).appendingPathComponent(item)
+            var isDir: ObjCBool = false
+            fm.fileExists(atPath: fullPath, isDirectory: &isDir)
+            if !isDir.boolValue {
+                try? fm.removeItem(atPath: fullPath)
+            }
+        }
     }
 }

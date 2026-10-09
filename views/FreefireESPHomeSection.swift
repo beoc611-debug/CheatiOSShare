@@ -23,6 +23,7 @@ struct FreefireESPHomeSection: View {
     @State private var wasPatching = false
     @State private var showPatchErrorSheet = false
     @State private var patchErrorMsg = ""
+    @State private var showAntiBanInfoSheet = false
 
     var body: some View {
         VStack(spacing: 12) {
@@ -31,6 +32,7 @@ struct FreefireESPHomeSection: View {
                 dnsButton
                 checkButton
                 antiBanCard
+                antiBanV2Card
             } else if tab == 1 {
                 innoSectionHeader(title: "ESP PROTOCOL", subtitle: "Tường nhìn xuyên & hiển thị đối thủ")
                     .padding(.horizontal, 4).padding(.top, 4)
@@ -444,6 +446,131 @@ struct FreefireESPHomeSection: View {
         }
     }
 
+    // MARK: - AntiBan Memory V2 Card
+
+    private var antiBanV2Card: some View {
+        let orange = Color(red: 1.00, green: 0.55, blue: 0.10)
+        return HStack(spacing: 12) {
+            ZStack {
+                Circle().fill(orange.opacity(0.15)).frame(width: 36, height: 36)
+                Image(systemName: "shield.slash")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(store.antiBanV2Enabled ? orange : orange.opacity(0.6))
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("ANTIBAN MEMORY V2")
+                    .font(.system(size: 13, weight: .heavy)).foregroundStyle(.white)
+                Text("Bảo vệ nâng cao liên tục")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color(white: 0.45))
+            }
+            Spacer()
+            Button {
+                if store.antiBanV2Enabled { store.disableAntiBanV2() } else { store.enableAntiBanV2() }
+            } label: {
+                Text(store.antiBanV2Enabled ? "Tắt Anti" : "Bật Anti")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14).padding(.vertical, 7)
+                    .background(store.antiBanV2Enabled
+                        ? Color(red: 0.88, green: 0.22, blue: 0.22)
+                        : Color(red: 0.10, green: 0.76, blue: 0.32))
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 13)
+        .background(AppTheme.techCardFill)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .strokeBorder(store.antiBanV2Enabled ? orange.opacity(0.45) : Color.white.opacity(0.07), lineWidth: 1.2))
+        .animation(.easeInOut(duration: 0.2), value: store.antiBanV2Enabled)
+    }
+
+    // MARK: - SpinBot 360° Card
+
+    private var spinBotCard: some View {
+        let cyan = Color(red: 0.10, green: 0.80, blue: 1.00)
+        let speeds = FreefireESPStore.spinBotSpeedLabels
+        return VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle().fill(cyan.opacity(0.15)).frame(width: 36, height: 36)
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(store.spinBotEnabled ? cyan : cyan.opacity(0.5))
+                        .rotationEffect(.degrees(store.spinBotEnabled ? 360 : 0))
+                        .animation(store.spinBotEnabled
+                            ? .linear(duration: 1.2).repeatForever(autoreverses: false)
+                            : .default,
+                            value: store.spinBotEnabled)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("SPIN BOT 360°")
+                        .font(.system(size: 13, weight: .heavy)).foregroundStyle(.white)
+                    Text(store.spinBotEnabled
+                        ? "Đang xoay · \(speeds[store.spinBotSpeedIndex])"
+                        : "Xoay nhân vật 360° liên tục")
+                        .font(.system(size: 11))
+                        .foregroundStyle(store.spinBotEnabled ? cyan.opacity(0.85) : Color(white: 0.45))
+                }
+                Spacer()
+                Button {
+                    store.spinBotEnabled.toggle()
+                    store.flushStatePublic()
+                } label: {
+                    Text(store.spinBotEnabled ? "Tắt Spin" : "Bật Spin")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14).padding(.vertical, 7)
+                        .background(store.spinBotEnabled
+                            ? Color(red: 0.88, green: 0.22, blue: 0.22)
+                            : Color(red: 0.08, green: 0.65, blue: 0.90))
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 13)
+
+            if store.spinBotEnabled {
+                Rectangle().fill(Color.white.opacity(0.06)).frame(height: 0.5).padding(.horizontal, 16)
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("Tốc độ xoay")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Color(white: 0.50))
+                        Spacer()
+                        Text(speeds[store.spinBotSpeedIndex])
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(cyan)
+                    }
+                    Slider(
+                        value: Binding(
+                            get: { Double(store.spinBotSpeedIndex) },
+                            set: { store.spinBotSpeedIndex = Int($0.rounded()); store.flushStatePublic() }
+                        ),
+                        in: 0...10,
+                        step: 1
+                    )
+                    .accentColor(cyan)
+                    HStack {
+                        Text("Nhẹ").font(.system(size: 10)).foregroundStyle(Color(white: 0.30))
+                        Spacer()
+                        Text("Tối đa").font(.system(size: 10)).foregroundStyle(Color(white: 0.30))
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color.black.opacity(0.18))
+            }
+        }
+        .background(AppTheme.techCardFill)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .strokeBorder(store.spinBotEnabled ? cyan.opacity(0.45) : Color.white.opacity(0.07), lineWidth: 1.2))
+        .animation(.easeInOut(duration: 0.2), value: store.spinBotEnabled)
+    }
+
     // MARK: - AntiBan Memory Card
 
     private var antiBanCard: some View {
@@ -481,6 +608,19 @@ struct FreefireESPHomeSection: View {
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
+                Button {
+                    showAntiBanInfoSheet = true
+                } label: {
+                    ZStack {
+                        Circle()
+                            .strokeBorder(Color.white.opacity(0.35), lineWidth: 1.5)
+                            .frame(width: 28, height: 28)
+                        Text("i")
+                            .font(.system(size: 13, weight: .semibold, design: .serif))
+                            .foregroundStyle(Color.white.opacity(0.7))
+                    }
+                }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, 16).padding(.vertical, 13)
 
@@ -507,6 +647,15 @@ struct FreefireESPHomeSection: View {
         .animation(.easeInOut(duration: 0.2), value: store.antiBanEnabled)
         .animation(.easeInOut(duration: 0.15), value: store.antiBanRunning)
         .animation(.easeInOut(duration: 0.15), value: store.antiBanLog.count)
+        .sheet(isPresented: $showAntiBanInfoSheet) {
+            if #available(iOS 16, *) {
+                AntiBanBackupSheet(store: store)
+                    .presentationDetents([.height(400), .large])
+                    .presentationDragIndicator(.visible)
+            } else {
+                AntiBanBackupSheet(store: store)
+            }
+        }
     }
 
     private var checkButton: some View {
@@ -545,6 +694,192 @@ struct FreefireESPHomeSection: View {
         .buttonStyle(.plain)
     }
 
+}
+
+// MARK: - AntiBan Backup Sheet
+
+private struct AntiBanBackupSheet: View {
+    @ObservedObject var store: FreefireESPStore
+    @State private var isRestoring = false
+    @State private var done = false
+    @State private var showGuide = false
+
+    private let purple = Color(red: 0.62, green: 0.32, blue: 1.00)
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    ZStack {
+                        Circle().fill(purple.opacity(0.18)).frame(width: 44, height: 44)
+                        Image(systemName: "checkmark.shield.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(purple)
+                    }
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Bảo vệ tài khoản")
+                            .font(.system(size: 16, weight: .heavy))
+                            .foregroundStyle(.white)
+                        Text("Tối ưu hóa an toàn cho phiên chơi")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color(white: 0.5))
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 24)
+                .padding(.bottom, 16)
+
+                Rectangle().fill(Color.white.opacity(0.07)).frame(height: 1).padding(.horizontal, 20)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Label("Chức năng này giúp tăng cường lớp bảo vệ tài khoản trong suốt phiên chơi game.", systemImage: "lock.shield")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color(white: 0.55))
+                    Label("Nhấn nút bên dưới để đồng bộ lại trạng thái bảo vệ về mặc định khi cần thiết.", systemImage: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color(white: 0.55))
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+
+                Spacer()
+
+                // Backup button
+                Button {
+                    guard !isRestoring else { return }
+                    isRestoring = true
+                    done = false
+                    Task { @MainActor in
+                        store.restoreAntiBanFiles()
+                        try? await Task.sleep(nanoseconds: 800_000_000)
+                        isRestoring = false
+                        done = true
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        if isRestoring {
+                            ProgressView().tint(.white).scaleEffect(0.85)
+                        } else {
+                            Image(systemName: done ? "checkmark.circle.fill" : "arrow.counterclockwise")
+                                .font(.system(size: 15, weight: .semibold))
+                        }
+                        Text(isRestoring ? "Đang xử lý..." : done ? "Đã hoàn tất!" : "Đồng bộ & Tối ưu bảo vệ")
+                            .font(.system(size: 14, weight: .bold))
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(done ? Color(red: 0.10, green: 0.72, blue: 0.35) : purple)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 20)
+                .disabled(isRestoring)
+
+                // Guide link
+                NavigationLink(destination: AntiBanGuideView()) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "book.pages")
+                            .font(.system(size: 13))
+                        Text("Xem hướng dẫn antiban v1")
+                            .font(.system(size: 13, weight: .semibold))
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(Color(white: 0.35))
+                    }
+                    .foregroundStyle(purple)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 14)
+                }
+                .padding(.bottom, 16)
+            }
+            .background(Color(red: 0.09, green: 0.09, blue: 0.12))
+            .navigationBarHidden(true)
+        }
+        .navigationViewStyle(.stack)
+    }
+}
+
+// MARK: - AntiBan Guide
+
+private struct AntiBanGuideView: View {
+    private let purple = Color(red: 0.62, green: 0.32, blue: 1.00)
+
+    private struct Step: Identifiable {
+        let id: Int
+        let icon: String
+        let title: String
+        let desc: String
+    }
+
+    private let steps: [Step] = [
+        Step(id: 1, icon: "bolt.fill",           title: "Kích hoạt tính năng",
+             desc: "Mở app, nhấn INJECT để kích hoạt. Sau đó mở Free Fire và vào sảnh chờ."),
+        Step(id: 2, icon: "shield.fill",          title: "Bật bảo vệ trong game",
+             desc: "Trong game sẽ có nút ANTIBAN ở góc màn hình. Nhấn vào để bật — hệ thống bảo vệ sẽ tự động kích hoạt và duy trì trong suốt phiên chơi."),
+        Step(id: 3, icon: "checkmark.seal.fill",  title: "Chơi bình thường",
+             desc: "Sau khi bật, chơi game như thường. App chạy nền để duy trì kết nối và bảo vệ tài khoản liên tục."),
+        Step(id: 4, icon: "arrow.triangle.2.circlepath", title: "Đồng bộ lại khi cần",
+             desc: "Khi cần đặt lại trạng thái bảo vệ (ví dụ trước khi cập nhật game), nhấn nút Đồng bộ & Tối ưu bảo vệ ở màn hình trước, hoặc tắt từ nút trong game."),
+        Step(id: 5, icon: "exclamationmark.triangle.fill", title: "Lưu ý quan trọng",
+             desc: "Không tắt app trong khi đang chơi — app cần chạy nền để duy trì kết nối bảo vệ. Nếu app bị tắt, tính năng sẽ ngừng hoạt động cho đến khi inject lại."),
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Hướng dẫn sử dụng\nAntiban Memory v1")
+                    .font(.system(size: 22, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                    .padding(.bottom, 20)
+
+                ForEach(steps) { step in
+                    HStack(alignment: .top, spacing: 14) {
+                        ZStack {
+                            Circle().fill(purple.opacity(0.18)).frame(width: 38, height: 38)
+                            Image(systemName: step.icon)
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(purple)
+                        }
+                        VStack(alignment: .leading, spacing: 5) {
+                            HStack(spacing: 6) {
+                                Text("Bước \(step.id)")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(purple.opacity(0.8))
+                                    .padding(.horizontal, 7).padding(.vertical, 2)
+                                    .background(purple.opacity(0.12))
+                                    .clipShape(Capsule())
+                                Text(step.title)
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundStyle(.white)
+                            }
+                            Text(step.desc)
+                                .font(.system(size: 12))
+                                .foregroundStyle(Color(white: 0.6))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 14)
+
+                    if step.id < steps.count {
+                        Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1).padding(.horizontal, 20)
+                    }
+                }
+
+                Spacer(minLength: 32)
+            }
+        }
+        .background(Color(red: 0.09, green: 0.09, blue: 0.12))
+        .navigationTitle("Hướng dẫn")
+        .navigationBarTitleDisplayMode(.inline)
+    }
 }
 
 // MARK: - AntiBan Log Row
