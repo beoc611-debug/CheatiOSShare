@@ -288,8 +288,7 @@ final class FreefireESPStore: ObservableObject {
 
     // SPINBOT — byte 9 bits 3-7 of pdata
     @Published var spinBotEnabled: Bool = false
-    @Published var spinBotSpeedIndex: Int = 1  // 0-10: 180/360/540/720/900/1080/1440/1800/2400/3000/3600 °/s
-    static let spinBotSpeedLabels: [String] = ["180°/s", "360°/s", "540°/s", "720°/s", "900°/s", "1080°/s", "1440°/s", "1800°/s", "2400°/s", "3000°/s", "3600°/s"]
+    @Published var spinBotSpeedIndex: Int = 25  // 0-300; speed °/s = value * 12
 
     // MARK: - Status
     @Published var selectedVariant: FFVariant = .freefire
@@ -508,7 +507,7 @@ final class FreefireESPStore: ObservableObject {
         case "ghostScale":    setGhostScale(Int32(value))
         case "aimMode":       setAimMode(Int32(value))
         case "headRate":      setHeadRate(Int32(value) + 1)  // segment 0-indexed → stored 1-4
-        case "spinBotSpeedIndex": spinBotSpeedIndex = max(0, min(10, Int(value))); flushStatePublic()
+        case "spinBotSpeedIndex": spinBotSpeedIndex = max(0, min(300, Int(value))); flushStatePublic()
         default:              break
         }
     }
@@ -769,8 +768,10 @@ final class FreefireESPStore: ObservableObject {
         if noFog       { r8 |= bitR8NoFog }
         if fastCrouch  { r8 |= bitR8FastCrouch }
         let spBit: UInt8 = spinBotEnabled ? (1 << 3) : 0
-        let spIdx: UInt8 = UInt8(min(15, spinBotSpeedIndex) & 0xF)
-        data[8] = r8; data[9] = UInt8(gsi & 7) | spBit | (spIdx << 4); data[10] = 0
+        let spSpeed: Int = min(300, max(0, spinBotSpeedIndex))
+        let spHiNib: UInt8 = UInt8((spSpeed >> 8) & 0xF)
+        let spLoByte: UInt8 = UInt8(spSpeed & 0xFF)
+        data[8] = r8; data[9] = UInt8(gsi & 7) | spBit | (spHiNib << 4); data[10] = spLoByte
         // bytes 11-13: thickness (0-97)
         data[11] = UInt8(min(97, max(0, lineThicknessRaw)))
         data[12] = UInt8(min(97, max(0, boxThicknessRaw)))
