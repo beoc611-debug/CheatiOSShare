@@ -468,30 +468,19 @@ struct FreefireESPHomeSection: View {
                         .foregroundStyle(Color(white: 0.45))
                 }
                 Spacer()
-                HStack(spacing: 6) {
-                    Button {
-                        store.showInGameBtn()
-                    } label: {
-                        Text("Hiện nút")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(store.antiBanBtnVisible ? .black : Color(white: 0.55))
-                            .padding(.horizontal, 11).padding(.vertical, 6)
-                            .background(store.antiBanBtnVisible ? purple : Color(white: 0.18))
-                            .clipShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
-                    Button {
-                        store.hideInGameBtn()
-                    } label: {
-                        Text("Ẩn nút")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(!store.antiBanBtnVisible ? .black : Color(white: 0.55))
-                            .padding(.horizontal, 11).padding(.vertical, 6)
-                            .background(!store.antiBanBtnVisible ? Color(red: 0.9, green: 0.25, blue: 0.25) : Color(white: 0.18))
-                            .clipShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
+                Button {
+                    if store.antiBanBtnVisible { store.hideInGameBtn() } else { store.showInGameBtn() }
+                } label: {
+                    Text(store.antiBanBtnVisible ? "Ẩn nút" : "Hiện nút")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14).padding(.vertical, 7)
+                        .background(store.antiBanBtnVisible
+                            ? Color(red: 0.88, green: 0.22, blue: 0.22)
+                            : Color(red: 0.10, green: 0.76, blue: 0.32))
+                        .clipShape(Capsule())
                 }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, 16).padding(.vertical, 13)
 

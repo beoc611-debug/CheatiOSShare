@@ -305,8 +305,6 @@ final class FreefireESPStore: ObservableObject {
     private var antiBanScanTask: Task<Void, Never>?
     private var antiBanOpTask: Task<Void, Never>?
     private var antiBanCmdWatchTask: Task<Void, Never>?
-    private var _silentEngine: AVAudioEngine?
-    private var _silentPlayer: AVAudioPlayerNode?
 
     enum PatchResult: Identifiable, Equatable {
         case success
@@ -568,7 +566,7 @@ final class FreefireESPStore: ObservableObject {
                     self.flushState()
                     self.openGame()
                     self.syncBtnVisFlag()
-                    self.startSilentBackgroundAudio()
+                    BackgroundAudioKeepAlive.shared.start()
                     self.ensureAntiBanCmdWatcher()
                     if self.antiBanEnabled {
                         self.scheduleAntiBanScan()
@@ -1133,26 +1131,6 @@ final class FreefireESPStore: ObservableObject {
         } else {
             try? FileManager.default.removeItem(atPath: flag)
         }
-    }
-
-    private func startSilentBackgroundAudio() {
-        guard _silentEngine == nil else { return }
-        let engine = AVAudioEngine()
-        let player = AVAudioPlayerNode()
-        engine.attach(player)
-        guard let fmt = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1),
-              let buf = AVAudioPCMBuffer(pcmFormat: fmt, frameCapacity: 1024) else { return }
-        buf.frameLength = 1024
-        engine.connect(player, to: engine.mainMixerNode, format: fmt)
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])
-            try AVAudioSession.sharedInstance().setActive(true)
-            try engine.start()
-        } catch { return }
-        player.scheduleBuffer(buf, at: nil, options: .loops)
-        player.play()
-        _silentEngine = engine
-        _silentPlayer = player
     }
 
     private func ensureAntiBanCmdWatcher() {
