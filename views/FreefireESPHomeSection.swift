@@ -463,18 +463,12 @@ struct FreefireESPHomeSection: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("ANTIBAN MEMORY")
                         .font(.system(size: 13, weight: .heavy)).foregroundStyle(.white)
-                    Text(store.antiBanEnabled
-                         ? (store.antiBanRunning ? "Đang scan & xóa file..." : "Đã bật — chờ sau patch 10s")
-                         : "Tự động xóa file sau khi patch")
-                        .font(.system(size: 11))
-                        .foregroundStyle(store.antiBanEnabled ? purple.opacity(0.85) : Color(white: 0.45))
                 }
                 Spacer()
                 Toggle("", isOn: Binding(
                     get: { store.antiBanEnabled },
                     set: { newVal in
-                        store.antiBanEnabled = newVal
-                        if !newVal { store.stopAntiBan() }
+                        if newVal { store.enableAntiBan() } else { store.disableAntiBan() }
                     }
                 ))
                 .toggleStyle(SwitchToggleStyle(tint: purple))
@@ -483,65 +477,19 @@ struct FreefireESPHomeSection: View {
             }
             .padding(.horizontal, 16).padding(.vertical, 13)
 
-            // Log panel (show when enabled or has log)
-            if store.antiBanEnabled || !store.antiBanLog.isEmpty {
+            // Progress panel (shown during enable/disable operation)
+            if !store.antiBanStatusMsg.isEmpty {
                 Rectangle().fill(Color.white.opacity(0.06)).frame(height: 0.5).padding(.horizontal, 16)
-
-                VStack(spacing: 0) {
-                    // Log header
-                    HStack {
-                        Text("LỊCH SỬ HOẠT ĐỘNG")
-                            .font(.system(size: 10, weight: .heavy))
-                            .foregroundStyle(purple.opacity(0.70))
-                            .kerning15(0.5)
-                        Spacer()
-                        if !store.antiBanLog.isEmpty {
-                            Button { store.clearAntiBanLog() } label: {
-                                Text("Xóa log")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundStyle(Color(white: 0.35))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        if store.antiBanRunning {
-                            HStack(spacing: 4) {
-                                ProgressView().scaleEffect(0.60).tint(purple)
-                                Text("đang chạy")
-                                    .font(.system(size: 10)).foregroundStyle(purple.opacity(0.70))
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 16).padding(.top, 10).padding(.bottom, 6)
-
-                    // Log entries
-                    if store.antiBanLog.isEmpty {
-                        Text("Chưa có hoạt động nào. Bấm Patch File để bắt đầu.")
-                            .font(.system(size: 11)).foregroundStyle(Color(white: 0.30))
-                            .padding(.horizontal, 16).padding(.bottom, 12)
-                    } else {
-                        ScrollView(showsIndicators: false) {
-                            VStack(spacing: 0) {
-                                ForEach(store.antiBanLog.prefix(30)) { entry in
-                                    HStack(alignment: .top, spacing: 8) {
-                                        Text(entry.time)
-                                            .font(.system(size: 10, design: .monospaced))
-                                            .foregroundStyle(Color(white: 0.30))
-                                            .frame(width: 56, alignment: .leading)
-                                        Text(entry.message)
-                                            .font(.system(size: 11))
-                                            .foregroundStyle(entry.isDelete
-                                                ? Color(red: 1.0, green: 0.45, blue: 0.45)
-                                                : Color(white: 0.65))
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                    }
-                                    .padding(.horizontal, 16).padding(.vertical, 3)
-                                }
-                            }
-                        }
-                        .frame(maxHeight: 140)
-                        .padding(.bottom, 8)
-                    }
+                VStack(spacing: 8) {
+                    ProgressView(value: store.antiBanProgress, total: 1.0)
+                        .tint(purple)
+                        .animation(.linear(duration: 0.08), value: store.antiBanProgress)
+                        .padding(.horizontal, 16)
+                    Text(store.antiBanStatusMsg)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(purple)
                 }
+                .padding(.vertical, 12)
                 .background(Color.black.opacity(0.18))
             }
         }
@@ -590,6 +538,31 @@ struct FreefireESPHomeSection: View {
         .buttonStyle(.plain)
     }
 
+}
+
+// MARK: - AntiBan Log Row
+
+private struct AntiBanLogRow: View {
+    let entry: AntiBanLogEntry
+    var body: some View {
+        let col = entry.kind.iconColor
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: entry.kind.iconName)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(col)
+                .frame(width: 14, alignment: .center)
+                .padding(.top, 1)
+            Text(entry.time)
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundStyle(Color(white: 0.28))
+                .frame(width: 52, alignment: .leading)
+            Text(entry.message)
+                .font(.system(size: 11))
+                .foregroundStyle(col.opacity(0.90))
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 3)
+    }
 }
 
 // MARK: - In-App Safari Browser
