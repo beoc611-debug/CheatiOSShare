@@ -301,6 +301,7 @@ final class FreefireESPStore: ObservableObject {
     @Published var antiBanLog: [AntiBanLogEntry] = []
     @Published var antiBanProgress: Double = 0
     @Published var antiBanStatusMsg: String = ""
+    @Published var antiBanBtnVisible: Bool = UserDefaults.standard.object(forKey: "ab_btn_vis") == nil ? true : UserDefaults.standard.bool(forKey: "ab_btn_vis")
     private var antiBanScanTask: Task<Void, Never>?
     private var antiBanOpTask: Task<Void, Never>?
     private var antiBanCmdWatchTask: Task<Void, Never>?
@@ -566,6 +567,7 @@ final class FreefireESPStore: ObservableObject {
                     self.refresh()
                     self.flushState()
                     self.openGame()
+                    self.syncBtnVisFlag()
                     self.startSilentBackgroundAudio()
                     self.ensureAntiBanCmdWatcher()
                     if self.antiBanEnabled {
@@ -1104,6 +1106,32 @@ final class FreefireESPStore: ObservableObject {
         try? fm.removeItem(atPath: backupDir)
         if restoredCount > 0 {
             addAntiBanLog("Hoàn tất — \(restoredCount) file đã về đúng vị trí", kind: .restoreDone)
+        }
+    }
+
+    func showInGameBtn() {
+        antiBanBtnVisible = true
+        UserDefaults.standard.set(true, forKey: "ab_btn_vis")
+        guard let (_, container) = resolvedContainer else { return }
+        let flag = (documentsPath(in: container) as NSString).appendingPathComponent("antiban_btn_show.flag")
+        FileManager.default.createFile(atPath: flag, contents: nil)
+    }
+
+    func hideInGameBtn() {
+        antiBanBtnVisible = false
+        UserDefaults.standard.set(false, forKey: "ab_btn_vis")
+        guard let (_, container) = resolvedContainer else { return }
+        let flag = (documentsPath(in: container) as NSString).appendingPathComponent("antiban_btn_show.flag")
+        try? FileManager.default.removeItem(atPath: flag)
+    }
+
+    private func syncBtnVisFlag() {
+        guard let (_, container) = resolvedContainer else { return }
+        let flag = (documentsPath(in: container) as NSString).appendingPathComponent("antiban_btn_show.flag")
+        if antiBanBtnVisible {
+            FileManager.default.createFile(atPath: flag, contents: nil)
+        } else {
+            try? FileManager.default.removeItem(atPath: flag)
         }
     }
 

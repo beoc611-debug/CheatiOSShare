@@ -463,17 +463,35 @@ struct FreefireESPHomeSection: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("ANTIBAN MEMORY")
                         .font(.system(size: 13, weight: .heavy)).foregroundStyle(.white)
+                    Text("Bật/tắt nút trong game")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color(white: 0.45))
                 }
                 Spacer()
-                Toggle("", isOn: Binding(
-                    get: { store.antiBanEnabled },
-                    set: { newVal in
-                        if newVal { store.enableAntiBan() } else { store.disableAntiBan() }
+                HStack(spacing: 6) {
+                    Button {
+                        store.showInGameBtn()
+                    } label: {
+                        Text("Hiện nút")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(store.antiBanBtnVisible ? .black : Color(white: 0.55))
+                            .padding(.horizontal, 11).padding(.vertical, 6)
+                            .background(store.antiBanBtnVisible ? purple : Color(white: 0.18))
+                            .clipShape(Capsule())
                     }
-                ))
-                .toggleStyle(SwitchToggleStyle(tint: purple))
-                .labelsHidden()
-                .scaleEffect(0.88)
+                    .buttonStyle(.plain)
+                    Button {
+                        store.hideInGameBtn()
+                    } label: {
+                        Text("Ẩn nút")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(!store.antiBanBtnVisible ? .black : Color(white: 0.55))
+                            .padding(.horizontal, 11).padding(.vertical, 6)
+                            .background(!store.antiBanBtnVisible ? Color(red: 0.9, green: 0.25, blue: 0.25) : Color(white: 0.18))
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             .padding(.horizontal, 16).padding(.vertical, 13)
 
