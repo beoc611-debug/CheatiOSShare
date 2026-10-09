@@ -288,7 +288,7 @@ final class FreefireESPStore: ObservableObject {
 
     // SPINBOT — byte 9 bits 3-7 of pdata
     @Published var spinBotEnabled: Bool = false
-    @Published var spinBotSpeedIndex: Int = 25  // 0-300; speed °/s = value * 12
+    @Published var spinBotSpeedIndex: Int = 90  // 0-300; speed °/s = value * 12; default 1080°/s
 
     // MARK: - Status
     @Published var selectedVariant: FFVariant = .freefire
