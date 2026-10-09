@@ -491,7 +491,6 @@ struct FreefireESPHomeSection: View {
 
     private var spinBotCard: some View {
         let cyan = Color(red: 0.10, green: 0.80, blue: 1.00)
-        let speeds = FreefireESPStore.spinBotSpeedLabels
         return VStack(spacing: 0) {
             HStack(spacing: 12) {
                 ZStack {
@@ -509,7 +508,7 @@ struct FreefireESPHomeSection: View {
                     Text("SPIN BOT 360°")
                         .font(.system(size: 13, weight: .heavy)).foregroundStyle(.white)
                     Text(store.spinBotEnabled
-                        ? "Đang xoay · \(speeds[store.spinBotSpeedIndex])"
+                        ? "Đang xoay · \(store.spinBotSpeedIndex * 12)°/s"
                         : "Xoay nhân vật 360° liên tục")
                         .font(.system(size: 11))
                         .foregroundStyle(store.spinBotEnabled ? cyan.opacity(0.85) : Color(white: 0.45))
@@ -536,11 +535,11 @@ struct FreefireESPHomeSection: View {
                 Rectangle().fill(Color.white.opacity(0.06)).frame(height: 0.5).padding(.horizontal, 16)
                 VStack(spacing: 8) {
                     HStack {
-                        Text("Tốc độ xoay")
+                        Text("Tốc độ xoay spin")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(Color(white: 0.50))
                         Spacer()
-                        Text(speeds[store.spinBotSpeedIndex])
+                        Text("\(store.spinBotSpeedIndex * 12)°/s")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(cyan)
                     }
@@ -549,7 +548,7 @@ struct FreefireESPHomeSection: View {
                             get: { Double(store.spinBotSpeedIndex) },
                             set: { store.spinBotSpeedIndex = Int($0.rounded()); store.flushStatePublic() }
                         ),
-                        in: 0...10,
+                        in: 0...300,
                         step: 1
                     )
                     .accentColor(cyan)
