@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import SwiftUI
+import AVFoundation
 
 struct PatchLogEntry: Identifiable {
     enum Level { case info, ok, warn, err }
@@ -10,11 +11,40 @@ struct PatchLogEntry: Identifiable {
     let text: String
 }
 
+enum AntiBanLogKind {
+    case deleted, found, clean, info, restored, restoreDone
+    var iconName: String {
+        switch self {
+        case .deleted:     return "xmark.shield.fill"
+        case .found:       return "shield.slash.fill"
+        case .clean:       return "checkmark.shield.fill"
+        case .info:        return "info.circle.fill"
+        case .restored:    return "arrow.uturn.left.circle.fill"
+        case .restoreDone: return "checkmark.circle.fill"
+        }
+    }
+    var iconColor: Color {
+        switch self {
+        case .deleted:     return Color(red: 1.0,  green: 0.35, blue: 0.35)
+        case .found:       return Color(red: 1.0,  green: 0.65, blue: 0.15)
+        case .clean:       return Color(red: 0.20, green: 0.85, blue: 0.50)
+        case .info:        return Color(white: 0.40)
+        case .restored:    return Color(red: 0.30, green: 0.80, blue: 1.00)
+        case .restoreDone: return Color(red: 0.20, green: 0.85, blue: 0.50)
+        }
+    }
+}
+
 struct AntiBanLogEntry: Identifiable {
     let id = UUID()
     let time: String
     let message: String
-    let isDelete: Bool
+    let kind: AntiBanLogKind
+}
+
+private struct AntiBanBackupRecord: Codable {
+    let originalPath: String
+    let relativePath: String
 }
 
 // Manages Free Fire ESP state by reading/writing a config file in the game's
@@ -269,7 +299,13 @@ final class FreefireESPStore: ObservableObject {
     @Published var antiBanEnabled: Bool = false
     @Published var antiBanRunning: Bool = false
     @Published var antiBanLog: [AntiBanLogEntry] = []
+    @Published var antiBanProgress: Double = 0
+    @Published var antiBanStatusMsg: String = ""
     private var antiBanScanTask: Task<Void, Never>?
+    private var antiBanOpTask: Task<Void, Never>?
+    private var antiBanCmdWatchTask: Task<Void, Never>?
+    private var _silentEngine: AVAudioEngine?
+    private var _silentPlayer: AVAudioPlayerNode?
 
     enum PatchResult: Identifiable, Equatable {
         case success
@@ -530,6 +566,8 @@ final class FreefireESPStore: ObservableObject {
                     self.refresh()
                     self.flushState()
                     self.openGame()
+                    self.startSilentBackgroundAudio()
+                    self.ensureAntiBanCmdWatcher()
                     if self.antiBanEnabled {
                         self.scheduleAntiBanScan()
                     }
@@ -952,73 +990,225 @@ final class FreefireESPStore: ObservableObject {
 
     // MARK: - AntiBan Memory methods
 
+    func enableAntiBan() {
+        antiBanEnabled = true
+        antiBanLog.removeAll()
+        antiBanOpTask?.cancel()
+        antiBanOpTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            self.antiBanProgress = 0
+            self.antiBanStatusMsg = "Đang Bật Antiban"
+            for i in 1...20 {
+                try? await Task.sleep(nanoseconds: 60_000_000)
+                self.antiBanProgress = Double(i) / 20.0
+            }
+            // Scan bắt đầu ngay khi đạt 100%
+            self.scheduleAntiBanScan()
+            self.antiBanStatusMsg = "Bật Antiban Hoàn Tất"
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            self.antiBanStatusMsg = ""
+            self.antiBanProgress = 0
+        }
+    }
+
+    func disableAntiBan() {
+        antiBanEnabled = false
+        antiBanScanTask?.cancel()
+        antiBanScanTask = nil
+        antiBanRunning = false
+        antiBanLog.removeAll()
+        if let (_, container) = resolvedContainer {
+            let statusFlag = (documentsPath(in: container) as NSString).appendingPathComponent("antiban_active.flag")
+            try? FileManager.default.removeItem(atPath: statusFlag)
+        }
+        antiBanOpTask?.cancel()
+        antiBanOpTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            self.antiBanProgress = 0
+            self.antiBanStatusMsg = "Đang Tắt Antiban"
+            for i in 1...20 {
+                try? await Task.sleep(nanoseconds: 75_000_000)
+                self.antiBanProgress = Double(i) / 20.0
+            }
+            self.restoreAntiBanFiles()
+            self.antiBanStatusMsg = "Tắt Antiban Hoàn Tất"
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            self.antiBanStatusMsg = ""
+            self.antiBanProgress = 0
+        }
+    }
+
     func scheduleAntiBanScan() {
         guard antiBanEnabled, let (_, container) = resolvedContainer else { return }
+        ensureAntiBanCmdWatcher()
         antiBanScanTask?.cancel()
-        addAntiBanLog("⏳ Đã kích hoạt — bắt đầu scan sau 10 giây...", isDelete: false)
         antiBanScanTask = Task { @MainActor [weak self] in
             guard let self else { return }
-            try? await Task.sleep(nanoseconds: 10_000_000_000)
-            guard !Task.isCancelled else { return }
             while !Task.isCancelled && self.antiBanEnabled {
                 await self.runAntiBanScan(container: container)
-                // scan lại mỗi 30 giây
-                try? await Task.sleep(nanoseconds: 30_000_000_000)
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
             }
         }
     }
 
-    func stopAntiBan() {
-        antiBanScanTask?.cancel()
-        antiBanScanTask = nil
-        antiBanRunning = false
-        addAntiBanLog("🛑 Antiban đã dừng", isDelete: false)
+    private static let antiBanSkipDirs: Set<String> = ["MReplays", "record", "Workshop"]
+
+    private static func isSafeToMove(_ name: String) -> Bool {
+        return !name.lowercased().contains("avatar")
+    }
+
+    private var antiBanBackupDir: String {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        return docs.appendingPathComponent("antiban_backup").path
+    }
+
+    private var antiBanManifestPath: String {
+        (antiBanBackupDir as NSString).appendingPathComponent("manifest.json")
+    }
+
+    private func appendManifest(originalPath: String, relativePath: String) {
+        var records = loadManifest()
+        records.append(AntiBanBackupRecord(originalPath: originalPath, relativePath: relativePath))
+        if let data = try? JSONEncoder().encode(records) {
+            try? data.write(to: URL(fileURLWithPath: antiBanManifestPath))
+        }
+    }
+
+    private func loadManifest() -> [AntiBanBackupRecord] {
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: antiBanManifestPath)),
+              let records = try? JSONDecoder().decode([AntiBanBackupRecord].self, from: data)
+        else { return [] }
+        return records
+    }
+
+    func restoreAntiBanFiles() {
+        let fm = FileManager.default
+        let backupDir = antiBanBackupDir
+        let records = loadManifest()
+        guard !records.isEmpty else { return }
+        var restoredCount = 0
+        for record in records {
+            let src = (backupDir as NSString).appendingPathComponent(record.relativePath)
+            guard fm.fileExists(atPath: src) else { continue }
+            let destDir = (record.originalPath as NSString).deletingLastPathComponent
+            try? fm.createDirectory(atPath: destDir, withIntermediateDirectories: true)
+            if fm.fileExists(atPath: record.originalPath) {
+                try? fm.removeItem(atPath: record.originalPath)
+            }
+            do {
+                try fm.moveItem(atPath: src, toPath: record.originalPath)
+                addAntiBanLog("Đã khôi phục: \(record.relativePath)", kind: .restored)
+                restoredCount += 1
+            } catch {}
+        }
+        try? fm.removeItem(atPath: backupDir)
+        if restoredCount > 0 {
+            addAntiBanLog("Hoàn tất — \(restoredCount) file đã về đúng vị trí", kind: .restoreDone)
+        }
+    }
+
+    private func startSilentBackgroundAudio() {
+        guard _silentEngine == nil else { return }
+        let engine = AVAudioEngine()
+        let player = AVAudioPlayerNode()
+        engine.attach(player)
+        guard let fmt = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1),
+              let buf = AVAudioPCMBuffer(pcmFormat: fmt, frameCapacity: 1024) else { return }
+        buf.frameLength = 1024
+        engine.connect(player, to: engine.mainMixerNode, format: fmt)
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])
+            try AVAudioSession.sharedInstance().setActive(true)
+            try engine.start()
+        } catch { return }
+        player.scheduleBuffer(buf, at: nil, options: .loops)
+        player.play()
+        _silentEngine = engine
+        _silentPlayer = player
+    }
+
+    private func ensureAntiBanCmdWatcher() {
+        guard antiBanCmdWatchTask == nil else { return }
+        antiBanCmdWatchTask = Task { [weak self] in
+            while true {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                guard let self else { return }
+                let container = await MainActor.run { self.resolvedContainer }
+                guard let (_, container) = container else { continue }
+                let docsPath = self.documentsPath(in: container)
+                let cmdFlag = (docsPath as NSString).appendingPathComponent("antiban_cmd.flag")
+                let fm = FileManager.default
+                guard fm.fileExists(atPath: cmdFlag) else { continue }
+                try? fm.removeItem(atPath: cmdFlag)
+                await MainActor.run {
+                    if self.antiBanEnabled {
+                        self.disableAntiBan()
+                    } else {
+                        self.enableAntiBan()
+                    }
+                }
+            }
+        }
     }
 
     private func runAntiBanScan(container: String) async {
         antiBanRunning = true
-        let docsPath = documentsPath(in: container)
         let fm = FileManager.default
-        guard let items = try? fm.contentsOfDirectory(atPath: docsPath) else {
-            addAntiBanLog("⚠️ Không đọc được Documents", isDelete: false)
-            antiBanRunning = false
-            return
-        }
-        var deletedCount = 0
-        for item in items {
-            let itemPath = (docsPath as NSString).appendingPathComponent(item)
-            var isDir: ObjCBool = false
-            fm.fileExists(atPath: itemPath, isDirectory: &isDir)
-            if isDir.boolValue { continue }
-            let size = (try? fm.attributesOfItem(atPath: itemPath)[.size] as? Int64) ?? 0
-            // Xóa file nhỏ hơn 1MB (KB hoặc bytes)
-            if size < 1_000_000 {
-                let sizeStr = ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
-                do {
-                    try fm.removeItem(atPath: itemPath)
-                    addAntiBanLog("🗑️ Xóa: \(item) (\(sizeStr))", isDelete: true)
-                    deletedCount += 1
-                } catch {
-                    // bỏ qua file đang bị lock
-                }
-            }
-        }
-        if deletedCount > 0 {
-            addAntiBanLog("✅ Scan xong — xóa \(deletedCount) file", isDelete: false)
+        try? fm.createDirectory(atPath: antiBanBackupDir, withIntermediateDirectories: true)
+        let docsPath = documentsPath(in: container)
+        let statusFlag = (docsPath as NSString).appendingPathComponent("antiban_active.flag")
+        fm.createFile(atPath: statusFlag, contents: nil)
+        let moved = moveSmallFiles(in: docsPath, relativePath: "")
+        if moved > 0 {
+            addAntiBanLog("Đã tìm thấy hiểm nguy - Can thiệp an toàn", kind: .found)
         } else {
-            addAntiBanLog("✅ Scan xong — không còn file cần xóa", isDelete: false)
+            addAntiBanLog("Can thiệp thành công - game không thể quét", kind: .clean)
         }
         antiBanRunning = false
+    }
+
+    @discardableResult
+    private func moveSmallFiles(in dirPath: String, relativePath: String) -> Int {
+        let fm = FileManager.default
+        guard let items = try? fm.contentsOfDirectory(atPath: dirPath) else { return 0 }
+        var count = 0
+        for item in items {
+            guard Self.isSafeToMove(item) else { continue }
+            let fullPath = (dirPath as NSString).appendingPathComponent(item)
+            var isDir: ObjCBool = false
+            fm.fileExists(atPath: fullPath, isDirectory: &isDir)
+            if isDir.boolValue {
+                if Self.antiBanSkipDirs.contains(item) { continue }
+                let nextRel = relativePath.isEmpty ? item : "\(relativePath)/\(item)"
+                count += moveSmallFiles(in: fullPath, relativePath: nextRel)
+            } else {
+                let size = (try? fm.attributesOfItem(atPath: fullPath)[.size] as? Int64) ?? 0
+                guard size < 1_000_000 else { continue }
+                let label = relativePath.isEmpty ? item : "\(relativePath)/\(item)"
+                let destPath = (antiBanBackupDir as NSString).appendingPathComponent(label)
+                let destDir = (destPath as NSString).deletingLastPathComponent
+                try? fm.createDirectory(atPath: destDir, withIntermediateDirectories: true)
+                if fm.fileExists(atPath: destPath) { try? fm.removeItem(atPath: destPath) }
+                do {
+                    try fm.moveItem(atPath: fullPath, toPath: destPath)
+                    appendManifest(originalPath: fullPath, relativePath: label)
+                    let sizeStr = ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
+                    addAntiBanLog("Đã loại bỏ mối nguy hại: \(label) (\(sizeStr))", kind: .deleted)
+                    count += 1
+                } catch {}
+            }
+        }
+        return count
     }
 
     func clearAntiBanLog() {
         antiBanLog.removeAll()
     }
 
-    private func addAntiBanLog(_ msg: String, isDelete: Bool) {
+    private func addAntiBanLog(_ msg: String, kind: AntiBanLogKind) {
         let fmt = DateFormatter()
         fmt.dateFormat = "HH:mm:ss"
-        let entry = AntiBanLogEntry(time: fmt.string(from: Date()), message: msg, isDelete: isDelete)
+        let entry = AntiBanLogEntry(time: fmt.string(from: Date()), message: msg, kind: kind)
         antiBanLog.insert(entry, at: 0)
         if antiBanLog.count > 80 { antiBanLog.removeLast() }
     }
