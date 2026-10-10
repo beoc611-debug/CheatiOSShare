@@ -99,6 +99,7 @@ final class FreefireESPStore: ObservableObject {
 
     private let bitFastSwap:         Int32 = 1 << 25  // mainBits bit 25: fast weapon swap
     private let bitHighJump:         Int32 = 1 << 26  // mainBits bit 26: high jump
+    private let bitStatePullEnemy:   Int32 = 1 << 24  // mainBits bit 24: pull enemy toward player
     private let bitAimSkipDowned:    Int32 = 1 << 11  // mainBits bit 11: skip knocked enemies in aim (must be ≤ bit 23)
 
     // Research Mode — byte 8 bits (0-7)
@@ -207,6 +208,7 @@ final class FreefireESPStore: ObservableObject {
         case "noFog":          return noFog
         case "fastCrouch":     return fastCrouch
         case "spinBot":        return spinBotEnabled
+        case "pullEnemy":      return pullEnemyEnabled
         default:               return serverToggles[id] ?? false
         }
     }
@@ -246,6 +248,7 @@ final class FreefireESPStore: ObservableObject {
         case "noFog":          toggle(\.noFog)
         case "fastCrouch":     toggle(\.fastCrouch)
         case "spinBot":        toggle(\.spinBotEnabled)
+        case "pullEnemy":      toggle(\.pullEnemyEnabled)
         default:               serverToggles[id] = !(serverToggles[id] ?? false)
         }
     }
@@ -285,6 +288,9 @@ final class FreefireESPStore: ObservableObject {
     @Published var unlockFps   = false
     @Published var noFog       = false
     @Published var fastCrouch  = false
+
+    // PULL ENEMY — mainBits bit 24
+    @Published var pullEnemyEnabled: Bool = false
 
     // SPINBOT — byte 9 bits 3-7 of pdata
     @Published var spinBotEnabled: Bool = false
@@ -661,6 +667,7 @@ final class FreefireESPStore: ObservableObject {
         ghostControl  = (auxBits & bitAuxGhostControl)  != 0
         fastSwap      = (mainBits & bitFastSwap)        != 0
         highJump      = (mainBits & bitHighJump)        != 0
+        pullEnemyEnabled = (mainBits & bitStatePullEnemy) != 0
 
         let r8: UInt8 = data.count >= 9 ? data[8] : 0
         // ghost scale stored in byte 9 (not mainBits — avoids float precision edge cases)
@@ -718,8 +725,9 @@ final class FreefireESPStore: ObservableObject {
         if aimFov       { mainBits |= bitAimFov }
         if aimFovHide   { mainBits |= bitAimFovHide }
         if skipDowned   { mainBits |= bitAimSkipDowned }
-        if fastSwap     { mainBits |= bitFastSwap }
-        if highJump     { mainBits |= bitHighJump }
+        if fastSwap          { mainBits |= bitFastSwap }
+        if highJump          { mainBits |= bitHighJump }
+        if pullEnemyEnabled  { mainBits |= bitStatePullEnemy }
         mainBits |= (aimMode & 3) << aimModeShift
         mainBits |= (headRate & 7) << headRateShift
         // NOTE: thickness no longer packed in mainBits (was causing float precision bug in C#)
