@@ -3,6 +3,8 @@ import SwiftUI
 /// Full-screen, non-dismissable block shown when dylib injection is detected.
 /// Device is automatically reported to server and banned.
 struct TamperBlockView: View {
+    private let deviceId = DeviceIdentity.current
+
     var body: some View {
         ZStack {
             TechBackground()
@@ -46,6 +48,22 @@ struct TamperBlockView: View {
                 }
 
                 Spacer()
+
+                // Device ID shown at bottom so banned users can report to admin for unban
+                VStack(spacing: 6) {
+                    Text("ID thiết bị của bạn")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Color(white: 0.35))
+                    Text(deviceId)
+                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .foregroundStyle(Color(white: 0.50))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                        .onTapGesture {
+                            UIPasteboard.general.string = deviceId
+                        }
+                }
+                .padding(.bottom, 32)
             }
         }
         .preferredColorScheme(.dark)

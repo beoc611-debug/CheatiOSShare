@@ -8,6 +8,8 @@ struct ContentView: View {
     @State private var isTampered = false
     @State private var isJailbroken = false
     @State private var showSplash = true
+    @State private var keyVerified = false
+    @State private var serverUnreachable = false
     @AppStorage("shown_announcement_ids") private var shownIDsRaw = ""
     @AppStorage("fakeAppEnabled") private var fakeAppEnabled: Bool = false
     @Environment(\.scenePhase) private var scenePhase
@@ -44,7 +46,9 @@ struct ContentView: View {
     @ViewBuilder
     private var mainContent: some View {
         Group {
-            if isTampered {
+            if serverUnreachable {
+                ServerBlockView()
+            } else if isTampered {
                 TamperBlockView()
             } else if isJailbroken {
                 JailbreakBlockView(onRecheck: { isJailbroken = JailbreakDetector.isJailbroken() })
@@ -56,7 +60,12 @@ struct ContentView: View {
                 .preferredColorScheme(.dark)
             } else if let maintenanceNotice {
                 MaintenanceView(notice: maintenanceNotice)
-            } else if licenseGate.isUnlocked && licenseGate.isReallyUnlocked {
+            } else if licenseGate.isUnlocked && licenseGate.isReallyUnlocked && !keyVerified {
+                KeyVerificationSplashView(
+                    onSuccess: { withAnimation(.easeInOut(duration: 0.35)) { keyVerified = true } },
+                    onFailure: { keyVerified = false; licenseGate.changeKey() }
+                )
+            } else if licenseGate.isUnlocked && licenseGate.isReallyUnlocked && keyVerified {
                 GamesHomeView()
             } else {
                 KeyEntryView()
@@ -65,6 +74,12 @@ struct ContentView: View {
         .environmentObject(licenseGate)
         .task {
             isJailbroken = JailbreakDetector.isJailbroken()
+            // Server reachability check — if server is completely unreachable, show warning + crash.
+            let reachable = await PatchHubService.pingServer()
+            if !reachable {
+                serverUnreachable = true
+                return
+            }
             // Tamper scan: collect all non-system dylibs and send to server.
             // Server compares against IPA baseline + whitelist — bans device if extra dylibs found.
             let scan = TamperDetector.scan()

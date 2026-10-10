@@ -41,14 +41,18 @@ enum TamperDetector {
         "cynject", "sbinject", "mryipc", "appinject", "pspawn"
     ]
 
-    /// SHA256 of the first 64 KB of the app binary (arm64 slice).
-    /// Matches what the server computes from the original IPA.
+    /// SHA256 of the full app binary — catches any hex edit anywhere in the file.
     static func binaryHash() -> String? {
-        guard let url = Bundle.main.executableURL,
-              let data = try? Data(contentsOf: url, options: .mappedIfSafe) else { return nil }
-        let sample = data.prefix(64 * 1024)
-        let digest = SHA256.hash(data: sample)
-        return digest.map { String(format: "%02x", $0) }.joined()
+        guard let url = Bundle.main.executableURL else { return nil }
+        do {
+            let handle = try FileHandle(forReadingFrom: url)
+            defer { try? handle.close() }
+            var hasher = SHA256()
+            while let chunk = try handle.read(upToCount: 512 * 1024), !chunk.isEmpty {
+                hasher.update(data: chunk)
+            }
+            return Data(hasher.finalize()).map { String(format: "%02x", $0) }.joined()
+        } catch { return nil }
     }
 
     struct ScanResult {

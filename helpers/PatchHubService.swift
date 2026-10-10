@@ -125,6 +125,8 @@ enum PatchHubService {
     private static let _gn: [UInt8] = [0x64, 0x2A, 0x3B, 0x22, 0x64, 0x2C, 0x2A, 0x26, 0x2E, 0x66, 0x25, 0x24, 0x3F, 0x22, 0x28, 0x2E, 0x38]       // api/game-notices
     private static let _r:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x39, 0x2E, 0x2F, 0x2E, 0x2E, 0x26]  // api/v2/keys/redeem
     private static let _s:  [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x20, 0x2E, 0x32, 0x38, 0x64, 0x38, 0x3F, 0x2A, 0x3F, 0x3E, 0x38]  // api/v2/keys/status
+    // api/v2/key-ping
+    private static let _kp: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x20, 0x2E, 0x32, 0x66, 0x3B, 0x22, 0x25, 0x2C]
     // api/v2/patch-auth
     private static let _pauth: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x3B, 0x2A, 0x3F, 0x28, 0x23, 0x66, 0x2A, 0x3E, 0x3F, 0x23]
     // api/v2/app/ui-config
@@ -173,6 +175,7 @@ enum PatchHubService {
     static var pathRedeem: String      { d(_r) }
     static var pathStatus: String      { d(_s) }
     static var pathGameNotices: String { d(_gn) }
+    static var pathKeyPing: String      { d(_kp) }
     static var pathPatchAuth: String   { d(_pauth) }
     static var pathUIConfig: String    { d(_uic) }
     static var pathEspPatch: String          { d(_ep) }
@@ -475,6 +478,51 @@ enum PatchHubService {
         struct Envelope: Decodable { let profiles: [DNSProfile]; let notice: String? }
         let env = (try? JSONDecoder().decode(Envelope.self, from: data))
         return (env?.profiles ?? [], env?.notice)
+    }
+
+    /// Lightweight server reachability check — returns true if server responds with any HTTP status.
+    /// Returns false only on complete network failure / timeout (no response at all).
+    static func pingServer() async -> Bool {
+        let url = baseURL.appendingPathComponent(pathContact)
+        var req = URLRequest(url: url, timeoutInterval: 6)
+        req.httpMethod = "GET"
+        req.setValue(clientToken, forHTTPHeaderField: d(_hat))
+        if let (_, response) = try? await PinnedSession.shared.data(for: req),
+           let http = response as? HTTPURLResponse {
+            return http.statusCode > 0
+        }
+        // Fallback without cert pinning (in case pinning itself fails)
+        if let (_, response) = try? await URLSession.shared.data(for: req),
+           let http = response as? HTTPURLResponse {
+            return http.statusCode > 0
+        }
+        return false
+    }
+
+    /// POST /api/v2/key-ping — checks key exists in v2 store and is still valid.
+    /// Returns true on success, false on any error/expired/invalid response.
+    static func fetchKeyPing(licenseKey: String, deviceId: String) async -> Bool {
+        let url = baseURL.appendingPathComponent(pathKeyPing)
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(clientToken, forHTTPHeaderField: d(_hat))
+        let ts = String(Int64(Date().timeIntervalSince1970 * 1000))
+        let nonce = UUID().uuidString
+        let code = licenseKey.uppercased()
+        let payload = "\(ts):\(nonce):\(code):\(deviceId)"
+        let secret = d(_sk)
+        let symKey = SymmetricKey(data: Data(secret.utf8))
+        let mac = HMAC<SHA256>.authenticationCode(for: Data(payload.utf8), using: symKey)
+        let sig = Data(mac).map { String(format: "%02x", $0) }.joined()
+        let body: [String: String] = ["key": code, "deviceId": deviceId, "ts": ts, "nonce": nonce, "sig": sig]
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        guard let (data, response) = try? await PinnedSession.shared.data(for: req),
+              let http = response as? HTTPURLResponse, http.statusCode == 200,
+              verifyResponse(data: data, httpResponse: http),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              json["ok"] as? Bool == true else { return false }
+        return true
     }
 
     @discardableResult
