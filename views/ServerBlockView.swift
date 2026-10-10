@@ -39,7 +39,7 @@ struct ServerBlockView: View {
                 Text("MẤT KẾT NỐI MÁY CHỦ")
                     .font(.system(size: 17, weight: .black))
                     .foregroundStyle(.white)
-                    .tracking(1.5)
+                    .kerning(1.5)
                     .padding(.bottom, 12)
 
                 // Description
