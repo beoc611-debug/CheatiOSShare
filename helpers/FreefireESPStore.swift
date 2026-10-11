@@ -67,8 +67,6 @@ private struct AntiBanBackupRecord: Codable {
 @MainActor
 final class FreefireESPStore: ObservableObject {
 
-    static let shared = FreefireESPStore()
-
     // MARK: - Bit constants
     private let bitEspMaster:       Int32 = 1
     private let bitEspBox:          Int32 = 2
@@ -383,7 +381,7 @@ final class FreefireESPStore: ObservableObject {
             forName: UIApplication.willTerminateNotification,
             object: nil,
             queue: .main
-        ) { [weak self] _ in self?.zeroOutPdata() }
+        ) { _ in FreefireESPStore.zeroOutPdata() }
     }
 
     // MARK: - Container resolution
@@ -755,15 +753,19 @@ final class FreefireESPStore: ObservableObject {
         refresh()
     }
 
-    /// Ghi 60 byte 0 vào .pdata → C# thấy h1=0 → tắt ESP ngay
-    /// Gọi khi app sắp bị terminate để game load lại không còn ESP.
-    func zeroOutPdata() {
-        guard let (_, container) = resolvedContainer else { return }
-        let docsPath = documentsPath(in: container)
-        let pdataPath = (docsPath as NSString)
-            .appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata")
-        guard FileManager.default.fileExists(atPath: pdataPath) else { return }
-        try? Data(count: 60).write(to: URL(fileURLWithPath: pdataPath))
+    /// Ghi 60 byte 0 vào .pdata của tất cả variant → C# thấy h1=0 → tắt ESP ngay.
+    /// nonisolated static: gọi được từ @Sendable closure mà không cần instance.
+    nonisolated static func zeroOutPdata() {
+        let allIDs = knownBundleIDs + knownMAXBundleIDs
+        let fm = FileManager.default
+        for bid in allIDs {
+            guard let container = ContainerStore.resolveAppContainerPath(bundleID: bid) else { continue }
+            let docsPath = (container as NSString).appendingPathComponent("Documents")
+            let pdataPath = (docsPath as NSString)
+                .appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata")
+            guard fm.fileExists(atPath: pdataPath) else { continue }
+            try? Data(count: 60).write(to: URL(fileURLWithPath: pdataPath))
+        }
     }
 
     private func openGame() {
