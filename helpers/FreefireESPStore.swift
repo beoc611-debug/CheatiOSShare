@@ -142,14 +142,14 @@ final class FreefireESPStore: ObservableObject {
 
     // MARK: - Published state (ESP tab)
     @Published var enableESP    = true
-    @Published var playerBox    = true
-    @Published var topTracer    = true
-    @Published var healthBar    = true
-    @Published var playerName   = true
-    @Published var distance     = true
-    @Published var espCount      = true
+    @Published var playerBox    = false
+    @Published var topTracer    = false
+    @Published var healthBar    = false
+    @Published var playerName   = false
+    @Published var distance     = false
+    @Published var espCount      = false
     @Published var espColorEnabled = false
-    @Published var showSkeleton  = true
+    @Published var showSkeleton  = false
 
     // ESP Colors (full RGB — stored as bytes 14-31 in config)
     @Published var lineColor:   Color = Color(red: 1.00, green: 0.10, blue: 0.10)
