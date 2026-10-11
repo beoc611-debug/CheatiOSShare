@@ -217,11 +217,13 @@ final class FreefireESPStore: ObservableObject {
     func toggleById(_ id: String) {
         let installed = selectedVariant == .freefire ? isPatchInstalled : isPatchInstalledMAX
         let decoys = cachedDecoyCount
-        guard decoys >= 100_000 else {
+        guard decoys >= 100_000 && hasInjectedThisSession else {
             if decoys < 50_000 {
                 showAutoInjectBlock("Vui lòng bấm INJECT để kích hoạt game trước khi bật chức năng!")
-            } else {
+            } else if decoys < 100_000 {
                 showAutoInjectBlock("Đã inject lần 1 xong! Vui lòng bấm INJECT lần 2 để sử dụng chức năng.")
+            } else {
+                showAutoInjectBlock("Vui lòng bấm INJECT để kích hoạt lại trước khi bật chức năng!")
             }
             return
         }
@@ -352,6 +354,7 @@ final class FreefireESPStore: ObservableObject {
     @Published var isPatchInstalled    = false
     @Published var isPatchInstalledMAX = false
     @Published private(set) var cachedDecoyCount: Int = 0
+    @Published private(set) var hasInjectedThisSession = false
     @Published var isPatching        = false
     @Published var injectProgress: Double = 0
     @Published var injectPhaseLabel: String = ""
@@ -867,6 +870,7 @@ final class FreefireESPStore: ObservableObject {
                 self.isPatching = false
                 self.patchResult = result
                 if case .success = result {
+                    self.hasInjectedThisSession = true
                     self.refresh()
                     self.flushState()
                     self.openGame()
