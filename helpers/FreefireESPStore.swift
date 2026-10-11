@@ -217,13 +217,11 @@ final class FreefireESPStore: ObservableObject {
     func toggleById(_ id: String) {
         let installed = selectedVariant == .freefire ? isPatchInstalled : isPatchInstalledMAX
         let decoys = cachedDecoyCount
-        guard installed && decoys >= 100_000 else {
+        guard decoys >= 100_000 else {
             if decoys < 50_000 {
                 showAutoInjectBlock("Vui lòng bấm INJECT để kích hoạt game trước khi bật chức năng!")
-            } else if !installed {
-                showAutoInjectBlock("Đã inject lần 1 xong! Vui lòng bấm INJECT lần 2 để sử dụng chức năng.")
             } else {
-                showAutoInjectBlock("Vui lòng bấm INJECT thêm để bổ sung trước khi bật chức năng!")
+                showAutoInjectBlock("Đã inject lần 1 xong! Vui lòng bấm INJECT lần 2 để sử dụng chức năng.")
             }
             return
         }
