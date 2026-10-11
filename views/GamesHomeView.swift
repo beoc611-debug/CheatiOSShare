@@ -43,7 +43,7 @@ struct GamesHomeView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var licenseGate: LicenseGateStore
     @StateObject private var store = PatchProjectStore()
-    @StateObject private var ffESP = FreefireESPStore.shared
+    @StateObject private var ffESP = FreefireESPStore()
     @State private var games: [RemoteGameSummary] = []
     @State private var isLoadingGames = false
     @State private var showLanguagePicker = false
