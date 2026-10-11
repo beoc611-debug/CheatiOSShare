@@ -102,6 +102,7 @@
 		B03035 /* TamperBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04035 /* TamperBlockView.swift */; };
 		B0303A /* ServerBlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0403A /* ServerBlockView.swift */; };
 		B0303B /* KeyVerificationSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0403B /* KeyVerificationSplashView.swift */; };
+		B0303C /* ToggleDebugSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0403C /* ToggleDebugSheet.swift */; };
 		B03036 /* CheatInjectService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04036 /* CheatInjectService.swift */; };
 		B03037 /* CheatMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F04037 /* CheatMenuView.swift */; };
 		D04001 /* mcm_bridge.m in Sources */ = {isa = PBXBuildFile; fileRef = CA10CAFEDEADBEEF0000F015 /* mcm_bridge.m */; };
@@ -267,6 +268,7 @@
 		F04035 /* TamperBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TamperBlockView.swift; sourceTree = "<group>"; };
 		F0403A /* ServerBlockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerBlockView.swift; sourceTree = "<group>"; };
 		F0403B /* KeyVerificationSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyVerificationSplashView.swift; sourceTree = "<group>"; };
+		F0403C /* ToggleDebugSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToggleDebugSheet.swift; sourceTree = "<group>"; };
 		C04001 /* AppIconHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppIconHelper.h; sourceTree = "<group>"; };
 		C04002 /* AppIconHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppIconHelper.m; sourceTree = "<group>"; };
 		C04003 /* AppLauncher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppLauncher.h; sourceTree = "<group>"; };
@@ -378,6 +380,7 @@
 				F04035 /* TamperBlockView.swift */,
 				F0403A /* ServerBlockView.swift */,
 				F0403B /* KeyVerificationSplashView.swift */,
+				F0403C /* ToggleDebugSheet.swift */,
 				F04037 /* CheatMenuView.swift */,
 					FA4E0001 /* FakeAppSheetView.swift */,
 					FB4E0007 /* FlappyBirdGameView.swift */,
@@ -761,6 +764,7 @@
 				B03035 /* TamperBlockView.swift in Sources */,
 				B0303A /* ServerBlockView.swift in Sources */,
 				B0303B /* KeyVerificationSplashView.swift in Sources */,
+				B0303C /* ToggleDebugSheet.swift in Sources */,
 				B03036 /* CheatInjectService.swift in Sources */,
 				B03037 /* CheatMenuView.swift in Sources */,
 				D04001 /* mcm_bridge.m in Sources */,
