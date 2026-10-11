@@ -1115,22 +1115,7 @@ struct AppNoticeV2View: View {
 
                 // ── Icon badge + title ──
                 HStack(alignment: .top, spacing: 16) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [red.opacity(0.30), red.opacity(0.10)],
-                                    startPoint: .topLeading, endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 52, height: 52)
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(red.opacity(0.40), lineWidth: 1.2)
-                            .frame(width: 52, height: 52)
-                        Image(systemName: "megaphone.fill")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundStyle(red)
-                    }
+                    AppLogo(size: 52)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(notice.title ?? "THÔNG BÁO")
