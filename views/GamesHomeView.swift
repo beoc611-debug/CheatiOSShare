@@ -1137,15 +1137,18 @@ struct AppNoticeV2View: View {
                     .fill(Color.white.opacity(0.07))
                     .frame(height: 1)
 
-                // ── Content (auto-height) ──
-                Text(notice.content)
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color(white: 0.72))
-                    .lineSpacing(5)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 18)
-                    .frame(maxHeight: 180)
+                // ── Content (shrinks to fit, scrollable when long) ──
+                ScrollView {
+                    Text(notice.content)
+                        .font(.system(size: 14))
+                        .foregroundStyle(Color(white: 0.72))
+                        .lineSpacing(5)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxHeight: 160)
 
                 // ── Button ──
                 Button { dismiss() } label: {
@@ -1175,6 +1178,7 @@ struct AppNoticeV2View: View {
                 .padding(.top, 14)
                 .padding(.bottom, 34)
             }
+            .fixedSize(horizontal: false, vertical: true)
             .background(Color(red: 0.08, green: 0.08, blue: 0.12))
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(
