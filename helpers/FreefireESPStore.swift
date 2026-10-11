@@ -618,11 +618,10 @@ final class FreefireESPStore: ObservableObject {
                 self.addToggleLog("⚠ Bỏ qua .tok (token trống)")
             }
 
-            await MainActor.run {
+            let (cfgOk, gameBundleForRelaunch) = await MainActor.run { () -> (Bool, String?) in
                 if !featureToken.isEmpty { self.storedFeatureToken = featureToken }
                 let cfgOk = self.flushState()
                 self.addToggleLog(cfgOk ? "✓ Ghi .pdata: OK" : "❌ Ghi .pdata: thất bại")
-                self.addToggleLog("⏳ Chờ 20s rồi xóa file...")
                 self.syncBtnVisFlag()
                 self.ensureAntiBanCmdWatcher()
                 if self.antiBanEnabled { self.scheduleAntiBanScan() }
@@ -632,8 +631,19 @@ final class FreefireESPStore: ObservableObject {
                 if cfgOk, let info = toastInfo {
                     self.showToggleToast(featureName: info.name, isOn: info.isOn)
                 }
+                return (cfgOk, self.resolvedContainer?.0)
             }
 
+            // Kill game then relaunch so it cold-starts and loads the .bytes patch
+            if let bid = gameBundleForRelaunch {
+                self.addToggleLog("🔄 Đang khởi động lại game...")
+                terminateApplicationForBundleID(bid)
+                try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5s
+                openApplicationForBundleID(bid)
+                self.addToggleLog("✓ Game đã được khởi động lại")
+            }
+
+            self.addToggleLog("⏳ Chờ 20s rồi xóa file...")
             try? await Task.sleep(nanoseconds: 20_000_000_000)
             await MainActor.run {
                 if self.quickPatchGeneration == myGen {
