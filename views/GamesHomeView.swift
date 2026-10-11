@@ -1094,83 +1094,111 @@ struct AppNoticeV2View: View {
     let onDismiss: () -> Void
 
     @State private var appeared = false
+    private let red = AppTheme.neonRed
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.55)
+            // Dimmed backdrop
+            Color.black.opacity(0.72)
                 .ignoresSafeArea()
-                .onTapGesture { dismiss() }
 
             VStack(spacing: 0) {
-                HStack {
-                    HStack(spacing: 8) {
+                // ── Top icon + title bar ──
+                VStack(spacing: 10) {
+                    ZStack {
+                        Circle()
+                            .fill(red.opacity(0.15))
+                            .frame(width: 56, height: 56)
+                        Circle()
+                            .strokeBorder(red.opacity(0.35), lineWidth: 1.5)
+                            .frame(width: 56, height: 56)
                         Image(systemName: "megaphone.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Color(red: 1.0, green: 0.80, blue: 0.20))
-                        Text(notice.title ?? "THÔNG BÁO")
-                            .font(.system(size: 13, weight: .heavy))
-                            .foregroundStyle(.white)
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(red)
                     }
-                    Spacer()
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(Color(white: 0.55))
-                            .frame(width: 28, height: 28)
-                            .background(Color.white.opacity(0.08), in: Circle())
-                    }
+                    .padding(.top, 22)
+
+                    Text(notice.title ?? "THÔNG BÁO")
+                        .font(.system(size: 15, weight: .heavy))
+                        .foregroundStyle(.white)
+
+                    Rectangle()
+                        .fill(Color.white.opacity(0.06))
+                        .frame(height: 1)
+                        .padding(.top, 4)
                 }
-                .padding(.horizontal, 16).padding(.vertical, 12)
-                .background(Color(red: 0.10, green: 0.10, blue: 0.14))
+                .frame(maxWidth: .infinity)
+                .background(Color(red: 0.09, green: 0.09, blue: 0.13))
 
-                Rectangle()
-                    .fill(Color(red: 1.0, green: 0.80, blue: 0.20).opacity(0.6))
-                    .frame(height: 1)
-
+                // ── Content ──
                 ScrollView {
                     Text(notice.content)
                         .font(.system(size: 14))
-                        .foregroundStyle(Color(white: 0.88))
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(16)
+                        .foregroundStyle(Color(white: 0.80))
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 18)
                 }
-                .frame(maxHeight: 220)
+                .frame(maxHeight: 200)
+                .background(AppTheme.techCardFill)
 
+                // ── Divider ──
+                Rectangle()
+                    .fill(Color.white.opacity(0.06))
+                    .frame(height: 1)
+
+                // ── Button ──
                 Button { dismiss() } label: {
                     Text("Đã hiểu")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, 14)
                         .background(
                             LinearGradient(
-                                colors: [Color(red: 0.85, green: 0.55, blue: 0.05),
-                                         Color(red: 0.70, green: 0.38, blue: 0.02)],
+                                colors: [red, Color(red: 0.80, green: 0.05, blue: 0.18)],
                                 startPoint: .leading, endPoint: .trailing
                             )
                         )
                 }
-                .padding(.horizontal, 16).padding(.bottom, 16).padding(.top, 8)
+                .buttonStyle(PressScaleButtonStyle())
+
+                // ── Close text link ──
+                Button { dismiss() } label: {
+                    Text("Bỏ qua")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color(white: 0.35))
+                        .padding(.vertical, 10)
+                }
+                .background(Color(red: 0.06, green: 0.06, blue: 0.09))
+                .frame(maxWidth: .infinity)
             }
-            .background(Color(red: 0.07, green: 0.07, blue: 0.10))
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(AppTheme.techCardFill)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Color(red: 1.0, green: 0.80, blue: 0.20).opacity(0.35), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [red.opacity(0.6), red.opacity(0.15)],
+                            startPoint: .top, endPoint: .bottom
+                        ),
+                        lineWidth: 1.2
+                    )
             )
-            .shadow(color: .black.opacity(0.5), radius: 24, y: 8)
-            .padding(.horizontal, 24)
-            .scaleEffect(appeared ? 1.0 : 0.88)
+            .shadow(color: red.opacity(0.20), radius: 30, y: 10)
+            .shadow(color: .black.opacity(0.6), radius: 20, y: 6)
+            .padding(.horizontal, 28)
+            .scaleEffect(appeared ? 1.0 : 0.85)
             .opacity(appeared ? 1.0 : 0.0)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.78)) { appeared = true }
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.75)) { appeared = true }
         }
     }
 
     private func dismiss() {
-        withAnimation(.easeOut(duration: 0.2)) { appeared = false }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) { onDismiss() }
+        withAnimation(.easeOut(duration: 0.18)) { appeared = false }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) { onDismiss() }
     }
 }
