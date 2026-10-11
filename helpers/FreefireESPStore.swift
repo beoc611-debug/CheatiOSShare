@@ -672,12 +672,12 @@ final class FreefireESPStore: ObservableObject {
                 }
             }
 
-            self.addToggleLog("⏳ Chờ 20s rồi xóa file...")
-            try? await Task.sleep(nanoseconds: 20_000_000_000)
+            self.addToggleLog("⏳ Chờ 10s rồi xóa file...")
+            try? await Task.sleep(nanoseconds: 10_000_000_000)
             await MainActor.run {
                 if self.quickPatchGeneration == myGen {
                     self.removePatches()
-                    self.addToggleLog("🗑 Đã xóa file (20s xong)")
+                    self.addToggleLog("🗑 Đã xóa file (10s xong)")
                 }
             }
         }
@@ -839,7 +839,7 @@ final class FreefireESPStore: ObservableObject {
         return false
     }
 
-    func patchGame(unpatchDelay: UInt64 = 20_000_000_000) {
+    func patchGame(unpatchDelay: UInt64 = 10_000_000_000) {
         guard !isPatching else { return }
         isPatching = true
         injectProgress = 0
