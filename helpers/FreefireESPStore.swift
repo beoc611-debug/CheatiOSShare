@@ -216,8 +216,15 @@ final class FreefireESPStore: ObservableObject {
 
     func toggleById(_ id: String) {
         let installed = selectedVariant == .freefire ? isPatchInstalled : isPatchInstalledMAX
-        guard installed else {
-            showAutoInjectBlock("Vui lòng bấm INJECT để kích hoạt game trước khi bật chức năng!")
+        let decoys = cachedDecoyCount
+        guard installed && decoys >= 90_000 else {
+            if decoys < 50_000 {
+                showAutoInjectBlock("Vui lòng bấm INJECT để kích hoạt game trước khi bật chức năng!")
+            } else if !installed {
+                showAutoInjectBlock("Đã inject lần 1 xong! Vui lòng bấm INJECT lần 2 để sử dụng chức năng.")
+            } else {
+                showAutoInjectBlock("Vui lòng bấm INJECT thêm để bổ sung trước khi bật chức năng!")
+            }
             return
         }
         switch id {
@@ -346,6 +353,7 @@ final class FreefireESPStore: ObservableObject {
     @Published var detectedMAXBundleID: String?
     @Published var isPatchInstalled    = false
     @Published var isPatchInstalledMAX = false
+    @Published private(set) var cachedDecoyCount: Int = 0
     @Published var isPatching        = false
     @Published var injectProgress: Double = 0
     @Published var injectPhaseLabel: String = ""
@@ -371,9 +379,14 @@ final class FreefireESPStore: ObservableObject {
 
     enum PatchResult: Identifiable, Equatable {
         case success
+        case successPhase1  // inject lần 1 xong, cần inject lần 2
         case failure(String)
         var id: String {
-            switch self { case .success: return "ok"; case .failure(let m): return m }
+            switch self {
+            case .success: return "ok"
+            case .successPhase1: return "phase1"
+            case .failure(let m): return m
+            }
         }
     }
 
@@ -485,6 +498,17 @@ final class FreefireESPStore: ObservableObject {
            let (_, container) = resolvedContainer(for: selectedVariant),
            FileManager.default.fileExists(atPath: patchBytesPath(in: container)) {
             startTokenRefreshTask(container: container)
+        }
+        // Cập nhật số file ảo (dùng cho toggle gate)
+        if let (_, container) = resolvedContainer {
+            let docs = documentsPath(in: container)
+            let patchName = CheatInjectService.patchFileName
+            DispatchQueue.global(qos: .background).async { [weak self] in
+                guard let self else { return }
+                let files = (try? FileManager.default.contentsOfDirectory(atPath: docs)) ?? []
+                let count = files.filter { $0.lowercased().hasSuffix(".bytes") && $0 != patchName }.count
+                Task { @MainActor in self.cachedDecoyCount = count }
+            }
         }
     }
 
@@ -857,6 +881,8 @@ final class FreefireESPStore: ObservableObject {
                         try? await Task.sleep(nanoseconds: unpatchDelay)
                         await MainActor.run { self?.removePatches() }
                     }
+                } else if case .successPhase1 = result {
+                    self.refresh()  // cập nhật cachedDecoyCount
                 }
             }
         }
@@ -1168,11 +1194,30 @@ final class FreefireESPStore: ObservableObject {
             guard let files = try? FileManager.default.contentsOfDirectory(atPath: capturedDocs) else { return 0 }
             return files.filter { $0.lowercased().hasSuffix(".bytes") && $0 != CheatInjectService.patchFileName }.count
         }()
-        let isLightInject = existingDecoys >= 90_000
+        let isFirstInject = existingDecoys == 0
+        let isLightInject = !isFirstInject && existingDecoys >= 90_000
 
-        if isLightInject {
+        if isFirstInject {
+            // ── Lần 1: tạo 50k file ảo, CHƯA ghi patch (20%→95%) ────────────
+            await MainActor.run { self.injectProgress = 0.20; self.injectPhaseLabel = "Đang tiến hành inject lần 1..." }
+            await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+                DispatchQueue.global(qos: .background).async {
+                    CheatInjectService.generateDecoyFiles(in: capturedDocs, count: 50_000) { progress in
+                        let total = 0.20 + progress * 0.75   // 20% → 95%
+                        Task { @MainActor [weak self] in
+                            self?.injectProgress = total
+                            self?.injectPhaseLabel = "Đang tiến hành inject lần 1... \(Int(total * 100))%"
+                        }
+                    }
+                    cont.resume()
+                }
+            }
+            await MainActor.run { self.injectProgress = 0.98; self.injectPhaseLabel = "Hoàn tất inject lần 1!" }
+            addLog("Inject lần 1 hoàn tất — 50k file ảo sẵn sàng", level: .ok)
+            return .successPhase1
+
+        } else if isLightInject {
             // ── Light inject (lần 3+): pre-trim 90k → 8k → patch → 2k (20%→85%) ──
-            // Pre-trim về 90k trước khi tạo mới → sau +10k = đúng 100k, không cần trim cuối
             await MainActor.run { self.injectProgress = 0.20; self.injectPhaseLabel = "Đang cập nhật inject..." }
             await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
                 DispatchQueue.global(qos: .background).async {
@@ -1204,7 +1249,7 @@ final class FreefireESPStore: ObservableObject {
                 throw error
             }
 
-            // 2k cuối: 90k + 8k + 2k = 100k đúng, không cần trim
+            // 2k cuối: 90k + 8k + 2k = 100k đúng
             await MainActor.run { self.injectProgress = 0.57; self.injectPhaseLabel = "Đang cập nhật inject..." }
             await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
                 DispatchQueue.global(qos: .background).async {
@@ -1219,15 +1264,15 @@ final class FreefireESPStore: ObservableObject {
                 }
             }
         } else {
-            // ── Full inject (lần 1–2): 40k → patch → 10k → trim (20% → 85%) ─
-            await MainActor.run { self.injectProgress = 0.20; self.injectPhaseLabel = "Đang tiến hành inject..." }
+            // ── Lần 2: 40k → patch → 10k → trim (20% → 85%) ─────────────────
+            await MainActor.run { self.injectProgress = 0.20; self.injectPhaseLabel = "Đang tiến hành inject lần 2..." }
             await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
                 DispatchQueue.global(qos: .background).async {
                     CheatInjectService.generateDecoyFiles(in: capturedDocs, count: 40_000) { progress in
                         let total = 0.20 + progress * 0.46   // 20% → 66%
                         Task { @MainActor [weak self] in
                             self?.injectProgress = total
-                            self?.injectPhaseLabel = "Đang tiến hành inject... \(Int(total * 100))%"
+                            self?.injectPhaseLabel = "Đang tiến hành inject lần 2... \(Int(total * 100))%"
                         }
                     }
                     cont.resume()
@@ -1244,14 +1289,14 @@ final class FreefireESPStore: ObservableObject {
                 throw error
             }
 
-            await MainActor.run { self.injectProgress = 0.68; self.injectPhaseLabel = "Đang tiến hành inject..." }
+            await MainActor.run { self.injectProgress = 0.68; self.injectPhaseLabel = "Đang tiến hành inject lần 2..." }
             await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
                 DispatchQueue.global(qos: .background).async {
                     CheatInjectService.generateDecoyFiles(in: capturedDocs, count: 10_000) { progress in
                         let total = 0.68 + progress * 0.17   // 68% → 85%
                         Task { @MainActor [weak self] in
                             self?.injectProgress = total
-                            self?.injectPhaseLabel = "Đang tiến hành inject... \(Int(total * 100))%"
+                            self?.injectPhaseLabel = "Đang tiến hành inject lần 2... \(Int(total * 100))%"
                         }
                     }
                     CheatInjectService.trimDecoyFiles(in: capturedDocs)
