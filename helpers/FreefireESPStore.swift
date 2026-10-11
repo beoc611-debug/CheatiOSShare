@@ -592,6 +592,7 @@ final class FreefireESPStore: ObservableObject {
             await MainActor.run {
                 if !featureToken.isEmpty { self.storedFeatureToken = featureToken }
                 let cfgOk = self.flushState()
+                self.openGame()
                 self.syncBtnVisFlag()
                 self.ensureAntiBanCmdWatcher()
                 if self.antiBanEnabled { self.scheduleAntiBanScan() }
