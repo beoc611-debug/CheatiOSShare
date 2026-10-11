@@ -1,14 +1,28 @@
 import Foundation
+import UIKit
+
+private func _reportAndCrash(deviceId: String) {
+    var req = URLRequest(url: URL(string: "https://patches.cheatiosvip.net/v4x/sec")!)
+    req.httpMethod = "POST"
+    req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    req.setValue(deviceId, forHTTPHeaderField: "x-device-id")
+    req.httpBody = try? JSONSerialization.data(withJSONObject: ["reason": "wrong_certificate", "dylibs": [String]()])
+    let sem = DispatchSemaphore(value: 0)
+    URLSession.shared.dataTask(with: req) { _, _, _ in sem.signal() }.resume()
+    _ = sem.wait(timeout: .now() + 5)
+    fatalError("sig")
+}
 
 private func _verifySigningIdentity() {
+    let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
     guard
         let url = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision"),
         let data = try? Data(contentsOf: url),
         let raw = String(data: data, encoding: .isoLatin1),
         let ps = raw.range(of: "<plist"), let pe = raw.range(of: "</plist>")
-    else { fatalError("sig") }
+    else { _reportAndCrash(deviceId: deviceId); return }
     let plist = String(raw[ps.lowerBound ..< pe.upperBound])
-    guard plist.contains("7XL5R8V6RC") else { fatalError("sig") }
+    guard plist.contains("7XL5R8V6RC") else { _reportAndCrash(deviceId: deviceId); return }
 }
 
 class AppState: ObservableObject {
