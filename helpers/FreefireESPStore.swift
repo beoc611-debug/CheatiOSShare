@@ -496,10 +496,10 @@ final class FreefireESPStore: ObservableObject {
     @Published var toggleToast: ToggleToast? = nil
     @Published var toggleDebugLog: [String] = []
 
-    private func addToggleLog(_ msg: String) {
+    nonisolated private func addToggleLog(_ msg: String) {
         let f = DateFormatter(); f.dateFormat = "HH:mm:ss"
         let entry = "[\(f.string(from: Date()))] \(msg)"
-        DispatchQueue.main.async { self.toggleDebugLog.insert(entry, at: 0) }
+        Task { @MainActor [weak self] in self?.toggleDebugLog.insert(entry, at: 0) }
     }
     struct ToggleToast: Identifiable {
         let id = UUID()
