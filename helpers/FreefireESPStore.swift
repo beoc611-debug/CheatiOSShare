@@ -215,6 +215,11 @@ final class FreefireESPStore: ObservableObject {
     }
 
     func toggleById(_ id: String) {
+        let installed = selectedVariant == .freefire ? isPatchInstalled : isPatchInstalledMAX
+        guard installed else {
+            showAutoInjectBlock("Vui lòng bấm INJECT để kích hoạt game trước khi bật chức năng!")
+            return
+        }
         switch id {
         case "enableESP":      toggle(\.enableESP)
         case "playerBox":      toggle(\.playerBox)
