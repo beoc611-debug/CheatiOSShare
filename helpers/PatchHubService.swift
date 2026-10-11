@@ -65,6 +65,12 @@ struct RemoteContainerSummary: Decodable, Identifiable, Equatable {
     let videoUrl: String?
 }
 
+struct AppNoticeV2: Decodable {
+    let enabled: Bool
+    let content: String
+    let title: String?
+}
+
 struct GameNotice: Decodable, Identifiable {
     let gameId: String
     let title: String
@@ -137,6 +143,8 @@ enum PatchHubService {
     private static let _lc: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x27, 0x24, 0x28, 0x2A, 0x27, 0x66, 0x28, 0x24, 0x25, 0x2D, 0x22, 0x2C]
     // api/v2/allowed-frameworks
     private static let _af: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x2A, 0x27, 0x27, 0x24, 0x3C, 0x2E, 0x2F, 0x66, 0x2D, 0x39, 0x2A, 0x26, 0x2E, 0x3C, 0x24, 0x39, 0x20, 0x38]
+    // api/v2/app-notice
+    private static let _apn: [UInt8] = [0x2A, 0x3B, 0x22, 0x64, 0x3D, 0x79, 0x64, 0x2A, 0x3B, 0x3B, 0x66, 0x25, 0x24, 0x3F, 0x22, 0x28, 0x2E]
     // esp-patch endpoint secret: rR1QEuJl63H2kdCacBvSf75YmzX4pbO8
     private static let _epk: [UInt8] = [
         0x39, 0x19, 0x7A, 0x1A, 0x0E, 0x3E, 0x01, 0x27, 0x7D, 0x78, 0x03, 0x79, 0x20, 0x2F,
@@ -198,6 +206,7 @@ enum PatchHubService {
     static var pathEspPatch: String          { d(_ep) }
     static var pathLocalConfig: String       { d(_lc) }
     static var pathAllowedFrameworks: String { d(_af) }
+    static var pathAppNotice: String         { d(_apn) }
 
     // Header name accessors used by LicenseKeyService
     static var hAppToken: String    { d(_hat) }
@@ -353,6 +362,16 @@ enum PatchHubService {
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let names = json["allowedFrameworks"] as? [String] else { return nil }
         return names
+    }
+
+    static func fetchAppNoticeV2() async -> AppNoticeV2? {
+        let url = baseURL.appendingPathComponent(pathAppNotice)
+        guard let (data, response) = try? await PinnedSession.shared.data(for: get(url)),
+              let http = response as? HTTPURLResponse,
+              (200...299).contains(http.statusCode),
+              let notice = try? JSONDecoder().decode(AppNoticeV2.self, from: data)
+        else { return nil }
+        return notice.enabled ? notice : nil
     }
 
     static func fetchGameNotices() async -> [String: GameNotice] {
