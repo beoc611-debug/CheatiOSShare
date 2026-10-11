@@ -1094,106 +1094,140 @@ struct AppNoticeV2View: View {
     let onDismiss: () -> Void
 
     @State private var appeared = false
-    private let red = AppTheme.neonRed
+    private let red   = AppTheme.neonRed
+    private let redDim = Color(red: 0.80, green: 0.05, blue: 0.18)
 
     var body: some View {
         ZStack {
-            // Dimmed backdrop
-            Color.black.opacity(0.72)
+            // Backdrop with blur
+            Rectangle()
+                .fill(.ultraThinMaterial)
                 .ignoresSafeArea()
+                .background(Color.black.opacity(0.60).ignoresSafeArea())
 
             VStack(spacing: 0) {
-                // ── Top icon + title bar ──
-                VStack(spacing: 10) {
-                    ZStack {
-                        Circle()
-                            .fill(red.opacity(0.15))
-                            .frame(width: 56, height: 56)
-                        Circle()
-                            .strokeBorder(red.opacity(0.35), lineWidth: 1.5)
-                            .frame(width: 56, height: 56)
-                        Image(systemName: "megaphone.fill")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundStyle(red)
-                    }
-                    .padding(.top, 22)
-
-                    Text(notice.title ?? "THÔNG BÁO")
-                        .font(.system(size: 15, weight: .heavy))
-                        .foregroundStyle(.white)
-
+                // ── Header ──
+                ZStack(alignment: .top) {
+                    // top red accent line
                     Rectangle()
-                        .fill(Color.white.opacity(0.06))
-                        .frame(height: 1)
-                        .padding(.top, 4)
+                        .fill(
+                            LinearGradient(
+                                colors: [.clear, red, .clear],
+                                startPoint: .leading, endPoint: .trailing
+                            )
+                        )
+                        .frame(height: 2)
+                        .frame(maxWidth: .infinity)
+
+                    VStack(spacing: 10) {
+                        // icon ring
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: [red.opacity(0.22), red.opacity(0.06)],
+                                        center: .topLeading,
+                                        startRadius: 0, endRadius: 40
+                                    )
+                                )
+                                .frame(width: 60, height: 60)
+                            Circle()
+                                .strokeBorder(red.opacity(0.40), lineWidth: 1.5)
+                                .frame(width: 60, height: 60)
+                            Circle()
+                                .strokeBorder(red.opacity(0.12), lineWidth: 1)
+                                .frame(width: 68, height: 68)
+                            Image(systemName: "megaphone.fill")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundStyle(red)
+                                .shadow(color: red.opacity(0.55), radius: 6)
+                        }
+                        .padding(.top, 28)
+
+                        // "SYSTEM NOTIFICATION" eyebrow
+                        Text("SYSTEM NOTIFICATION")
+                            .font(.system(size: 9.5, weight: .semibold))
+                            .foregroundStyle(red)
+                            .tracking(2.2)
+
+                        // Title
+                        Text(notice.title ?? "THÔNG BÁO")
+                            .font(.system(size: 17, weight: .heavy))
+                            .foregroundStyle(.white)
+                            .padding(.bottom, 18)
+                    }
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
-                .background(Color(red: 0.09, green: 0.09, blue: 0.13))
+                .background(Color(red: 0.07, green: 0.07, blue: 0.11))
+
+                // separator
+                Rectangle()
+                    .fill(Color.white.opacity(0.06))
+                    .frame(height: 1)
 
                 // ── Content ──
                 ScrollView {
                     Text(notice.content)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color(white: 0.80))
+                        .font(.system(size: 13.5))
+                        .foregroundStyle(Color(white: 0.75))
                         .multilineTextAlignment(.center)
+                        .lineSpacing(4)
                         .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 18)
+                        .padding(.horizontal, 22)
+                        .padding(.vertical, 20)
                 }
-                .frame(maxHeight: 200)
+                .frame(maxHeight: 190)
                 .background(AppTheme.techCardFill)
 
-                // ── Divider ──
+                // separator
                 Rectangle()
                     .fill(Color.white.opacity(0.06))
                     .frame(height: 1)
 
                 // ── Button ──
                 Button { dismiss() } label: {
-                    Text("Đã hiểu")
+                    Text("ĐÃ HIỂU")
                         .font(.system(size: 15, weight: .bold))
+                        .tracking(1.0)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
+                        .frame(height: 52)
                         .background(
                             LinearGradient(
-                                colors: [red, Color(red: 0.80, green: 0.05, blue: 0.18)],
-                                startPoint: .leading, endPoint: .trailing
+                                colors: [red, redDim],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
+                        )
+                        .overlay(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.12), .clear],
+                                startPoint: .top, endPoint: .center
                             )
                         )
                 }
                 .buttonStyle(PressScaleButtonStyle())
-
-                // ── Close text link ──
-                Button { dismiss() } label: {
-                    Text("Bỏ qua")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color(white: 0.35))
-                        .padding(.vertical, 10)
-                }
-                .background(Color(red: 0.06, green: 0.06, blue: 0.09))
-                .frame(maxWidth: .infinity)
+                .padding(14)
             }
             .background(AppTheme.techCardFill)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .strokeBorder(
                         LinearGradient(
-                            colors: [red.opacity(0.6), red.opacity(0.15)],
+                            colors: [red.opacity(0.55), red.opacity(0.10)],
                             startPoint: .top, endPoint: .bottom
                         ),
                         lineWidth: 1.2
                     )
             )
-            .shadow(color: red.opacity(0.20), radius: 30, y: 10)
-            .shadow(color: .black.opacity(0.6), radius: 20, y: 6)
-            .padding(.horizontal, 28)
-            .scaleEffect(appeared ? 1.0 : 0.85)
+            .shadow(color: red.opacity(0.18), radius: 40, y: 12)
+            .shadow(color: .black.opacity(0.65), radius: 20, y: 6)
+            .padding(.horizontal, 26)
+            .scaleEffect(appeared ? 1.0 : 0.86)
             .opacity(appeared ? 1.0 : 0.0)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.38, dampingFraction: 0.75)) { appeared = true }
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.76)) { appeared = true }
         }
     }
 
