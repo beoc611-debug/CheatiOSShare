@@ -1088,150 +1088,124 @@ private struct InjectProgressOverlay: View {
     }
 }
 
-// MARK: - App Notice V2 Popup
+// MARK: - App Notice V2 Popup (bottom sheet)
 struct AppNoticeV2View: View {
     let notice: AppNoticeV2
     let onDismiss: () -> Void
 
     @State private var appeared = false
-    private let red   = AppTheme.neonRed
+    private let red    = AppTheme.neonRed
     private let redDim = Color(red: 0.80, green: 0.05, blue: 0.18)
 
     var body: some View {
-        ZStack {
-            // Backdrop with blur
-            Rectangle()
-                .fill(.ultraThinMaterial)
+        ZStack(alignment: .bottom) {
+            // Dim backdrop
+            Color.black.opacity(appeared ? 0.60 : 0)
                 .ignoresSafeArea()
-                .background(Color.black.opacity(0.60).ignoresSafeArea())
+                .onTapGesture { dismiss() }
 
+            // ── Bottom Sheet ──
             VStack(spacing: 0) {
-                // ── Header ──
-                ZStack(alignment: .top) {
-                    // top red accent line
-                    Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [.clear, red, .clear],
-                                startPoint: .leading, endPoint: .trailing
-                            )
-                        )
-                        .frame(height: 2)
-                        .frame(maxWidth: .infinity)
+                // drag handle
+                Capsule()
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 36, height: 4)
+                    .padding(.top, 12)
+                    .padding(.bottom, 20)
 
-                    VStack(spacing: 10) {
-                        // icon ring
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    RadialGradient(
-                                        colors: [red.opacity(0.22), red.opacity(0.06)],
-                                        center: .topLeading,
-                                        startRadius: 0, endRadius: 40
-                                    )
+                // ── Icon badge + title ──
+                HStack(alignment: .top, spacing: 16) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [red.opacity(0.30), red.opacity(0.10)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
                                 )
-                                .frame(width: 60, height: 60)
-                            Circle()
-                                .strokeBorder(red.opacity(0.40), lineWidth: 1.5)
-                                .frame(width: 60, height: 60)
-                            Circle()
-                                .strokeBorder(red.opacity(0.12), lineWidth: 1)
-                                .frame(width: 68, height: 68)
-                            Image(systemName: "megaphone.fill")
-                                .font(.system(size: 24, weight: .semibold))
-                                .foregroundStyle(red)
-                                .shadow(color: red.opacity(0.55), radius: 6)
-                        }
-                        .padding(.top, 28)
-
-                        // "SYSTEM NOTIFICATION" eyebrow
-                        Text("SYSTEM NOTIFICATION")
-                            .font(.system(size: 9.5, weight: .semibold))
+                            )
+                            .frame(width: 52, height: 52)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(red.opacity(0.40), lineWidth: 1.2)
+                            .frame(width: 52, height: 52)
+                        Image(systemName: "megaphone.fill")
+                            .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(red)
-
-                        // Title
-                        Text(notice.title ?? "THÔNG BÁO")
-                            .font(.system(size: 17, weight: .heavy))
-                            .foregroundStyle(.white)
-                            .padding(.bottom, 18)
                     }
-                    .frame(maxWidth: .infinity)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(notice.title ?? "THÔNG BÁO")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundStyle(.white)
+                        Text("SYSTEM NOTIFICATION")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(red.opacity(0.85))
+                    }
+                    .padding(.top, 4)
+
+                    Spacer()
                 }
-                .background(Color(red: 0.07, green: 0.07, blue: 0.11))
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
 
                 // separator
                 Rectangle()
-                    .fill(Color.white.opacity(0.06))
+                    .fill(Color.white.opacity(0.07))
                     .frame(height: 1)
 
-                // ── Content ──
-                ScrollView {
-                    Text(notice.content)
-                        .font(.system(size: 13.5))
-                        .foregroundStyle(Color(white: 0.75))
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(4)
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 22)
-                        .padding(.vertical, 20)
-                }
-                .frame(maxHeight: 190)
-                .background(AppTheme.techCardFill)
-
-                // separator
-                Rectangle()
-                    .fill(Color.white.opacity(0.06))
-                    .frame(height: 1)
+                // ── Content (auto-height) ──
+                Text(notice.content)
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color(white: 0.72))
+                    .lineSpacing(5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 18)
+                    .frame(maxHeight: 180)
 
                 // ── Button ──
                 Button { dismiss() } label: {
-                    Text("ĐÃ HIỂU")
-                        .font(.system(size: 15, weight: .bold))
-                        .tracking(1.0)
+                    Text("Đã hiểu")
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 52)
+                        .frame(height: 54)
                         .background(
                             LinearGradient(
                                 colors: [red, redDim],
-                                startPoint: .topLeading, endPoint: .bottomTrailing
+                                startPoint: .leading, endPoint: .trailing
                             )
                         )
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                         .overlay(
                             LinearGradient(
-                                colors: [Color.white.opacity(0.12), .clear],
+                                colors: [Color.white.opacity(0.13), .clear],
                                 startPoint: .top, endPoint: .center
                             )
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                         )
+                        .shadow(color: red.opacity(0.45), radius: 12, y: 4)
                 }
                 .buttonStyle(PressScaleButtonStyle())
-                .padding(14)
+                .padding(.horizontal, 20)
+                .padding(.top, 14)
+                .padding(.bottom, 34)
             }
-            .background(AppTheme.techCardFill)
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .background(Color(red: 0.08, green: 0.08, blue: 0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [red.opacity(0.55), red.opacity(0.10)],
-                            startPoint: .top, endPoint: .bottom
-                        ),
-                        lineWidth: 1.2
-                    )
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
             )
-            .shadow(color: red.opacity(0.18), radius: 40, y: 12)
-            .shadow(color: .black.opacity(0.65), radius: 20, y: 6)
-            .padding(.horizontal, 26)
-            .scaleEffect(appeared ? 1.0 : 0.86)
-            .opacity(appeared ? 1.0 : 0.0)
+            .offset(y: appeared ? 0 : 700)
         }
+        .ignoresSafeArea()
         .onAppear {
-            withAnimation(.spring(response: 0.38, dampingFraction: 0.76)) { appeared = true }
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { appeared = true }
         }
     }
 
     private func dismiss() {
-        withAnimation(.easeOut(duration: 0.18)) { appeared = false }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) { onDismiss() }
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) { appeared = false }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { onDismiss() }
     }
 }
