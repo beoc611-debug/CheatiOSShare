@@ -378,6 +378,12 @@ final class FreefireESPStore: ObservableObject {
     init() {
         refresh()
         flushState()
+        // Ghi zero .pdata khi app sắp terminate → game load lại sẽ thấy h1=0 → tắt ESP
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willTerminateNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in self?.zeroOutPdata() }
     }
 
     // MARK: - Container resolution
