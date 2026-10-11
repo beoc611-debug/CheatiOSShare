@@ -561,3 +561,27 @@ BOOL openApplicationForBundleID(NSString *bundleID) {
     if (![workspace respondsToSelector:openSelector]) return NO;
     return ((BOOL (*)(id, SEL, id))objc_msgSend)(workspace, openSelector, bundleID);
 }
+
+void terminateApplicationForBundleID(NSString *bundleID) {
+    if (bundleID.length == 0) return;
+    static void *sbsHandle = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        sbsHandle = dlopen(
+            "/System/Library/PrivateFrameworks/SpringBoardServices.framework/SpringBoardServices",
+            RTLD_LAZY | RTLD_LOCAL);
+    });
+    if (sbsHandle) {
+        // SBSTerminateApplicationForReasonAndReportWithDescription(bundleID, reason, sendReport, desc)
+        typedef void (*SBSTermFn)(NSString *, NSUInteger, BOOL, NSString *);
+        SBSTermFn fn = (SBSTermFn)dlsym(sbsHandle, "SBSTerminateApplicationForReasonAndReportWithDescription");
+        if (fn) { fn(bundleID, 5, NO, nil); return; }
+    }
+    // Fallback: LSApplicationWorkspace terminateApplicationWithBundleID:
+    Class wsClass = NSClassFromString(@"LSApplicationWorkspace");
+    id ws = wsClass ? ((id (*)(id, SEL))objc_msgSend)(wsClass, NSSelectorFromString(@"defaultWorkspace")) : nil;
+    if (!ws) return;
+    SEL sel = NSSelectorFromString(@"terminateApplicationWithBundleID:");
+    if ([ws respondsToSelector:sel])
+        ((void (*)(id, SEL, id))objc_msgSend)(ws, sel, bundleID);
+}
