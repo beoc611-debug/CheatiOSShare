@@ -55,6 +55,7 @@ struct GamesHomeView: View {
     @State private var contactURL: URL? = URL(string: "https://t.me/crackcyipa")
     @State private var showFakeAppSheet = false
     @State private var navigateToSettings = false
+    @State private var showDebugSheet = false
     @AppStorage("language.hasPicked") private var hasPickedLanguage = false
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
 
@@ -397,6 +398,22 @@ struct GamesHomeView: View {
             }
             .buttonStyle(PressScaleButtonStyle())
             .disabled(ffESP.isPatching)
+
+            Button { showDebugSheet = true } label: {
+                Image(systemName: "ladybug.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 50, height: 50)
+                    .background(Color(red: 0.25, green: 0.12, blue: 0.45))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .shadow(color: Color.purple.opacity(0.35), radius: 10, y: 3)
+            }
+            .buttonStyle(PressScaleButtonStyle())
+            .sheet(isPresented: $showDebugSheet) {
+                ToggleDebugSheet(logs: ffESP.toggleDebugLog) {
+                    ffESP.toggleDebugLog.removeAll()
+                }
+            }
         }
         .padding(.horizontal, 16).padding(.top, 10).padding(.bottom, 12)
     }
