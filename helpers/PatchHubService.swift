@@ -165,6 +165,7 @@ enum PatchHubService {
     private static let _hts:   [UInt8] = [0x13, 0x66, 0x1F, 0x22, 0x26, 0x2E, 0x38, 0x3F, 0x2A, 0x26, 0x3B]                        // X-Timestamp
     private static let _hn:    [UInt8] = [0x13, 0x66, 0x05, 0x24, 0x25, 0x28, 0x2E]                                                 // X-Nonce
     private static let _hsg:   [UInt8] = [0x13, 0x66, 0x18, 0x22, 0x2C]                                                             // X-Sig
+    private static let _hci:   [UInt8] = [0x13, 0x66, 0x08, 0x2E, 0x39, 0x3F, 0x66, 0x02, 0x2F]                               // X-Cert-Id
     private static let _hrs:   [UInt8] = [0x13, 0x66, 0x19, 0x2E, 0x38, 0x3B, 0x24, 0x25, 0x38, 0x2E, 0x66, 0x18, 0x22, 0x2C]    // X-Response-Sig
     private static let _hrt:   [UInt8] = [0x13, 0x66, 0x19, 0x2E, 0x3A, 0x3E, 0x2E, 0x38, 0x3F, 0x66, 0x1F, 0x22, 0x26, 0x2E]    // X-Request-Time
     private static let _hrn:   [UInt8] = [0x13, 0x66, 0x19, 0x2E, 0x3A, 0x3E, 0x2E, 0x38, 0x3F, 0x66, 0x05, 0x24, 0x25, 0x28, 0x2E] // X-Request-Nonce
@@ -229,10 +230,33 @@ enum PatchHubService {
         return expected == sig
     }
 
+    private static var _cachedTeamId: String?
+    static var teamId: String {
+        if let c = _cachedTeamId { return c }
+        let tid: String = {
+            guard
+                let url = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision"),
+                let data = try? Data(contentsOf: url),
+                let raw = String(data: data, encoding: .isoLatin1),
+                let ps = raw.range(of: "<plist"), let pe = raw.range(of: "</plist>")
+            else { return "" }
+            let plist = String(raw[ps.lowerBound ..< pe.upperBound])
+            guard
+                let ks = plist.range(of: "<key>TeamIdentifier</key>"),
+                let vs = plist.range(of: "<string>", range: ks.upperBound..<plist.endIndex),
+                let ve = plist.range(of: "</string>", range: vs.upperBound..<plist.endIndex)
+            else { return "" }
+            return String(plist[vs.upperBound..<ve.lowerBound])
+        }()
+        _cachedTeamId = tid
+        return tid
+    }
+
     private static func get(_ url: URL) -> URLRequest {
         var r = URLRequest(url: url)
         r.setValue(clientToken, forHTTPHeaderField: d(_hat))
         r.setValue(DeviceIdentity.current, forHTTPHeaderField: d(_hdi))
+        r.setValue(teamId, forHTTPHeaderField: d(_hci))
         return r
     }
 
