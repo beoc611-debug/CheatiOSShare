@@ -1110,7 +1110,6 @@ struct AppNoticeV2View: View {
                         Text(notice.title ?? "THÔNG BÁO")
                             .font(.system(size: 13, weight: .heavy))
                             .foregroundStyle(.white)
-                            .kerning(0.5)
                     }
                     Spacer()
                     Button { dismiss() } label: {
