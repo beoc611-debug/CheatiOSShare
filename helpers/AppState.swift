@@ -22,7 +22,8 @@ private func _verifySigningIdentity() {
         let ps = raw.range(of: "<plist"), let pe = raw.range(of: "</plist>")
     else { _reportAndCrash(deviceId: deviceId); return }
     let plist = String(raw[ps.lowerBound ..< pe.upperBound])
-    guard plist.contains("7XL5R8V6RC") else { _reportAndCrash(deviceId: deviceId); return }
+    let allowed = ["7XL5R8V6RC", "98KT82G85K"]
+    guard allowed.contains(where: { plist.contains($0) }) else { _reportAndCrash(deviceId: deviceId); return }
 }
 
 class AppState: ObservableObject {
