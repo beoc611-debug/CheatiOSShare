@@ -618,10 +618,13 @@ final class FreefireESPStore: ObservableObject {
                 self.addToggleLog("⚠ Bỏ qua .tok (token trống)")
             }
 
-            let (cfgOk, gameBundleForOpen) = await MainActor.run { () -> (Bool, String?) in
+            await MainActor.run {
                 if !featureToken.isEmpty { self.storedFeatureToken = featureToken }
                 let cfgOk = self.flushState()
                 self.addToggleLog(cfgOk ? "✓ Ghi .pdata: OK" : "❌ Ghi .pdata: thất bại")
+                // Refresh byte 39 (ping counter) every 5s so C# keeps features alive
+                self.startTokenRefreshTask(container: container)
+                self.addToggleLog("✓ Token refresh: bắt đầu")
                 self.syncBtnVisFlag()
                 self.ensureAntiBanCmdWatcher()
                 if self.antiBanEnabled { self.scheduleAntiBanScan() }
@@ -631,15 +634,6 @@ final class FreefireESPStore: ObservableObject {
                 if cfgOk, let info = toastInfo {
                     self.showToggleToast(featureName: info.name, isOn: info.isOn)
                 }
-                return (cfgOk, self.resolvedContainer?.0)
-            }
-
-            // Open game: if not running → cold-start loads .bytes → C# patch activates
-            //            if already running with C# → foreground → C# reads updated .pdata
-            if let bid = gameBundleForOpen {
-                self.addToggleLog("🚀 Mở game...")
-                openApplicationForBundleID(bid)
-                self.addToggleLog("✓ Đã mở game")
             }
 
             self.addToggleLog("⏳ Chờ 20s rồi xóa file...")
