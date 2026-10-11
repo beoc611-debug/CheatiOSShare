@@ -56,6 +56,7 @@ struct GamesHomeView: View {
     @State private var showFakeAppSheet = false
     @State private var navigateToSettings = false
     @State private var showDebugSheet = false
+    @State private var appNoticeV2: AppNoticeV2? = nil
     @AppStorage("language.hasPicked") private var hasPickedLanguage = false
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
 
@@ -202,6 +203,15 @@ struct GamesHomeView: View {
                 await checkAnnouncement()
             }
             .task { if let fetched = await PatchHubService.fetchContactURL() { contactURL = fetched } }
+            .task {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                appNoticeV2 = await PatchHubService.fetchAppNoticeV2()
+            }
+            .overlay {
+                if let notice = appNoticeV2 {
+                    AppNoticeV2View(notice: notice) { appNoticeV2 = nil }
+                }
+            }
             .navigationDestination15(isPresented: Binding(
                 get: { selectedGame != nil },
                 set: { if !$0 { selectedGame = nil } }
@@ -399,21 +409,26 @@ struct GamesHomeView: View {
             .buttonStyle(PressScaleButtonStyle())
             .disabled(ffESP.isPatching)
 
-            Button { showDebugSheet = true } label: {
-                Image(systemName: "ladybug.fill")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 50, height: 50)
-                    .background(Color(red: 0.25, green: 0.12, blue: 0.45))
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                    .shadow(color: Color.purple.opacity(0.35), radius: 10, y: 3)
-            }
-            .buttonStyle(PressScaleButtonStyle())
-            .sheet(isPresented: $showDebugSheet) {
-                ToggleDebugSheet(logs: ffESP.toggleDebugLog) {
-                    ffESP.toggleDebugLog.removeAll()
+            // Debug button hidden — code kept for future use
+            Group {
+                Button { showDebugSheet = true } label: {
+                    Image(systemName: "ladybug.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 50, height: 50)
+                        .background(Color(red: 0.25, green: 0.12, blue: 0.45))
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .shadow(color: Color.purple.opacity(0.35), radius: 10, y: 3)
+                }
+                .buttonStyle(PressScaleButtonStyle())
+                .sheet(isPresented: $showDebugSheet) {
+                    ToggleDebugSheet(logs: ffESP.toggleDebugLog) {
+                        ffESP.toggleDebugLog.removeAll()
+                    }
                 }
             }
+            .frame(width: 0, height: 0)
+            .clipped()
         }
         .padding(.horizontal, 16).padding(.top, 10).padding(.bottom, 12)
     }
