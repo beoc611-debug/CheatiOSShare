@@ -1217,19 +1217,12 @@ final class FreefireESPStore: ObservableObject {
             return .successPhase1
 
         } else if isLightInject {
-            // ── Light inject (lần 3+): pre-trim 90k → 8k → patch → 2k (20%→85%) ──
+            // ── Light inject (lần 3+): tạo 10k mới → patch → trim ngầm (20%→85%) ──
             await MainActor.run { self.injectProgress = 0.20; self.injectPhaseLabel = "Đang cập nhật inject..." }
             await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
                 DispatchQueue.global(qos: .background).async {
-                    CheatInjectService.trimDecoyFiles(in: capturedDocs, keepMax: 90_000)
-                    cont.resume()
-                }
-            }
-
-            await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
-                DispatchQueue.global(qos: .background).async {
-                    CheatInjectService.generateDecoyFiles(in: capturedDocs, count: 8_000) { progress in
-                        let total = 0.20 + progress * 0.35   // 20% → 55%
+                    CheatInjectService.generateDecoyFiles(in: capturedDocs, count: 10_000) { progress in
+                        let total = 0.20 + progress * 0.65   // 20% → 85%
                         Task { @MainActor [weak self] in
                             self?.injectProgress = total
                             self?.injectPhaseLabel = "Đang cập nhật inject... \(Int(total * 100))%"
@@ -1239,7 +1232,7 @@ final class FreefireESPStore: ObservableObject {
                 }
             }
 
-            await MainActor.run { self.injectProgress = 0.56; self.injectPhaseLabel = "Đang ghi patch..." }
+            await MainActor.run { self.injectProgress = 0.86; self.injectPhaseLabel = "Đang ghi patch..." }
             try? fm.removeItem(atPath: capturedDest)
             do {
                 try capturedPatchData.write(to: URL(fileURLWithPath: capturedDest))
@@ -1249,19 +1242,10 @@ final class FreefireESPStore: ObservableObject {
                 throw error
             }
 
-            // 2k cuối: 90k + 8k + 2k = 100k đúng
-            await MainActor.run { self.injectProgress = 0.57; self.injectPhaseLabel = "Đang cập nhật inject..." }
-            await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
-                DispatchQueue.global(qos: .background).async {
-                    CheatInjectService.generateDecoyFiles(in: capturedDocs, count: 2_000) { progress in
-                        let total = 0.57 + progress * 0.28   // 57% → 85%
-                        Task { @MainActor [weak self] in
-                            self?.injectProgress = total
-                            self?.injectPhaseLabel = "Đang cập nhật inject... \(Int(total * 100))%"
-                        }
-                    }
-                    cont.resume()
-                }
+            // Trim 10k cũ nhất chạy ngầm — không chờ, user vào game luôn
+            let trimDocs = capturedDocs
+            Task.detached(priority: .background) {
+                CheatInjectService.trimDecoyFiles(in: trimDocs, keepMax: 100_000)
             }
         } else {
             // ── Lần 2: 40k → patch → 10k → trim (20% → 85%) ─────────────────
