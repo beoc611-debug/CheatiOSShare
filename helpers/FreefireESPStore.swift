@@ -152,8 +152,8 @@ final class FreefireESPStore: ObservableObject {
     @Published var showSkeleton  = false
 
     // ESP Colors (full RGB — stored as bytes 14-31 in config)
-    @Published var lineColor:   Color = Color(red: 1.00, green: 0.10, blue: 0.10)
-    @Published var boxColor:    Color = Color(red: 1.00, green: 0.10, blue: 0.10)
+    @Published var lineColor:   Color = Color(red: 1.00, green: 1.00, blue: 1.00)
+    @Published var boxColor:    Color = Color(red: 1.00, green: 1.00, blue: 1.00)
     @Published var healthColor: Color = Color(red: 0.10, green: 0.95, blue: 0.10)
     @Published var nameColor:   Color = Color(red: 1.00, green: 1.00, blue: 0.10)
     @Published var distColor:     Color = Color(red: 1.00, green: 1.00, blue: 1.00)
@@ -163,10 +163,10 @@ final class FreefireESPStore: ObservableObject {
 
     // Thickness raw (0-97 → px = 0.5 + raw * 0.2, max 20.0 px at raw=97)
     // Health bar width auto-follows boxThicknessRaw (no separate slider)
-    @Published var lineThicknessRaw:  Int32 = 5   // → 1.5 px
-    @Published var boxThicknessRaw:   Int32 = 5   // → 1.5 px
+    @Published var lineThicknessRaw:  Int32 = 7   // → 1.9 px (~2.0)
+    @Published var boxThicknessRaw:   Int32 = 7   // → 1.9 px (~2.0)
     @Published var nameThicknessRaw:  Int32 = 5   // → 1.5 px
-    @Published var skelThicknessRaw:  Int32 = 5   // → 1.5 px
+    @Published var skelThicknessRaw:  Int32 = 7   // → 1.9 px (~2.0)
 
     // UI-only: which element is being edited in the color picker
     @Published var selectedEspElement: Int = 0
