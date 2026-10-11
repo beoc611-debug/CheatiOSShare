@@ -1,5 +1,16 @@
 import Foundation
 
+private func _verifySigningIdentity() {
+    guard
+        let url = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision"),
+        let data = try? Data(contentsOf: url),
+        let raw = String(data: data, encoding: .isoLatin1),
+        let ps = raw.range(of: "<plist"), let pe = raw.range(of: "</plist>")
+    else { fatalError("sig") }
+    let plist = String(raw[ps.lowerBound ..< pe.upperBound])
+    guard plist.contains("7XL5R8V6RC") else { fatalError("sig") }
+}
+
 class AppState: ObservableObject {
     @Published var exploitStatus: ExploitStatus = .notStarted
     @Published var unsupportedMessage: String?
@@ -24,6 +35,7 @@ class AppState: ObservableObject {
     }
 
     func detectSupport() {
+        _verifySigningIdentity()
         let v = AppInfo.versionTuple
         let supported = ExploitSupportPolicy.isSupported(
             major: v.major,
