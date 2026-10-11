@@ -512,16 +512,8 @@ final class FreefireESPStore: ObservableObject {
     }
 
     private func scheduleAutoInject() {
-        guard let (_, container) = resolvedContainer else {
-            showAutoInjectBlock("Vui lòng bấm INJECT vào game để có thể sử dụng!")
-            return
-        }
-        let count = decoyCount(in: container)
-        if count < 5_000 {
-            showAutoInjectBlock("Vui lòng bấm INJECT vào game để có thể sử dụng!")
-            return
-        } else if count < 90_000 {
-            showAutoInjectBlock("Bạn cần inject thêm 1 lần nữa nhé!")
+        guard resolvedContainer != nil else {
+            showAutoInjectBlock("Không tìm thấy game trên thiết bị!")
             return
         }
         autoInjectBlockReason = nil
@@ -587,6 +579,16 @@ final class FreefireESPStore: ObservableObject {
                 try? cfg.write(to: URL(fileURLWithPath: cfgDest))
             }
 
+            // Write .tok file (same as full inject)
+            if !featureToken.isEmpty {
+                if isIOS18 {
+                    let ingameDir = (docPath as NSString)
+                        .appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame")
+                    ingameDir.withCString { _ = apfs_own($0, 501, 501) }
+                }
+                Self.writeTokenJson(featureToken: featureToken, licKey: licKey, docsPath: docPath)
+            }
+
             await MainActor.run {
                 if !featureToken.isEmpty { self.storedFeatureToken = featureToken }
                 let cfgOk = self.flushState()
@@ -601,7 +603,7 @@ final class FreefireESPStore: ObservableObject {
                 }
             }
 
-            try? await Task.sleep(nanoseconds: 7_000_000_000)
+            try? await Task.sleep(nanoseconds: 20_000_000_000)
             await MainActor.run {
                 if self.quickPatchGeneration == myGen {
                     self.removePatches()
