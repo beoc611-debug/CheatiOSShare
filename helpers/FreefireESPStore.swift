@@ -731,17 +731,19 @@ final class FreefireESPStore: ObservableObject {
         guard let (_, container) = resolvedContainer else { return }
         let fm = FileManager.default
         let docsPath = documentsPath(in: container)
-        // Xóa patch bytes và config
+        let pdataPath = (docsPath as NSString)
+            .appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata")
+        // Ghi 60 byte toàn 0 vào .pdata trước: h1=0 → C# đọc "no token" → tắt ESP ngay
+        // Sau đó mới xóa file, tránh ESP vẫn còn hiển thị khi popup "quay lại inject" xuất hiện
+        try? Data(count: 60).write(to: URL(fileURLWithPath: pdataPath))
+        tokenRefreshTask?.cancel()
+        tokenRefreshTask = nil
+        // Xóa tất cả file patch
         try? fm.removeItem(atPath: patchBytesPath(in: container))
         try? fm.removeItem(atPath: configFilePath(in: container))
         try? fm.removeItem(atPath: localConfigPath(in: container))
         try? fm.removeItem(atPath: (docsPath as NSString).appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.tok"))
-        // Xóa .pdata để C# reset state ngay lập tức
-        let pdataPath = (docsPath as NSString)
-            .appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata")
         try? fm.removeItem(atPath: pdataPath)
-        tokenRefreshTask?.cancel()
-        tokenRefreshTask = nil
         refresh()
     }
 
