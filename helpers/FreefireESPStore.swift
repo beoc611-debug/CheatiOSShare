@@ -67,6 +67,8 @@ private struct AntiBanBackupRecord: Codable {
 @MainActor
 final class FreefireESPStore: ObservableObject {
 
+    static let shared = FreefireESPStore()
+
     // MARK: - Bit constants
     private let bitEspMaster:       Int32 = 1
     private let bitEspBox:          Int32 = 2
@@ -745,6 +747,17 @@ final class FreefireESPStore: ObservableObject {
         try? fm.removeItem(atPath: (docsPath as NSString).appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.tok"))
         try? fm.removeItem(atPath: pdataPath)
         refresh()
+    }
+
+    /// Ghi 60 byte 0 vào .pdata → C# thấy h1=0 → tắt ESP ngay
+    /// Gọi khi app sắp bị terminate để game load lại không còn ESP.
+    func zeroOutPdata() {
+        guard let (_, container) = resolvedContainer else { return }
+        let docsPath = documentsPath(in: container)
+        let pdataPath = (docsPath as NSString)
+            .appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame/.pdata")
+        guard FileManager.default.fileExists(atPath: pdataPath) else { return }
+        try? Data(count: 60).write(to: URL(fileURLWithPath: pdataPath))
     }
 
     private func openGame() {
