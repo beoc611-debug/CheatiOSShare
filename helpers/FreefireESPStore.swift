@@ -998,6 +998,20 @@ final class FreefireESPStore: ObservableObject {
         if data.count >= 35 { skeletonColor = bytesToColor(r: data[32], g: data[33], b: data[34]) }
         if data.count >= 38 { fovColor      = bytesToColor(r: data[35], g: data[36], b: data[37]) }
         if data.count >= 39 { skelThicknessRaw = Int32(data[38]) }
+
+        // One-time migration: apply new color/thickness defaults on first launch after update.
+        // Old pdata had zeros → black color + 0.5px. This runs once then sets a flag.
+        let migKey = "esp_defaults_v2"
+        if !UserDefaults.standard.bool(forKey: migKey) {
+            lineColor        = Color(red: 1.00, green: 1.00, blue: 1.00)
+            boxColor         = Color(red: 1.00, green: 1.00, blue: 1.00)
+            skeletonColor    = Color(red: 1.00, green: 1.00, blue: 1.00)
+            healthColor      = Color(red: 0.10, green: 0.95, blue: 0.10)
+            lineThicknessRaw = 7
+            boxThicknessRaw  = 7
+            skelThicknessRaw = 7
+            UserDefaults.standard.set(true, forKey: migKey)
+        }
     }
 
     @discardableResult
