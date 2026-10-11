@@ -26,11 +26,6 @@ struct CheatiOSShareApp: App {
                     appState.runExploit()
                     PatchProjectLibrary.migrateRemoveLegacyFiles()
                     _ = BackgroundAudioKeepAlive.shared  // init observers
-                    // Ghi zero .pdata khi app terminate → game load lại thấy h1=0 → tắt ESP
-                    NotificationCenter.default.addObserver(
-                        forName: UIApplication.willTerminateNotification,
-                        object: nil, queue: .main
-                    ) { _ in FreefireESPStore.shared.zeroOutPdata() }
                 }
                 .onOpenURL { url in
                     MakeToolsStore.shared.load(url: url)
