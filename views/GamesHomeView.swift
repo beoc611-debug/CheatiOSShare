@@ -1148,7 +1148,6 @@ struct AppNoticeV2View: View {
                         Text("SYSTEM NOTIFICATION")
                             .font(.system(size: 9.5, weight: .semibold))
                             .foregroundStyle(red)
-                            .tracking(2.2)
 
                         // Title
                         Text(notice.title ?? "THÔNG BÁO")
