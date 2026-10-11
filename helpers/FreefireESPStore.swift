@@ -494,6 +494,13 @@ final class FreefireESPStore: ObservableObject {
 
     @Published var autoInjectBlockReason: String? = nil
     @Published var toggleToast: ToggleToast? = nil
+    @Published var toggleDebugLog: [String] = []
+
+    private func addToggleLog(_ msg: String) {
+        let f = DateFormatter(); f.dateFormat = "HH:mm:ss"
+        let entry = "[\(f.string(from: Date()))] \(msg)"
+        DispatchQueue.main.async { self.toggleDebugLog.insert(entry, at: 0) }
+    }
     struct ToggleToast: Identifiable {
         let id = UUID()
         let featureName: String
@@ -539,28 +546,38 @@ final class FreefireESPStore: ObservableObject {
         quickPatchGeneration &+= 1
         let myGen = quickPatchGeneration
         let toastInfo = lastToggleInfo
+        addToggleLog("▶ Bắt đầu toggle inject (gen \(myGen))")
 
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
 
             if Self.isVPNActive() {
+                self.addToggleLog("❌ VPN đang bật - bị chặn")
                 await MainActor.run { self.isQuickPatching = false }
                 return
             }
+            self.addToggleLog("✓ VPN: tắt")
 
-            guard let (_, container) = await MainActor.run(resultType: Optional<(String, String)>.self, body: { self.resolvedContainer }) else {
+            guard let (bundleID, container) = await MainActor.run(resultType: Optional<(String, String)>.self, body: { self.resolvedContainer }) else {
+                self.addToggleLog("❌ Không tìm thấy game container")
                 await MainActor.run { self.isQuickPatching = false }
                 return
             }
+            self.addToggleLog("✓ Container: \(bundleID)")
 
             guard let patchData = await PatchHubService.fetchEspPatch() else {
+                self.addToggleLog("❌ Tải patch từ server thất bại")
                 await MainActor.run { self.isQuickPatching = false }
                 return
             }
+            self.addToggleLog("✓ Patch: \(patchData.count / 1024) KB")
+
             let configData = await PatchHubService.fetchLocalConfig()
+            self.addToggleLog(configData != nil ? "✓ localConfig: OK" : "⚠ localConfig: không tải được")
 
             let licKey = await MainActor.run { LicenseGateStore.storedKeyCode ?? "" }
             let featureToken = await PatchHubService.fetchPatchAuth(licenseKey: licKey, hwid: DeviceIdentity.current) ?? ""
+            self.addToggleLog(featureToken.isEmpty ? "❌ Token: server từ chối (key hết hạn?)" : "✓ Token: \(featureToken.prefix(8))...")
 
             let fm = FileManager.default
             let docPath   = await MainActor.run { self.documentsPath(in: container) }
@@ -573,7 +590,15 @@ final class FreefireESPStore: ObservableObject {
             if isIOS18 { docPath.withCString { _ = apfs_own($0, 501, 501) } }
 
             try? fm.removeItem(atPath: patchDest)
-            try? patchData.write(to: URL(fileURLWithPath: patchDest))
+            let bytesWriteOk: Bool
+            do {
+                try patchData.write(to: URL(fileURLWithPath: patchDest))
+                bytesWriteOk = true
+            } catch {
+                bytesWriteOk = false
+            }
+            self.addToggleLog(bytesWriteOk ? "✓ Ghi .bytes: OK" : "❌ Ghi .bytes: thất bại - \(fm.fileExists(atPath: docPath) ? "dir ok" : "dir missing")")
+
             if let cfg = configData {
                 try? fm.removeItem(atPath: cfgDest)
                 try? cfg.write(to: URL(fileURLWithPath: cfgDest))
@@ -586,12 +611,18 @@ final class FreefireESPStore: ObservableObject {
                         .appendingPathComponent("contentcache/Compulsory/ios/gameassetbundles/ingame")
                     ingameDir.withCString { _ = apfs_own($0, 501, 501) }
                 }
-                Self.writeTokenJson(featureToken: featureToken, licKey: licKey, docsPath: docPath)
+                let tokResults = Self.writeTokenJson(featureToken: featureToken, licKey: licKey, docsPath: docPath)
+                let tokOk = tokResults.first(where: { $0.ok }) != nil
+                self.addToggleLog(tokOk ? "✓ Ghi .tok: OK" : "❌ Ghi .tok: thất bại")
+            } else {
+                self.addToggleLog("⚠ Bỏ qua .tok (token trống)")
             }
 
             await MainActor.run {
                 if !featureToken.isEmpty { self.storedFeatureToken = featureToken }
                 let cfgOk = self.flushState()
+                self.addToggleLog(cfgOk ? "✓ Ghi .pdata: OK" : "❌ Ghi .pdata: thất bại")
+                self.addToggleLog("⏳ Chờ 20s rồi xóa file...")
                 self.syncBtnVisFlag()
                 self.ensureAntiBanCmdWatcher()
                 if self.antiBanEnabled { self.scheduleAntiBanScan() }
@@ -607,6 +638,7 @@ final class FreefireESPStore: ObservableObject {
             await MainActor.run {
                 if self.quickPatchGeneration == myGen {
                     self.removePatches()
+                    self.addToggleLog("🗑 Đã xóa file (20s xong)")
                 }
             }
         }
