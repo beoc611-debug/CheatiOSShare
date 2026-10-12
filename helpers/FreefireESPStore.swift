@@ -317,6 +317,7 @@ final class FreefireESPStore: ObservableObject {
     @Published var fovRadius: Int32 = 100
     @Published var aimMode: Int32 = 1
     @Published var headRate: Int32 = 3
+    @Published var aimSpeed: Int32 = 4  // 0-7 → 20+n*15f in C#
 
     // SETTINGS tab
     @Published var fastParachute = false
@@ -716,6 +717,11 @@ final class FreefireESPStore: ObservableObject {
         flushState()
     }
 
+    func setAimSpeed(_ v: Int32) {
+        aimSpeed = max(1, min(7, v))
+        flushState()
+    }
+
     func setSilentFov(_ radius: Int32) {
         silentFov = max(50, min(500, radius))
         flushState()
@@ -744,6 +750,7 @@ final class FreefireESPStore: ObservableObject {
         case "ghostScale":    return Double(ghostScale)
         case "aimMode":       return Double(aimMode)
         case "headRate":      return Double(headRate - 1)  // stored 1-4, segment is 0-indexed
+        case "aimSpeed":      return Double(aimSpeed)
         case "spinBotSpeedIndex": return Double(spinBotSpeedIndex)
         default:              return 0
         }
@@ -757,6 +764,7 @@ final class FreefireESPStore: ObservableObject {
         case "ghostScale":    setGhostScale(Int32(value))
         case "aimMode":       setAimMode(Int32(value))
         case "headRate":      setHeadRate(Int32(value) + 1)  // segment 0-indexed → stored 1-4
+        case "aimSpeed":      setAimSpeed(Int32(value))
         case "spinBotSpeedIndex": spinBotSpeedIndex = max(0, min(300, Int(value))); flushStatePublic()
         default:              break
         }
@@ -998,10 +1006,10 @@ final class FreefireESPStore: ObservableObject {
         if data.count >= 35 { skeletonColor = bytesToColor(r: data[32], g: data[33], b: data[34]) }
         if data.count >= 38 { fovColor      = bytesToColor(r: data[35], g: data[36], b: data[37]) }
         if data.count >= 39 { skelThicknessRaw = Int32(data[38]) }
+        if data.count >= 62 { let _as = Int32(data[61] & 7); aimSpeed = _as > 0 ? _as : 4 }
 
         // One-time migration: apply new color/thickness defaults on first launch after update.
-        // Old pdata had zeros → black color + 0.5px. This runs once then sets a flag.
-        let migKey = "esp_defaults_v2"
+        let migKey = "esp_defaults_v3"
         if !UserDefaults.standard.bool(forKey: migKey) {
             lineColor        = Color(red: 1.00, green: 1.00, blue: 1.00)
             boxColor         = Color(red: 1.00, green: 1.00, blue: 1.00)
@@ -1010,7 +1018,9 @@ final class FreefireESPStore: ObservableObject {
             lineThicknessRaw = 7
             boxThicknessRaw  = 7
             skelThicknessRaw = 7
+            aimSpeed         = 4
             UserDefaults.standard.set(true, forKey: migKey)
+            _ = flushState()
         }
     }
 
@@ -1064,7 +1074,7 @@ final class FreefireESPStore: ObservableObject {
         auxBits |= ((fovRadius / 2) & 0xFF) << auxFovRadiusShift
         auxBits |= ((silentFov / 2) & 0xFF) << auxSilentFovShift
 
-        var data = Data(count: 60)
+        var data = Data(count: 62)
         data.withUnsafeMutableBytes { ptr in
             withUnsafeBytes(of: mainBits) { src in
                 ptr.baseAddress!.copyMemory(from: src.baseAddress!, byteCount: 4)
@@ -1122,6 +1132,7 @@ final class FreefireESPStore: ObservableObject {
             data[58] = UInt8((_h1 >> 16) & 0xFF);  data[59] = UInt8((_h1 >> 24) & 0xFF)
         }
         // else: bytes 40-59 remain 0 → C# sees h1=0 → ESP disabled
+        data[61] = UInt8(aimSpeed & 7)
 
         let docPath = documentsPath(in: container)
         try? FileManager.default.createDirectory(
