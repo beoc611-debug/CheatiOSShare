@@ -96,6 +96,10 @@ final class FreefireESPStore: ObservableObject {
     private let bitAuxFastFire:      Int32 = 1 << 28  // bit 28: fast fire
     private let bitAuxBackJump:      Int32 = 1 << 29  // bit 29: backjump
     private let bitAuxGhostControl:  Int32 = 1 << 30  // bit 30: ghost sync-freeze control
+
+    // Byte 62 feature flags
+    private let bitB62SpeedHack: UInt8 = 1  // bit 0: time.timeScale speed hack
+    private let bitB62Radar:     UInt8 = 2  // bit 1: minimap radar
     private let ghostScaleShift:     Int32 = 12       // mainBits bits 12-14: ghost button scale index
 
     private let bitFastSwap:         Int32 = 1 << 25  // mainBits bit 25: fast weapon swap
@@ -191,6 +195,8 @@ final class FreefireESPStore: ObservableObject {
         case "aimFovHide":     return aimFovHide
         case "skipDowned":     return skipDowned
         case "fastParachute":  return fastParachute
+        case "speedHack":      return speedHack
+        case "radar":          return radar
         case "speedRunning":   return speedRunning
         case "fakeDamage":     return fakeDamage
         case "wideCamera":     return wideCamera
@@ -243,6 +249,8 @@ final class FreefireESPStore: ObservableObject {
         case "aimFovHide":     toggle(\.aimFovHide)
         case "skipDowned":     toggle(\.skipDowned)
         case "fastParachute":  toggle(\.fastParachute)
+        case "speedHack":      toggle(\.speedHack)
+        case "radar":          toggle(\.radar)
         case "speedRunning":   toggle(\.speedRunning)
         case "fakeDamage":     toggle(\.fakeDamage)
         case "wideCamera":     toggle(\.wideCamera)
@@ -285,6 +293,8 @@ final class FreefireESPStore: ObservableObject {
         case "aimFovHide":     return "Ẩn FOV"
         case "skipDowned":     return "Bỏ Qua Gục"
         case "fastParachute":  return "Dù Nhanh"
+        case "speedHack":      return "Speed Hack"
+        case "radar":          return "Radar"
         case "speedRunning":   return "Tốc Độ"
         case "fakeDamage":     return "Fake Damage"
         case "wideCamera":     return "Wide Camera"
@@ -323,6 +333,9 @@ final class FreefireESPStore: ObservableObject {
     @Published var fastParachute = false
     @Published var speedRunning  = false
     @Published var fakeDamage    = false
+    @Published var speedHack     = false
+    @Published var speedHackValue: Int32 = 2
+    @Published var radar         = false
     @Published var wideCamera    = false
     @Published var wideCameraFov: Int32 = 88
     @Published var fastHeal      = false
@@ -364,7 +377,7 @@ final class FreefireESPStore: ObservableObject {
     var storedFeatureToken: String = ""
 
     // MARK: - AntiBan Memory
-    @Published var antiBanEnabled: Bool = false
+    @Published var antiBanEnabled: Bool = UserDefaults.standard.bool(forKey: "ab_v1_on")
     @Published var antiBanRunning: Bool = false
     @Published var antiBanLog: [AntiBanLogEntry] = []
     @Published var antiBanProgress: Double = 0
@@ -378,6 +391,11 @@ final class FreefireESPStore: ObservableObject {
     @Published var antiBanV2Enabled: Bool = UserDefaults.standard.bool(forKey: "ab_v2_on")
     @Published var antiBanV2Logs: [String] = []
     private var antiBanV2Task: Task<Void, Never>?
+
+    // MARK: - Auto AntiBan (radar-based match detection)
+    @Published var autoAntiBanEnabled: Bool = UserDefaults.standard.bool(forKey: "ab_auto_on")
+    private var autoAntiBanMonitorTask: Task<Void, Never>?
+    private var autoAntiBanInMatch = false
 
     enum PatchResult: Identifiable, Equatable {
         case success
@@ -494,6 +512,15 @@ final class FreefireESPStore: ObservableObject {
         }
         if let (_, container) = resolvedContainer {
             readState(from: container)
+        }
+        // Auto-resume AntiBan V1 nếu đã bật trước đó
+        if antiBanEnabled && antiBanScanTask == nil {
+            ensureAntiBanCmdWatcher()
+            scheduleAntiBanScan()
+        }
+        // Auto-resume Auto AntiBan monitor nếu đã bật trước đó
+        if autoAntiBanEnabled && autoAntiBanMonitorTask == nil {
+            startAutoAntiBanMonitor()
         }
         // Auto-restart token refresh after app relaunch if patch is already installed
         if tokenRefreshTask == nil,
@@ -732,6 +759,11 @@ final class FreefireESPStore: ObservableObject {
         flushState()
     }
 
+    func setSpeedHackValue(_ v: Int32) {
+        speedHackValue = max(1, min(5, v))
+        flushState()
+    }
+
     func setWideCameraFov(_ fov: Int32) {
         wideCameraFov = max(60, min(120, fov))
         flushState()
@@ -744,6 +776,7 @@ final class FreefireESPStore: ObservableObject {
 
     func doubleValue(for id: String) -> Double {
         switch id {
+        case "speedHackValue": return Double(speedHackValue)
         case "wideCameraFov": return Double(wideCameraFov)
         case "silentFov":     return Double(silentFov)
         case "fovRadius":     return Double(fovRadius)
@@ -758,6 +791,7 @@ final class FreefireESPStore: ObservableObject {
 
     func setDouble(for id: String, _ value: Double) {
         switch id {
+        case "speedHackValue": setSpeedHackValue(Int32(value))
         case "wideCameraFov": setWideCameraFov(Int32(value))
         case "silentFov":     setSilentFov(Int32(value))
         case "fovRadius":     setFovRadius(Int32(value))
@@ -933,6 +967,7 @@ final class FreefireESPStore: ObservableObject {
             }
         }
 
+        let isInitialized = (mainBits & bitStateInitialized) != 0
         enableESP       = (mainBits & bitEspMaster)      != 0
         playerBox       = (mainBits & bitEspBox)          != 0
         topTracer       = (mainBits & bitEspTracer)       != 0
@@ -991,33 +1026,47 @@ final class FreefireESPStore: ObservableObject {
         noFog       = (r8 & bitR8NoFog)      != 0
         fastCrouch  = (r8 & bitR8FastCrouch) != 0
 
-        // Thickness from bytes 11-13
-        lineThicknessRaw  = data.count >= 12 ? Int32(data[11]) : 5
-        boxThicknessRaw   = data.count >= 13 ? Int32(data[12]) : 5
-        nameThicknessRaw  = data.count >= 14 ? Int32(data[13]) : 5
+        // Thickness and colors — only read from pdata when state was previously flushed by app.
+        // If pdata is zeroed (isInitialized==false), keep @Published defaults (white/1.9px).
+        if isInitialized {
+            lineThicknessRaw  = data.count >= 12 ? Int32(data[11]) : 7
+            boxThicknessRaw   = data.count >= 13 ? Int32(data[12]) : 7
+            nameThicknessRaw  = data.count >= 14 ? Int32(data[13]) : 5
 
-        // RGB colors from bytes 14-31
-        if data.count >= 17 { lineColor   = bytesToColor(r: data[14], g: data[15], b: data[16]) }
-        if data.count >= 20 { boxColor    = bytesToColor(r: data[17], g: data[18], b: data[19]) }
-        if data.count >= 23 { healthColor = bytesToColor(r: data[20], g: data[21], b: data[22]) }
-        if data.count >= 26 { nameColor   = bytesToColor(r: data[23], g: data[24], b: data[25]) }
-        if data.count >= 29 { distColor     = bytesToColor(r: data[26], g: data[27], b: data[28]) }
-        if data.count >= 32 { countColor    = bytesToColor(r: data[29], g: data[30], b: data[31]) }
-        if data.count >= 35 { skeletonColor = bytesToColor(r: data[32], g: data[33], b: data[34]) }
-        if data.count >= 38 { fovColor      = bytesToColor(r: data[35], g: data[36], b: data[37]) }
-        if data.count >= 39 { skelThicknessRaw = Int32(data[38]) }
+            if data.count >= 17 { lineColor   = bytesToColor(r: data[14], g: data[15], b: data[16]) }
+            if data.count >= 20 { boxColor    = bytesToColor(r: data[17], g: data[18], b: data[19]) }
+            if data.count >= 23 { healthColor = bytesToColor(r: data[20], g: data[21], b: data[22]) }
+            if data.count >= 26 { nameColor   = bytesToColor(r: data[23], g: data[24], b: data[25]) }
+            if data.count >= 29 { distColor     = bytesToColor(r: data[26], g: data[27], b: data[28]) }
+            if data.count >= 32 { countColor    = bytesToColor(r: data[29], g: data[30], b: data[31]) }
+            if data.count >= 35 { skeletonColor = bytesToColor(r: data[32], g: data[33], b: data[34]) }
+            if data.count >= 38 { fovColor      = bytesToColor(r: data[35], g: data[36], b: data[37]) }
+            if data.count >= 39 { skelThicknessRaw = Int32(data[38]) }
+        }
         if data.count >= 62 { let _as = Int32(data[61] & 7); aimSpeed = _as > 0 ? _as : 4 }
+        if data.count >= 63 {
+            let b62 = data[62]
+            speedHack = (b62 & bitB62SpeedHack) != 0
+            radar     = (b62 & bitB62Radar)     != 0
+        }
+        if data.count >= 64 {
+            let v = Int32(data[63])
+            speedHackValue = v >= 1 && v <= 5 ? v : 2
+        }
 
-        // One-time migration: apply new color/thickness defaults on first launch after update.
-        let migKey = "esp_defaults_v3"
+        // One-time migration: restore correct color/thickness defaults after reset.
+        let migKey = "esp_defaults_v4"
         if !UserDefaults.standard.bool(forKey: migKey) {
             lineColor        = Color(red: 1.00, green: 1.00, blue: 1.00)
             boxColor         = Color(red: 1.00, green: 1.00, blue: 1.00)
             skeletonColor    = Color(red: 1.00, green: 1.00, blue: 1.00)
             healthColor      = Color(red: 0.10, green: 0.95, blue: 0.10)
+            distColor        = Color(red: 1.00, green: 1.00, blue: 1.00)
+            countColor       = Color(red: 1.00, green: 0.10, blue: 0.10)
             lineThicknessRaw = 7
             boxThicknessRaw  = 7
             skelThicknessRaw = 7
+            nameThicknessRaw = 5
             aimSpeed         = 4
             UserDefaults.standard.set(true, forKey: migKey)
             _ = flushState()
@@ -1074,7 +1123,7 @@ final class FreefireESPStore: ObservableObject {
         auxBits |= ((fovRadius / 2) & 0xFF) << auxFovRadiusShift
         auxBits |= ((silentFov / 2) & 0xFF) << auxSilentFovShift
 
-        var data = Data(count: 62)
+        var data = Data(count: 64)
         data.withUnsafeMutableBytes { ptr in
             withUnsafeBytes(of: mainBits) { src in
                 ptr.baseAddress!.copyMemory(from: src.baseAddress!, byteCount: 4)
@@ -1133,6 +1182,11 @@ final class FreefireESPStore: ObservableObject {
         }
         // else: bytes 40-59 remain 0 → C# sees h1=0 → ESP disabled
         data[61] = UInt8(aimSpeed & 7)
+        var b62: UInt8 = 0
+        if speedHack { b62 |= bitB62SpeedHack }
+        if radar     { b62 |= bitB62Radar }
+        data[62] = b62
+        data[63] = UInt8(max(1, min(5, speedHackValue)))
 
         let docPath = documentsPath(in: container)
         try? FileManager.default.createDirectory(
@@ -1521,6 +1575,12 @@ final class FreefireESPStore: ObservableObject {
 
     func enableAntiBan() {
         antiBanEnabled = true
+        UserDefaults.standard.set(true, forKey: "ab_v1_on")
+        // Create flag immediately so C# ANTIBAN display shows ON without delay
+        if let (_, container) = resolvedContainer {
+            let flagPath = (documentsPath(in: container) as NSString).appendingPathComponent("antiban_active.flag")
+            try? Data().write(to: URL(fileURLWithPath: flagPath))
+        }
         antiBanLog.removeAll()
         antiBanOpTask?.cancel()
         antiBanOpTask = Task { @MainActor [weak self] in
@@ -1542,6 +1602,7 @@ final class FreefireESPStore: ObservableObject {
 
     func disableAntiBan() {
         antiBanEnabled = false
+        UserDefaults.standard.set(false, forKey: "ab_v1_on")
         antiBanScanTask?.cancel()
         antiBanScanTask = nil
         antiBanRunning = false
@@ -1567,6 +1628,40 @@ final class FreefireESPStore: ObservableObject {
         }
     }
 
+    func setAutoAntiBan(_ enabled: Bool) {
+        autoAntiBanEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: "ab_auto_on")
+        if enabled {
+            startAutoAntiBanMonitor()
+        } else {
+            autoAntiBanMonitorTask?.cancel()
+            autoAntiBanMonitorTask = nil
+            autoAntiBanInMatch = false
+        }
+    }
+
+    func startAutoAntiBanMonitor() {
+        guard autoAntiBanEnabled, let (_, container) = resolvedContainer else { return }
+        autoAntiBanMonitorTask?.cancel()
+        autoAntiBanMonitorTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled && self.autoAntiBanEnabled {
+                let docs = self.documentsPath(in: container)
+                // .flag extension ensures AntiBan scan skips this file (isSafeToMove excludes .flag)
+                let flagPath = (docs as NSString).appendingPathComponent(".esp_match_active.flag")
+                let inMatch = FileManager.default.fileExists(atPath: flagPath)
+                if inMatch && !self.autoAntiBanInMatch {
+                    self.autoAntiBanInMatch = true
+                    if !self.antiBanEnabled { self.enableAntiBan() }
+                } else if !inMatch && self.autoAntiBanInMatch {
+                    self.autoAntiBanInMatch = false
+                    if self.antiBanEnabled { self.disableAntiBan() }
+                }
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+            }
+        }
+    }
+
     func scheduleAntiBanScan() {
         guard antiBanEnabled, let (_, container) = resolvedContainer else { return }
         ensureAntiBanCmdWatcher()
@@ -1584,7 +1679,8 @@ final class FreefireESPStore: ObservableObject {
 
     private static func isSafeToMove(_ name: String) -> Bool {
         let l = name.lowercased()
-        return !l.contains("avatar") && !l.hasSuffix(".flag")
+        // Skip hidden files (starting with ".") — these are app control files like .pdata, .esp_radar_pos
+        return !l.hasPrefix(".") && !l.contains("avatar") && !l.hasSuffix(".flag")
     }
 
     private var antiBanBackupDir: String {
